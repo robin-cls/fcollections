@@ -16,17 +16,9 @@ numba = "*"
 typer = "*"
 jinja2 = "*"
 
-[tool.poetry.group.geo.dependencies]
-shapely = "*"
-dask = "*"
-pyinterp = "*"
-geopandas = "*"
-
-[tool.poetry.group.test.dependencies]
-pytest = "*"
-
-[tool.poetry.group.dev.dependencies]
-setuptools_scm = "*"
+[tool.poetry.extras]
+testing = ["pytest", "pytest-cov"]
+geo = ["shapely", "geopandas", "pyinterp", "dask"]
 
 [tool.poetry.scripts]
 sad = "fcollections.sad:main"
