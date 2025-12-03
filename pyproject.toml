@@ -10,8 +10,15 @@ maintainers = [
     {name = "Robin Chevrier", email = "rchevrier@groupcls.com"},
     {name = "Anne-Sophie Tonneau", email = "atonneau@groupcls.com"}
 ]
-licence = "Apache-2.0"
 requires-python = ">= 3.8"
+dependencies = [
+    "docstring_parser",
+    "jinja2",
+    "netCDF4",
+    "numba",
+    "numpy",
+    "typer",
+    "xarray"]
 
 [tool.setuptools.packages.find]
 exclude = ["**/__pycache__", "**/.ipynb_checkpoints"]
@@ -19,14 +26,6 @@ exclude = ["**/__pycache__", "**/.ipynb_checkpoints"]
 [project.urls]
 Repository='https://github.com/robin-cls/fcollections'
 
-[project.dependencies]
-numpy = "*"
-xarray = "*"
-docstring_parser = "*"
-netCDF4 = "*"
-numba = "*"
-typer = "*"
-jinja2 = "*"
 
 [project.optional-dependencies]
 testing = ["pytest", "pytest-cov"]
