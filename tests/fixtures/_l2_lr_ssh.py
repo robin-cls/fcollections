@@ -8,8 +8,8 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from fcollections.geometry import query_geometries
 from fcollections.core import GroupMetadata, VariableMetadata
+from fcollections.geometry import query_geometries
 
 from ._generation import (
     HalfOrbitTrackCoordinatesGenerator,

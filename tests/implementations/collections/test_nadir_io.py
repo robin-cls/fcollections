@@ -12,7 +12,6 @@ from fcollections.core import (
     FileNameConvention,
     FileSystemIterable,
 )
-from fcollections.missions import MissionsPhases
 from fcollections.implementations import (
     CMEMS_NADIR_SSHA_LAYOUT,
     Delay,
@@ -20,6 +19,7 @@ from fcollections.implementations import (
     NetcdfFilesDatabaseL3Nadir,
     ProductLevel,
 )
+from fcollections.missions import MissionsPhases
 from fcollections.time import Period
 
 

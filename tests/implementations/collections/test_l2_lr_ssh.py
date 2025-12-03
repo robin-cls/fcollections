@@ -74,7 +74,8 @@ class TestReader:
     def setup(self):
         try:
             # Reader for test configuration with geo packages available
-            from fcollections.implementations.optional import GeoSwotReaderL2LRSSH
+            from fcollections.implementations.optional import (
+                GeoSwotReaderL2LRSSH, )
             self.reader = GeoSwotReaderL2LRSSH()
         except ImportError:
             # Fall back reader

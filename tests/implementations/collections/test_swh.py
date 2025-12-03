@@ -5,8 +5,11 @@ import typing as tp
 import numpy as np
 import pytest
 
+from fcollections.implementations import (
+    FileNameConventionSWH,
+    NetcdfFilesDatabaseSWH,
+)
 from fcollections.missions import MissionsPhases
-from fcollections.implementations import FileNameConventionSWH, NetcdfFilesDatabaseSWH
 from fcollections.time import Period
 
 if tp.TYPE_CHECKING:

@@ -7,7 +7,6 @@ import numpy as np
 import pytest
 
 from fcollections.core import FileDiscoverer, FileSystemIterable
-from fcollections.missions import MissionsPhases
 from fcollections.implementations import (
     AVISO_L4_SWOT_LAYOUT,
     Delay,
@@ -15,6 +14,7 @@ from fcollections.implementations import (
     FileNameConventionGriddedSLAInternal,
     NetcdfFilesDatabaseGriddedSLA,
 )
+from fcollections.missions import MissionsPhases
 from fcollections.time import Period
 
 if tp.TYPE_CHECKING:

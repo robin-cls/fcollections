@@ -5,7 +5,10 @@ import typing as tp
 import numpy as np
 import pytest
 
-from fcollections.implementations import FileNameConventionDAC, NetcdfFilesDatabaseDAC
+from fcollections.implementations import (
+    FileNameConventionDAC,
+    NetcdfFilesDatabaseDAC,
+)
 
 if tp.TYPE_CHECKING:
     from pathlib import Path

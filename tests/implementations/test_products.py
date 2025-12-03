@@ -2,7 +2,11 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
-from fcollections.implementations import L2Version, Timeliness, build_version_parser
+from fcollections.implementations import (
+    L2Version,
+    Timeliness,
+    build_version_parser,
+)
 
 
 @pytest.fixture

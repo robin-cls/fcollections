@@ -4,8 +4,8 @@ import functools
 import logging
 import typing as tp
 
-from fcollections.geometry import query_half_orbits_intersect
 from fcollections.core import IPredicate
+from fcollections.geometry import query_half_orbits_intersect
 from fcollections.missions import PHASES, Missions
 
 logger = logging.getLogger(__name__)

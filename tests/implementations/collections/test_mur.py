@@ -5,7 +5,10 @@ import typing as tp
 import numpy as np
 import pytest
 
-from fcollections.implementations import FileNameConventionMUR, NetcdfFilesDatabaseMUR
+from fcollections.implementations import (
+    FileNameConventionMUR,
+    NetcdfFilesDatabaseMUR,
+)
 
 if tp.TYPE_CHECKING:
     from pathlib import Path
