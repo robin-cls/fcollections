@@ -1,0 +1,45 @@
+<style>{{ css }}</style>
+<div class='xr-container'>
+    {% for group in groups %}
+        {% set open_group = 'open' if group.name == '/' and group.variables | length > 0 else '' %}
+        <details class='xr-group' {{ open_group }}>
+            <summary class='xr-summary'>Group: {{ group.name }}</summary>
+            <div class='xr-sub'>
+                {% set open_dimension = 'open' if group.dimensions | length > 0 else '' %}
+                <details class='xr-sub' {{ open_dimension }}>
+                    <summary class='xr-summary'>Dimensions</summary>
+                    <table class='xr-table'>
+                        {% for dimension_name, dimension_size in group.dimensions.items() %}
+                            <tr><td>{{ dimension_name }}</td><td>{{ dimension_size }}</td></tr>
+                        {% endfor %}
+                    </table>
+                </details>
+
+                {% set open_variable = 'open' if group.variables | length > 0 else '' %}
+                <details class='xr-sub' {{ open_variable }}>
+                    <summary class='xr-summary'>Variables</summary>
+                    {% for variable in group.variables %}
+                        <details class='xr-sub'>
+                            <summary class='xr-summary'>{{ variable.name }}</summary>
+                            <table class='xr-table'>
+                                    {% for key, value in variable.items() %}
+                                        <tr><td>{{ key }}</td><td>{{ value }}</td></tr>
+                                    {% endfor %}
+                            </table>
+                        </details>
+                    {% endfor %}
+                </details>
+
+                <details class='xr-sub'>
+                    <summary class='xr-summary'>Attributes</summary>
+                    <table class='xr-table'>
+                        {% for attribute_name, attribute_value in group.attributes.items() %}
+                            <tr><td>{{ attribute_name }}</td><td>{{ attribute_value }}</td></tr>
+                        {% endfor %}
+                    </table>
+                </details>
+            </div>
+        </details>
+
+    {% endfor %}
+</div>

@@ -1,0 +1,29 @@
+.xr-container {
+    font-family: monospace;
+    margin: 10px 0;
+}
+.xr-header {
+    font-weight: bold;
+    font-size: 1em;
+    color: #1f77b4;
+    margin-bottom: 2px;
+}
+.xr-table {
+    border-collapse: collapse;
+    margin: 2px 0 6px 0;
+    width: auto;
+    font-size: 90%;
+}
+.xr-table td {
+    border: 1px solid #ddd;
+    padding: 2px 6px;
+}
+details.xr-group {
+    margin-bottom: 6px;
+}
+summary.xr-summary {
+    cursor: pointer;
+}
+details.xr-sub {
+    margin-left: 10px;
+}

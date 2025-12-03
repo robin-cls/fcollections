@@ -1,0 +1,52 @@
+"""Optional functionalities.
+
+Optional functionalities include the geographical selection in the
+FilesDatabase and IFileReader implementations. Because the dependencies
+can be heavy, these functionalities are only enabled if we can import
+shapely, pyinterp and geopandas.
+
+In case this module import fails, the caller should fall back to the
+default implementations.
+"""
+from __future__ import annotations
+
+from ._area_selectors import (
+    AreaSelector1D,
+    AreaSelector2D,
+    SwathAreaSelector,
+    TemporalSerieAreaSelector,
+)
+from ._collections import (
+    GeoNetcdfFilesDatabaseDAC,
+    GeoNetcdfFilesDatabaseGriddedSLA,
+    GeoNetcdfFilesDatabaseL2Nadir,
+    GeoNetcdfFilesDatabaseL3Nadir,
+    GeoNetcdfFilesDatabaseMUR,
+    GeoNetcdfFilesDatabaseOC,
+    GeoNetcdfFilesDatabaseOHC,
+    GeoNetcdfFilesDatabaseSST,
+    GeoNetcdfFilesDatabaseSWH,
+    GeoNetcdfFilesDatabaseSwotLRL2,
+    GeoNetcdfFilesDatabaseSwotLRL3,
+    GeoNetcdfFilesDatabaseSwotLRWW,
+)
+from ._predicates import SwotGeometryPredicate
+from ._reader import (
+    GeoOpenMfDataset,
+    GeoSwotReaderL2LRSSH,
+    GeoSwotReaderL3LRSSH,
+    GeoSwotReaderL3WW,
+)
+
+__all__ = [
+    'GeoOpenMfDataset', 'GeoSwotReaderL3WW', 'GeoSwotReaderL2LRSSH',
+    'GeoSwotReaderL3LRSSH', 'SwotGeometryPredicate',
+    'GeoNetcdfFilesDatabaseOC', 'GeoNetcdfFilesDatabaseDAC',
+    'GeoNetcdfFilesDatabaseGriddedSLA', 'GeoNetcdfFilesDatabaseL2Nadir',
+    'GeoNetcdfFilesDatabaseL3Nadir', 'GeoNetcdfFilesDatabaseMUR',
+    'GeoNetcdfFilesDatabaseOHC', 'GeoNetcdfFilesDatabaseSST',
+    'GeoNetcdfFilesDatabaseSWH', 'GeoNetcdfFilesDatabaseSwotLRL2',
+    'GeoNetcdfFilesDatabaseSwotLRL3', 'GeoNetcdfFilesDatabaseSwotLRWW',
+    'AreaSelector1D', 'AreaSelector2D', 'SwathAreaSelector',
+    'TemporalSerieAreaSelector'
+]

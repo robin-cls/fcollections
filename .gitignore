@@ -1,0 +1,10 @@
+__pycache__
+*egg-info
+build
+.vscode
+docs/fcollections*.rst
+dist
+.mypy_cache
+.pytest_cache
+.coverage
+coverage.xml

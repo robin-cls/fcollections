@@ -1,0 +1,156 @@
+import dataclasses as dc
+import functools
+from enum import Enum
+
+import numpy as np
+
+from ._distances import distances_along_axis
+
+
+@dc.dataclass
+class LongitudeConvention:
+    """Longitude convention.
+
+    Parameters
+    ----------
+    lon_min: float
+        minimal longitude
+    lon_max: float
+        maximal longitude
+    """
+    lon_min: float
+    lon_max: float
+
+    def __post_init__(self):
+        if self.lon_max - self.lon_min != 360:
+            raise ValueError(
+                'Longitude convention must define a 360° interval')
+
+    def __str__(self):
+        return f'[{self.lon_min},{self.lon_max}['
+
+    __repr__ = __str__
+
+    def normalize(self, lon: np.array, inplace: bool = False) -> np.array:
+        """Normalize a longitude array and keep it even if it's not monotonous.
+
+        Parameters
+        ----------
+        lon: np.array
+            an array of longitudes
+        inplace: bool
+            edit input array (True) or return a copy (False)
+
+        Returns
+        -------
+            an array of longitudes converted in the current convention
+        """
+        if not inplace:
+            lon = lon.copy()
+
+        # This is a patch to handle maximum convention intervals
+        # TODO Needs to be improved by, e.g. overloading Period object
+        if np.array_equal(lon, np.array([-180, 180])):
+            return np.array([self.lon_min, self.lon_max])
+        if np.array_equal(lon, np.array([0, 360])):
+            return np.array([self.lon_min, self.lon_max])
+
+        is_max = lon == self.lon_max
+        lon = (lon - self.lon_min) % 360 + self.lon_min
+        lon[is_max] = self.lon_max
+
+        return lon
+
+    def normalize_and_split(self,
+                            lon: np.array,
+                            inplace: bool = False) -> list[np.array]:
+        """Normalize a longitude array and split it in two parts if its not
+        monotonous.
+
+        Parameters
+        ----------
+        lon: np.array
+            an array of longitudes
+        inplace: bool
+            edit input array (True) or return a copy (False)
+
+        Returns
+        -------
+            an list of array of longitudes converted in the current convention
+        """
+        lon = self.normalize(lon, inplace)
+        return _split_arr(lon, self.lon_min, self.lon_max)
+
+
+def _split_arr(arr: np.ndarray, val_min: float,
+               val_max: float) -> list[np.array]:
+    """Split an array of longitude coordinates if its not monotonous.
+
+    Add min and max bounds to each split.
+    """
+    indice = np.where(arr == np.min(arr))[0][0]
+
+    if indice == 0 or indice == arr.size:
+        return [arr]
+
+    sl0 = arr[slice(0, indice)]
+    if sl0[-1] != val_max: sl0 = np.append(arr[slice(0, indice)], val_max)
+
+    sl1 = arr[slice(indice, arr.size)]
+    if sl1[0] != val_min:
+        sl1 = np.insert(arr[slice(indice, arr.size)], 0, val_min)
+
+    return [sl0, sl1]
+
+
+class StandardLongitudeConvention(Enum):
+    CONV_180 = LongitudeConvention(-180, 180)
+    CONV_360 = LongitudeConvention(0, 360)
+
+
+def guess_longitude_convention(lon: np.array) -> StandardLongitudeConvention:
+    """Guess the convention used in an array of longitudes, either (-180/180)
+    or (0/360)
+
+    Parameters
+    ----------
+    lon: np.array
+        an array of longitudes
+
+    Returns
+    -------
+        the detected StandardLongitudeConvention enum
+    """
+    lon = lon[~np.isnan(lon)]
+
+    if np.all((lon >= 0) & (lon <= 360)):
+        return StandardLongitudeConvention.CONV_360
+
+    if np.all((lon >= -180) & (lon <= 180)):
+        return StandardLongitudeConvention.CONV_180
+
+    raise ValueError(
+        f"Impossible to guess the convention: longitudes do not follow any known convention amongst [ {', '.join([str(c.value) for c in StandardLongitudeConvention])} ]"
+    )
+
+
+class Distances:
+
+    def __init__(self,
+                 longitudes: np.ndarray,
+                 latitudes: np.ndarray,
+                 return_full: bool = True,
+                 spherical_approximation: bool = True):
+        # Use a standard class to prevent hashing. longitude and latitude are
+        # tables and should not be set as a dataclass attribute else it will
+        # conflict with the functools cache
+        self.longitudes = longitudes
+        self.latitudes = latitudes
+        self.return_full = return_full
+        self.spherical_approximation = spherical_approximation
+
+    @functools.cache
+    def compute(self, axis):
+        return distances_along_axis(self.longitudes, self.latitudes, axis,
+                                    self.return_full,
+                                    self.spherical_approximation)

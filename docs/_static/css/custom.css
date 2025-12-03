@@ -1,0 +1,19 @@
+.wy-nav-content {
+    max-width: 80% !important;
+    background: #fefefe
+}
+
+/* Prevent links from being too invading inf code blocks*/
+a[class^="sphx-glr-backref-"] {
+    text-decoration: none;
+}
+
+.wy-side-nav-search, .wy-nav-top, .wy-nav-side {
+    background: #0b1817;
+}
+.wy-nav-side{
+    color: #0b1817;
+}
+.wy-menu-vertical p.caption{
+    color:#43a299
+}

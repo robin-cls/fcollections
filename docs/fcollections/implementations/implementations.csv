@@ -1,0 +1,15 @@
+class,file examples,recommended layout
+:class:`fcollections.implementations.NetcdfFilesDatabaseOC`,20250401_cmems_obs-oc_glo_bgc-plankton_myint_l3-multi-4km_P1D.nc,
+:class:`fcollections.implementations.NetcdfFilesDatabaseDAC`,dac_dif_27054_06.nc,
+:class:`fcollections.implementations.NetcdfFilesDatabaseERA5`,reanalysis-era5-single-levels_20230305.nc,
+:class:`fcollections.implementations.NetcdfFilesDatabaseGriddedSLA`,dt_global_allsat_phy_l4_20220808_20241024.nc,
+:class:`fcollections.implementations.NetcdfFilesDatabaseMUR`,20250129090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc,
+:class:`fcollections.implementations.NetcdfFilesDatabaseOHC`,OHC-NAQG3_v1r0_blend_s202409110000000_e202409242359599_c202409240930560.nc,
+:class:`fcollections.implementations.NetcdfFilesDatabaseS1AOWI`,s1a-iw-owi-cm-20240924t111921-20240924t112018-000003-055806_gs.nc,
+:class:`fcollections.implementations.NetcdfFilesDatabaseSST`,20250317000000-IFR-L3S_GHRSST-SSTfnd-ODYSSEA-GLOB_010-v02.1-fv01.0.nc,
+:class:`fcollections.implementations.NetcdfFilesDatabaseSWH`,global_vavh_l3_rt_s6a_lr_20250319T060000_20250319T090000_20250319T100606.nc,
+:class:`fcollections.implementations.NetcdfFilesDatabaseSwotLRL2`,SWOT_L2_LR_SSH_Expert_022_427_20241016T143655_20241016T152824_PIC2_01.nc,:data:`fcollections.implementations.AVISO_L2_LR_SSH_LAYOUT`
+:class:`fcollections.implementations.NetcdfFilesDatabaseSwotLRL3`,SWOT_L3_LR_SSH_Expert_005_012_20231013T020000_20231013T025127_v2.0.1.nc,:data:`fcollections.implementations.AVISO_L3_LR_SSH_LAYOUT`
+:class:`fcollections.implementations.NetcdfFilesDatabaseSwotLRWW`,SWOT_L3_LR_SSH_Expert_005_012_20231013T020000_20231013T025127_v2.0.1.nc,:data:`fcollections.implementations.AVISO_L3_LR_WINDWAVE_LAYOUT`
+:class:`fcollections.implementations.NetcdfFilesDatabaseL2Nadir`,SWOT_GPN_2PfP001_293_20230731_155619_20230731_164746.nc,
+:class:`fcollections.implementations.NetcdfFilesDatabaseL3Nadir`,nrt_global_al_phy_l3_1hz_20241020_20241110.nc,:data:`fcollections.implementations.CMEMS_NADIR_SSHA_LAYOUT`

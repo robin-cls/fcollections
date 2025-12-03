@@ -1,0 +1,36 @@
+[tool.poetry]
+name = 'fcollections'
+version = '0.1.0'
+description = "Read a collection of files using information in their names"
+authors = ["Robin Chevrier <rchevrier@groupcls.com>", "Anne-Sophie Tonneau <atonneau@groupcls.com>"]
+repository='https://github.com/robin-cls/fcollections'
+exclude = ["**/__pycache__", "**/.ipynb_checkpoints"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "*"
+xarray = "*"
+docstring_parser = "*"
+netCDF4 = "*"
+numba = "*"
+typer = "*"
+jinja2 = "*"
+
+[tool.poetry.group.geo.dependencies]
+shapely = "*"
+dask = "*"
+pyinterp = "*"
+geopandas = "*"
+
+[tool.poetry.group.test.dependencies]
+pytest = "*"
+
+[tool.poetry.group.dev.dependencies]
+setuptools_scm = "*"
+
+[tool.poetry.scripts]
+sad = "fcollections.sad:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
