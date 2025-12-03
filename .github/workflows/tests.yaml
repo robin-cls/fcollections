@@ -17,16 +17,11 @@ jobs:
           python-version: 3.12
       - name: Install Pyinterp build requirements
         run: |
-          sudo apt-get install g++ cmake libeigen3-dev libboost-dev
+          sudo apt-get install g++ cmake libeigen3-dev libboost-dev libhdf5-serial-dev
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[testing,geo]"
-      - name: Debug fcollections import
-        run: |
-          python -c "import fcollections,sys,inspect; print('fcollections file:', getattr(fcollections,'file',None)); print('sys.path[:6]=',sys.path[:6])"
-          python -c "import pkgutil; print('pkgutil.find_loader:', pkgutil.find_loader('fcollections'))"
-          pip show fcollections || true
       - name: Run unit tests
         run: |
           pytest tests --cov=src --cov-report=xml:coverage-ut.xml --cov-report=term
@@ -49,14 +44,14 @@ jobs:
           python-version: 3.11
       - name: Install Pyinterp build requirements
         run: |
-          sudo apt-get install g++ cmake libeigen3-dev libboost-dev
+          sudo apt-get install g++ cmake libeigen3-dev libboost-dev libhdf5-serial-dev
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[testing,geo]"
       - name: Run unit tests without geo
         run: |
-          pytest tests/implementations/collections --without-geo-packages --cov=src --cov-report=xml:coverage-ut-nogeo.xml --cov-report=term
+          pytest tests/implementations/collections --ignore tests/implementations/collections/test_area_selector.py --without-geo-packages --cov=src --cov-report=xml:coverage-ut-nogeo.xml --cov-report=term
           mv .coverage .coverage-ut-nogeo
       - name: Upload unit test no-geo coverage artifacts
         uses: actions/upload-artifact@v4
