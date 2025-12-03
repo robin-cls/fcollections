@@ -16,7 +16,7 @@ numba = "*"
 typer = "*"
 jinja2 = "*"
 
-[tool.poetry.extras]
+[project.optional-dependencies]
 testing = ["pytest", "pytest-cov"]
 geo = ["shapely", "geopandas", "pyinterp", "dask"]
 
