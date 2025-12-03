@@ -20,6 +20,7 @@ class Period:
     include_stop: boolean
          inclusive (True) or strict (False) end selection
     """
+
     start: np.datetime64
     stop: np.datetime64
     include_start: bool = True
@@ -33,12 +34,14 @@ class Period:
         return self.start == time or self.stop == time
 
     def _include(self, time: np.datetime64, include: bool):
-        if self.start == time: return self.include_start and include
-        if self.stop == time: return self.include_stop and include
+        if self.start == time:
+            return self.include_start and include
+        if self.stop == time:
+            return self.include_stop and include
 
-    def intersects(self,
-                   times: np.datetime64 | Period,
-                   include_time: bool = True) -> bool:
+    def intersects(
+        self, times: np.datetime64 | Period, include_time: bool = True
+    ) -> bool:
         """Check if the period intersects with another periods or time.
 
         In case a time is given, it checks if it is contained in the period.
@@ -57,11 +60,15 @@ class Period:
             True if there is an intersection, False otherwise
         """
         if isinstance(times, np.datetime64):
-            return (self.start <= times if
-                    (self.include_start and include_time) else self.start
-                    < times) and (times <= self.stop if
-                                  (self.include_stop
-                                   and include_time) else times < self.stop)
+            return (
+                self.start <= times
+                if (self.include_start and include_time)
+                else self.start < times
+            ) and (
+                times <= self.stop
+                if (self.include_stop and include_time)
+                else times < self.stop
+            )
 
         if self._equals(times.start):
             if self._include(times.start, times.include_start):
@@ -70,22 +77,25 @@ class Period:
                 return True
             if self.intersects(times.stop):
                 return True
-            return times.intersects(self.start,
-                                    self.include_start) | times.intersects(
-                                        self.stop, self.include_stop)
+            return times.intersects(self.start, self.include_start) | times.intersects(
+                self.stop, self.include_stop
+            )
 
         if self._equals(times.stop):
             if self._include(times.stop, times.include_stop):
                 return True
             if self.intersects(times.start):
                 return True
-            return times.intersects(self.start,
-                                    self.include_start) | times.intersects(
-                                        self.stop, self.include_stop)
+            return times.intersects(self.start, self.include_start) | times.intersects(
+                self.stop, self.include_stop
+            )
 
-        return (self.intersects(times.start) | self.intersects(times.stop)
-                | times.intersects(self.start, self.include_start)
-                | times.intersects(self.stop, self.include_stop))
+        return (
+            self.intersects(times.start)
+            | self.intersects(times.stop)
+            | times.intersects(self.start, self.include_start)
+            | times.intersects(self.stop, self.include_stop)
+        )
 
     def union(self, other: Period) -> Period:
         """Union of two periods.
@@ -123,8 +133,8 @@ class Period:
         return Period(start, stop, include_start, include_stop)
 
     def intersection(
-            self,
-            other: np.datetime64 | Period) -> np.datetime64 | Period | None:
+        self, other: np.datetime64 | Period
+    ) -> np.datetime64 | Period | None:
         """Intersection of two periods.
 
         Parameters
@@ -164,8 +174,7 @@ class Period:
             include_stop = other.include_stop and self.include_stop
 
         # Sanity check. Singular period will be transformed to None instead
-        if stop < start or (stop == start
-                            and not (include_start and include_stop)):
+        if stop < start or (stop == start and not (include_start and include_stop)):
             return None
 
         return Period(start, stop, include_start, include_stop)

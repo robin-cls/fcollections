@@ -16,7 +16,7 @@ class IAuxiliaryDataFetcher(abc.ABC):
         the user home (~/.config/sad)
     """
 
-    PATTERN = re.compile(r'(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])')
+    PATTERN = re.compile(r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
 
     def __init__(self, preferred_target_folder: Path | None = None):
         self.preferred_target_folder = preferred_target_folder
@@ -51,7 +51,7 @@ class IAuxiliaryDataFetcher(abc.ABC):
         ergonomy.
         """
         name = self.__class__.__name__
-        return self.PATTERN.sub('_', name).lower()
+        return self.PATTERN.sub("_", name).lower()
 
     def __getitem__(self, key: str) -> Path:
         """Get the file path matching the input key.
@@ -71,8 +71,7 @@ class IAuxiliaryDataFetcher(abc.ABC):
             file system
         """
         if key not in self.keys:
-            raise KeyError(
-                f'Unknown {key}. Possible choices include {self.keys}')
+            raise KeyError(f"Unknown {key}. Possible choices include {self.keys}")
 
         candidate = self.file(key)
 
@@ -106,24 +105,23 @@ class IAuxiliaryDataFetcher(abc.ABC):
             # It can happen if we have a baseline of static data set up, but which is only
             # partially filled. Allowing multiple folders gives some flexibility in the overall
             # system setup
-            if len(os.environ[f'SAD_DATA_{self.name.upper()}']) > 0:
-                folders.append(
-                    Path(os.environ[f'SAD_DATA_{self.name.upper()}']))
+            if len(os.environ[f"SAD_DATA_{self.name.upper()}"]) > 0:
+                folders.append(Path(os.environ[f"SAD_DATA_{self.name.upper()}"]))
         except KeyError:
             pass
 
         try:
             # Else, we scan a more generic environment variable that encompasses all
             # auxiliary data types, with a flat layout or subfolders
-            folders.append(Path(os.environ['SAD_DATA']) / self.name.lower())
-            if len(os.environ['SAD_DATA']) > 0:
-                folders.append(Path(os.environ['SAD_DATA']))
+            folders.append(Path(os.environ["SAD_DATA"]) / self.name.lower())
+            if len(os.environ["SAD_DATA"]) > 0:
+                folders.append(Path(os.environ["SAD_DATA"]))
         except KeyError:
             pass
 
         # The user config folder fallback. data will be downloaded here if it is not available
         # in the previous shared folders
-        user_folder = (Path('~') / '.config' / 'sad').expanduser()
+        user_folder = (Path("~") / ".config" / "sad").expanduser()
         user_folder.mkdir(parents=True, exist_ok=True)
         folders.append(user_folder)
 
@@ -151,4 +149,8 @@ class IAuxiliaryDataFetcher(abc.ABC):
             candidate = folder / file_name
             if candidate.exists():
                 return candidate
-        return candidate if self.preferred_target_folder is None else self.preferred_target_folder / file_name
+        return (
+            candidate
+            if self.preferred_target_folder is None
+            else self.preferred_target_folder / file_name
+        )

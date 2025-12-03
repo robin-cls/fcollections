@@ -8,7 +8,6 @@ repos:
       - id: check-docstring-first
       - id: trailing-whitespace
       - id: debug-statements
-      - id: double-quote-string-fixer
       - id: end-of-file-fixer
       - id: check-docstring-first
       - id: check-xml

@@ -35,43 +35,43 @@ class GSHHG(IAuxiliaryDataFetcher):
         the user home (~/.config/sad)
     """
 
-    FTP_URL = 'ftp.soest.hawaii.edu'
-    FILE = 'gshhg/gshhg-gmt-2.3.7.tar.gz'
+    FTP_URL = "ftp.soest.hawaii.edu"
+    FILE = "gshhg/gshhg-gmt-2.3.7.tar.gz"
 
     @property
     def keys(self) -> set[str]:
-        resolutions = {'c', 'l', 'i', 'h', 'f'}
-        subset = {'border', 'GSHHS', 'river'}
-        return {f'{s}_{r}' for s, r in itertools.product(subset, resolutions)}
+        resolutions = {"c", "l", "i", "h", "f"}
+        subset = {"border", "GSHHS", "river"}
+        return {f"{s}_{r}" for s, r in itertools.product(subset, resolutions)}
 
     def _download(self, remote_file: str, target_folder: Path):
         fetch_ftp_file(self.FTP_URL, self.FILE, target_folder)
         return target_folder / remote_file
 
     def _file_name(self, key: str):
-        return f'binned_{key}.nc'
+        return f"binned_{key}.nc"
 
 
 def fetch_ftp_file(url: str, filename: str, target_folder: Path):
 
-    logger.debug('Connecting as anonymous to %s', url)
+    logger.debug("Connecting as anonymous to %s", url)
     ftp = FTP(url)
     ftp.login()
 
     # Download in-memory. This should be limited to a few MB
-    logger.info('Downloading %s...', filename)
+    logger.info("Downloading %s...", filename)
     tar_data = io.BytesIO()
-    ftp.retrbinary(f'RETR {filename}', tar_data.write)
+    ftp.retrbinary(f"RETR {filename}", tar_data.write)
     ftp.quit()
-    logger.info('Downloading %s... Done', filename)
+    logger.info("Downloading %s... Done", filename)
 
     # Extract in-memory buffer
     tar_data.seek(0)
-    with tarfile.open(fileobj=tar_data, mode='r') as tar:
+    with tarfile.open(fileobj=tar_data, mode="r") as tar:
         for member in tar.getmembers():
             # Remove the top-level directory (first path part). Only works
             # there is a unique root folder
-            parts = member.name.split('/', 1)
+            parts = member.name.split("/", 1)
             if len(parts) > 1:
                 # rewrite the path to exclude the root folder
                 member.name = parts[1]

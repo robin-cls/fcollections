@@ -20,42 +20,42 @@ from fcollections.implementations.optional._area_selectors import (
 
 
 @pytest.mark.parametrize(
-    'x_bounds, y_bounds, result',
+    "x_bounds, y_bounds, result",
     [
         ((1, 6), (1, 6), (0, 1)),
         ((1, 6), (5.5, 6), ()),
-        ((1, 6), (5, 5), (1, )),
+        ((1, 6), (5, 5), (1,)),
         ((5.5, 6), (1, 6), ()),
         ((3, 4), (2.5, 4.5), (0, 1)),
-        ((1, 6), (0, 2), (0, )),
-        ((1, 6), (0, 2.5), (0, )),
-        ((0, 2), (1, 6), (0, )),
+        ((1, 6), (0, 2), (0,)),
+        ((1, 6), (0, 2.5), (0,)),
+        ((0, 2), (1, 6), (0,)),
         ((3, 4), (3, 4), ()),
         ((2, 3), (3, 5), (0, 1)),
-        ((4, 5), (4, 3), (1, )),
+        ((4, 5), (4, 3), (1,)),
         # tests circularity in x axis
-        ((5, 1), (1, 6), (1, )),
+        ((5, 1), (1, 6), (1,)),
         ((6, 1), (1, 6), ()),
         ((2, 1), (1, 6), (0, 1)),
         ((5, 2), (1, 6), (0, 1)),
         ((5, 4), (1, 6), (0, 1)),
-        ((5, 2), (2, 3), (0, )),
-        ((5, 2), (4, 5), (1, )),
-        ((5, 4), (2, 3), (0, )),
-        ((5, 4), (4, 5), (1, )),
-    ])
+        ((5, 2), (2, 3), (0,)),
+        ((5, 2), (4, 5), (1,)),
+        ((5, 4), (2, 3), (0,)),
+        ((5, 4), (4, 5), (1,)),
+    ],
+)
 def test_select_2d_indices_intersect_bounds(x_bounds, y_bounds, result):
     x_arr = np.array([[2, 3, 4], [3, 4, 5]])
     y_arr = np.array([[3, 2.5, 2], [5, 4.5, 4]])
-    (ind_x, _) = _select_2d_indices_intersect_bounds(x_arr, y_arr, x_bounds,
-                                                     y_bounds)
+    (ind_x, _) = _select_2d_indices_intersect_bounds(x_arr, y_arr, x_bounds, y_bounds)
     assert tuple(np.unique(ind_x)) == result
 
 
 class Test_select_slice_intersect_bounds:
 
     @pytest.mark.parametrize(
-        'bounds, ind_start, result',
+        "bounds, ind_start, result",
         [
             ((1, 2), 0, [(3, 5)]),
             ((1, 2), 2, [(5, 7)]),
@@ -72,43 +72,58 @@ class Test_select_slice_intersect_bounds:
             ((-2, -2), 0, [(0, 1)]),
             # tests circularity
             ((1, 0), 0, [(0, 3), (3, 5)]),
-            ((2, -2), 0, [
-                (0, 1),
-                (4, 5),
-            ]),
-            ((2, -0.5), 0, [
-                (0, 2),
-                (4, 5),
-            ])
-        ])
+            (
+                (2, -2),
+                0,
+                [
+                    (0, 1),
+                    (4, 5),
+                ],
+            ),
+            (
+                (2, -0.5),
+                0,
+                [
+                    (0, 2),
+                    (4, 5),
+                ],
+            ),
+        ],
+    )
     def test_nominal(self, bounds, ind_start, result):
         array = np.array([-2, -1, 0, 1, 2])
         sl = _select_slices_intersect_bounds(array, bounds, ind_start)
         assert sl == [slice(*r) for r in result]
 
-    @pytest.mark.parametrize('bounds, ind_start, result', [
-        ((1, 2), 0, [(2, 4)]),
-        ((0, 5), 0, [(0, 5)]),
-    ])
+    @pytest.mark.parametrize(
+        "bounds, ind_start, result",
+        [
+            ((1, 2), 0, [(2, 4)]),
+            ((0, 5), 0, [(0, 5)]),
+        ],
+    )
     def test_unordered(self, bounds, ind_start, result):
         array = np.array([4, 3, 2, 1, 0])
         sl = _select_slices_intersect_bounds(array, bounds, ind_start)
         assert sl == [slice(*r) for r in result]
 
-    @pytest.mark.parametrize('array, bounds', [
-        ([], (0, 1)),
-        ([0, 1, 2], (-10, -1)),
-        ([0, 1, 2], (3, 10)),
-    ])
+    @pytest.mark.parametrize(
+        "array, bounds",
+        [
+            ([], (0, 1)),
+            ([0, 1, 2], (-10, -1)),
+            ([0, 1, 2], (3, 10)),
+        ],
+    )
     def test_none_cases(self, array, bounds):
-        assert _select_slices_intersect_bounds(np.array(array),
-                                               bounds) == [None]
+        assert _select_slices_intersect_bounds(np.array(array), bounds) == [None]
 
 
 class Test_AreaSelector2D:
 
-    @pytest.mark.parametrize('longitude, latitude', [('bad_lon', 'latitude'),
-                                                     ('longitude', 'bad_lat')])
+    @pytest.mark.parametrize(
+        "longitude, latitude", [("bad_lon", "latitude"), ("longitude", "bad_lat")]
+    )
     def test_bad_lonlat(self, l4_ssha_dataset_180_180, longitude, latitude):
         """Test apply with bad longitude and latitude names."""
         selector = AreaSelector2D(longitude=longitude, latitude=latitude)
@@ -116,7 +131,7 @@ class Test_AreaSelector2D:
             selector.apply(l4_ssha_dataset_180_180, (0, 1, 0, 1))
 
     @pytest.mark.parametrize(
-        'bbox, lon_values, lat_values',
+        "bbox, lon_values, lat_values",
         [
             ((1, 1, 2, 2), [1, 2], [1, 2]),
             ((-2, -2, 2, 2), [-2, -1, 0, 1, 2], [-2, -1, 0, 1, 2]),
@@ -141,9 +156,9 @@ class Test_AreaSelector2D:
             ((1, 1, -3, 4), [1, 2], [1, 2]),
             ((180, -90, -180, 90), [], []),
             ((179, -90, -179, 90), [], []),
-        ])
-    def test_apply_180_180(self, l4_ssha_dataset_180_180, bbox, lon_values,
-                           lat_values):
+        ],
+    )
+    def test_apply_180_180(self, l4_ssha_dataset_180_180, bbox, lon_values, lat_values):
         """Test apply with a bbox intersecting the dataset."""
         selector = AreaSelector2D()
         ds = selector.apply(l4_ssha_dataset_180_180, bbox)
@@ -151,7 +166,7 @@ class Test_AreaSelector2D:
         assert np.array_equal(ds.latitude.values, np.array(lat_values))
 
     @pytest.mark.parametrize(
-        'bbox, lon_values, lat_values',
+        "bbox, lon_values, lat_values",
         [
             ((0, 0, 4, 4), [0, 1, 2], [2, 1, 0]),
             ((-2, -2, 2, 2), [-2, -1, 0, 1, 2], [2, 1, 0, -1, -2]),
@@ -176,9 +191,11 @@ class Test_AreaSelector2D:
             ((1, 1, -3, 4), [1, 2], [2, 1]),
             ((180, -90, -180, 90), [], []),
             ((179, -90, -179, 90), [], []),
-        ])
-    def test_apply_desc_lat_180_180(self, l4_ssha_dataset_reversed_lat, bbox,
-                                    lon_values, lat_values):
+        ],
+    )
+    def test_apply_desc_lat_180_180(
+        self, l4_ssha_dataset_reversed_lat, bbox, lon_values, lat_values
+    ):
         """Test apply with a bbox intersecting the dataset."""
         selector = AreaSelector2D()
         ds = selector.apply(l4_ssha_dataset_reversed_lat, bbox)
@@ -186,7 +203,7 @@ class Test_AreaSelector2D:
         assert np.array_equal(ds.latitude.values, np.array(lat_values))
 
     @pytest.mark.parametrize(
-        'bbox, lon_values, lat_values',
+        "bbox, lon_values, lat_values",
         [
             ((-2, -2, 2, 2), [0, 1, 2, 358, 359], [1, 2]),
             ((-10, -10, 10, 10), [0, 1, 2, 358, 359], [1, 2]),
@@ -205,11 +222,11 @@ class Test_AreaSelector2D:
             ((360, -90, 359.5, 90), [0, 1, 2, 358, 359], [1, 2]),
             ((-3, 1, -5, 4), [0, 1, 2, 358, 359], [1, 2]),
             ((3, 1, 0, 4), [0, 358, 359], [1, 2]),
-        ])
-    def test_apply_0_360(self, l4_ssha_dataset_0_360, bbox, lon_values,
-                         lat_values):
+        ],
+    )
+    def test_apply_0_360(self, l4_ssha_dataset_0_360, bbox, lon_values, lat_values):
         """Test apply with a bbox intersecting the dataset."""
-        selector = AreaSelector2D(longitude='lon', latitude='lat')
+        selector = AreaSelector2D(longitude="lon", latitude="lat")
         ds = selector.apply(l4_ssha_dataset_0_360, bbox)
         assert np.array_equal(ds.lon.values, np.array(lon_values))
         assert np.array_equal(ds.lat.values, np.array(lat_values))
@@ -217,18 +234,19 @@ class Test_AreaSelector2D:
 
 class Test_SwathAreaSelector:
 
-    @pytest.mark.parametrize('longitude, latitude', [('bad_lon', 'latitude'),
-                                                     ('longitude', 'bad_lat')])
-    def test_bad_lonlat(self, l2_lr_ssh_basic_dataset: xr_t.Dataset,
-                        longitude: str, latitude: str):
+    @pytest.mark.parametrize(
+        "longitude, latitude", [("bad_lon", "latitude"), ("longitude", "bad_lat")]
+    )
+    def test_bad_lonlat(
+        self, l2_lr_ssh_basic_dataset: xr_t.Dataset, longitude: str, latitude: str
+    ):
         """Test apply with bad longitude and latitude names."""
         selector = SwathAreaSelector(longitude=longitude, latitude=latitude)
         with pytest.raises(KeyError):
             selector.apply(l2_lr_ssh_basic_dataset, (0, 0, 1, 1))
 
-    @pytest.mark.parametrize('latitude', [-75, -30, 0, 30, 75])
-    def test_apply(self, l2_lr_ssh_basic_dataset: xr_t.Dataset,
-                   latitude: float):
+    @pytest.mark.parametrize("latitude", [-75, -30, 0, 30, 75])
+    def test_apply(self, l2_lr_ssh_basic_dataset: xr_t.Dataset, latitude: float):
         """Test apply with a bbox intersecting the dataset."""
         # Pass in the reference dataset
         pass_number = 25
@@ -237,8 +255,7 @@ class Test_SwathAreaSelector:
         # form an approximated formulae
         box_size = 5
         bbox = extract_box_from_polygon(pass_number, box_size, latitude)
-        reference = brute_force_geographical_selection(l2_lr_ssh_basic_dataset,
-                                                       *bbox)
+        reference = brute_force_geographical_selection(l2_lr_ssh_basic_dataset, *bbox)
         assert reference.num_lines.size > 0
         assert reference.num_lines.size < l2_lr_ssh_basic_dataset.num_lines.size
 
@@ -247,16 +264,16 @@ class Test_SwathAreaSelector:
 
         assert reference == ds
 
-    @pytest.mark.parametrize('latitude', [-75, -30, 0, 30, 75])
-    def test_apply_circular(self, l2_lr_ssh_basic_dataset: xr_t.Dataset,
-                            latitude: float):
+    @pytest.mark.parametrize("latitude", [-75, -30, 0, 30, 75])
+    def test_apply_circular(
+        self, l2_lr_ssh_basic_dataset: xr_t.Dataset, latitude: float
+    ):
         """Test apply with a bbox intersecting the dataset."""
         # Pass in the reference dataset
         pass_number = 25
         box_size = 5
         bbox = extract_box_from_polygon(pass_number, box_size, latitude)
-        reference = brute_force_geographical_selection(l2_lr_ssh_basic_dataset,
-                                                       *bbox)
+        reference = brute_force_geographical_selection(l2_lr_ssh_basic_dataset, *bbox)
         assert reference.num_lines.size > 0
         assert reference.num_lines.size < l2_lr_ssh_basic_dataset.num_lines.size
 
@@ -266,18 +283,21 @@ class Test_SwathAreaSelector:
 
         assert reference == ds
 
-    @pytest.mark.parametrize('bbox', [(-180, -90, 180, 90),
-                                      (-179, -90, 179, 90)])
-    def test_apply_global(self, l2_lr_ssh_basic_dataset: xr_t.Dataset,
-                          bbox: tuple[float, float, float, float]):
+    @pytest.mark.parametrize("bbox", [(-180, -90, 180, 90), (-179, -90, 179, 90)])
+    def test_apply_global(
+        self,
+        l2_lr_ssh_basic_dataset: xr_t.Dataset,
+        bbox: tuple[float, float, float, float],
+    ):
         selector = SwathAreaSelector()
         ds = selector.apply(l2_lr_ssh_basic_dataset, bbox)
 
         assert ds == l2_lr_ssh_basic_dataset
 
-    @pytest.mark.parametrize('latitude', [-75, -30, 0, 30, 75])
-    def test_apply_box_too_small(self, l2_lr_ssh_basic_dataset: xr_t.Dataset,
-                                 latitude: float):
+    @pytest.mark.parametrize("latitude", [-75, -30, 0, 30, 75])
+    def test_apply_box_too_small(
+        self, l2_lr_ssh_basic_dataset: xr_t.Dataset, latitude: float
+    ):
         """Test apply with a small bbox with no data inside."""
         selector = SwathAreaSelector()
 
@@ -285,44 +305,43 @@ class Test_SwathAreaSelector:
         box_size = 0.1  # This box is too small and will not capture any points
         bbox = extract_box_from_polygon(pass_number, box_size, latitude)
         ds = selector.apply(l2_lr_ssh_basic_dataset, bbox)
-        assert ds.sizes['num_lines'] == 0
+        assert ds.sizes["num_lines"] == 0
 
-    @pytest.mark.parametrize('latitude', [-75, -30, 0, 30, 75])
-    def test_apply_box_outside(self, l2_lr_ssh_basic_dataset: xr_t.Dataset,
-                               latitude: float):
+    @pytest.mark.parametrize("latitude", [-75, -30, 0, 30, 75])
+    def test_apply_box_outside(
+        self, l2_lr_ssh_basic_dataset: xr_t.Dataset, latitude: float
+    ):
         """Test apply with a small bbox with no data inside."""
         selector = SwathAreaSelector()
 
         # Science pass, completely unrelated to the calval pass 25 expected in the input dataset
         pass_number = 532
         box_size = 5
-        bbox = extract_box_from_polygon(pass_number, box_size, latitude,
-                                        'science')
+        bbox = extract_box_from_polygon(pass_number, box_size, latitude, "science")
         ds = selector.apply(l2_lr_ssh_basic_dataset, bbox)
-        assert ds.sizes['num_lines'] == 0
+        assert ds.sizes["num_lines"] == 0
 
-    @pytest.mark.parametrize('bbox', [(180, -90, -180, 90),
-                                      (179, -90, -179, 90)])
+    @pytest.mark.parametrize("bbox", [(180, -90, -180, 90), (179, -90, -179, 90)])
     def test_apply_bad_box(self, l2_lr_ssh_basic_dataset: xr_t.Dataset, bbox):
         """Test apply with a bbox where lon_min = lon_max."""
         selector = SwathAreaSelector()
         ds = selector.apply(l2_lr_ssh_basic_dataset, bbox)
-        assert ds.sizes['num_lines'] == 0
+        assert ds.sizes["num_lines"] == 0
 
 
 class Test_TemporalSerieAreaSelector:
 
-    @pytest.mark.parametrize('longitude, latitude', [('bad_lon', 'latitude'),
-                                                     ('longitude', 'bad_lat')])
+    @pytest.mark.parametrize(
+        "longitude, latitude", [("bad_lon", "latitude"), ("longitude", "bad_lat")]
+    )
     def test_bad_lonlat(self, l3_nadir_dataset_0_360, longitude, latitude):
         """Test apply with bad longitude and latitude names."""
-        selector = TemporalSerieAreaSelector(longitude=longitude,
-                                             latitude=latitude)
+        selector = TemporalSerieAreaSelector(longitude=longitude, latitude=latitude)
         with pytest.raises(KeyError):
             selector.apply(l3_nadir_dataset_0_360, (0, 0, 1, 1))
 
     @pytest.mark.parametrize(
-        'bbox, lon_values, lat_values',
+        "bbox, lon_values, lat_values",
         [
             ((-10, -10, 0.5, 0.5), [], []),
             ((3, 3, 5, 7), [], []),
@@ -338,9 +357,9 @@ class Test_TemporalSerieAreaSelector:
             ((-3, 1, -5, 4), [1, 2, 358, 359], [1, 2, 3, 4]),
             ((3, 1, 0, 4), [358, 359], [3, 4]),
             ((360, -90, 0, 90), [], []),
-        ])
-    def test_apply_0_360(self, l3_nadir_dataset_0_360, bbox, lon_values,
-                         lat_values):
+        ],
+    )
+    def test_apply_0_360(self, l3_nadir_dataset_0_360, bbox, lon_values, lat_values):
         """Test apply with a bbox intersecting the dataset."""
         selector = TemporalSerieAreaSelector()
         ds = selector.apply(l3_nadir_dataset_0_360, bbox)
@@ -348,7 +367,7 @@ class Test_TemporalSerieAreaSelector:
         assert np.array_equal(ds.latitude.values, np.array(lat_values))
 
     @pytest.mark.parametrize(
-        'bbox, lon_values, lat_values',
+        "bbox, lon_values, lat_values",
         [
             ((-10, -10, -3, -3), [], []),
             ((3, 3, 5, 7), [], []),
@@ -363,9 +382,11 @@ class Test_TemporalSerieAreaSelector:
             ((1, 1, -3, 4), [1, 2], [1, 2]),
             ((180, -90, -180, 90), [], []),
             ((179, -90, -179, 90), [], []),
-        ])
-    def test_apply_180_180(self, l3_nadir_dataset_180_180, bbox, lon_values,
-                           lat_values):
+        ],
+    )
+    def test_apply_180_180(
+        self, l3_nadir_dataset_180_180, bbox, lon_values, lat_values
+    ):
         """Test apply with a bbox intersecting the dataset."""
         selector = TemporalSerieAreaSelector()
         ds = selector.apply(l3_nadir_dataset_180_180, bbox)

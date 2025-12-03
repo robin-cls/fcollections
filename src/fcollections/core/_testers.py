@@ -8,8 +8,8 @@ import numpy as np
 
 from fcollections.time import Period
 
-T = tp.TypeVar('T')
-U = tp.TypeVar('U')
+T = tp.TypeVar("T")
+U = tp.TypeVar("U")
 
 
 class ITester(abc.ABC, tp.Generic[U, T]):
@@ -75,9 +75,10 @@ class StringTester(ITester[str, str]):
     @property
     def test_description(self) -> str:
         return (
-            'As a String field, it can filtered by giving a reference '
-            'string. The tested value from the file name will be filtered out if it'
-            ' is not equal to the reference value.')
+            "As a String field, it can filtered by giving a reference "
+            "string. The tested value from the file name will be filtered out if it"
+            " is not equal to the reference value."
+        )
 
     @property
     def type(self) -> type[str]:
@@ -89,9 +90,10 @@ class FloatTester(ITester[float, float]):
     @property
     def test_description(self) -> str:
         return (
-            'As a Float field, it can be filtered by using a reference '
-            'float value. The tested value found in the file name will be filtered '
-            'out if it is not equal to the reference value.')
+            "As a Float field, it can be filtered by using a reference "
+            "float value. The tested value found in the file name will be filtered "
+            "out if it is not equal to the reference value."
+        )
 
     @property
     def type(self) -> type[float]:
@@ -111,10 +113,11 @@ class IntegerTester(ITester[list[int] | slice | int, int]):
     @property
     def test_description(self) -> str:
         return (
-            'As a Integer field, it can be filtered by using a reference '
-            'value. The reference value can either be a list, a slice or an integer'
-            '. The tested value from the file name will be filtered out if it is '
-            'outside the given list/slice or not equal to the integer value.')
+            "As a Integer field, it can be filtered by using a reference "
+            "value. The reference value can either be a list, a slice or an integer"
+            ". The tested value from the file name will be filtered out if it is "
+            "outside the given list/slice or not equal to the integer value."
+        )
 
     @property
     def type(self) -> type[int]:
@@ -129,15 +132,16 @@ class EnumTester(ITester[type[Enum] | list[type[Enum]], type[Enum]]):
     @property
     def test_description(self) -> str:
         return (
-            'As an Enum field, it can be filtered using a reference '
-            f'{self.enum_cls} or its equivalent string. The tested value found in '
-            'the file name will be filtered out if it is not equal to the given '
-            f'enum field. Possible values are: {[e.name for e in self.enum_cls]}'
+            "As an Enum field, it can be filtered using a reference "
+            f"{self.enum_cls} or its equivalent string. The tested value found in "
+            "the file name will be filtered out if it is not equal to the given "
+            f"enum field. Possible values are: {[e.name for e in self.enum_cls]}"
         )
 
-    def test(self, reference: type[Enum] | list[type[Enum]],
-             tested: type[Enum]) -> bool:
-        if hasattr(reference, '__iter__'):
+    def test(
+        self, reference: type[Enum] | list[type[Enum]], tested: type[Enum]
+    ) -> bool:
+        if hasattr(reference, "__iter__"):
             return tested in reference
         else:
             return tested == reference
@@ -147,8 +151,11 @@ class EnumTester(ITester[type[Enum] | list[type[Enum]], type[Enum]]):
     ) -> type[Enum] | tuple[type[Enum], ...]:
         if isinstance(reference, str):
             return self.enum_cls[reference]
-        elif isinstance(reference, collections.abc.Sequence) and len(
-                reference) > 0 and isinstance(reference[0], str):
+        elif (
+            isinstance(reference, collections.abc.Sequence)
+            and len(reference) > 0
+            and isinstance(reference[0], str)
+        ):
             return tuple([self.enum_cls[nested] for nested in reference])
         else:
             return reference
@@ -163,23 +170,28 @@ class DateTimeTester(ITester[Period | np.datetime64, np.datetime64]):
     @property
     def test_description(self) -> str:
         return (
-            'As a DateTime field, it can be filtered by giving a reference '
-            'Period, datetime. The tested value from the file name will be '
-            'filtered out if it is not included or not equal to the reference '
-            'Period or datetime respectively. The reference value can be given '
-            'as a string or tuple of string following with the numpy date '
-            'formatting [%Y-%m-%dT%H:%M:%S])')
+            "As a DateTime field, it can be filtered by giving a reference "
+            "Period, datetime. The tested value from the file name will be "
+            "filtered out if it is not included or not equal to the reference "
+            "Period or datetime respectively. The reference value can be given "
+            "as a string or tuple of string following with the numpy date "
+            "formatting [%Y-%m-%dT%H:%M:%S])"
+        )
 
-    def test(self, reference: Period | np.datetime64,
-             tested: np.datetime64) -> bool:
+    def test(self, reference: Period | np.datetime64, tested: np.datetime64) -> bool:
         if isinstance(reference, Period):
             return reference.intersects(tested)
         else:
             return reference == tested
 
     def sanitize(
-        self, reference: tuple[str | None | np.datetime64, str | None
-                               | np.datetime64] | Period | np.datetime64 | str
+        self,
+        reference: (
+            tuple[str | None | np.datetime64, str | None | np.datetime64]
+            | Period
+            | np.datetime64
+            | str
+        ),
     ) -> Period | np.datetime64:
         return _sanitize_time(reference)
 
@@ -196,16 +208,22 @@ class PeriodTester(ITester[Period | np.datetime64, Period]):
     @property
     def test_description(self) -> str:
         return (
-            'As a Period field, it can be filtered by giving a reference '
-            'Period or datetime. The tested value from the file name will be '
-            'filtered out if it does not intersect the reference Period or does'
-            ' not contain the reference datetime. The reference value can be '
-            'given as a string or tuple of string following the '
-            '[%Y-%m-%dT%H:%M:%S] formatting')
+            "As a Period field, it can be filtered by giving a reference "
+            "Period or datetime. The tested value from the file name will be "
+            "filtered out if it does not intersect the reference Period or does"
+            " not contain the reference datetime. The reference value can be "
+            "given as a string or tuple of string following the "
+            "[%Y-%m-%dT%H:%M:%S] formatting"
+        )
 
     def sanitize(
-        self, reference: tuple[str | None | np.datetime64, str | None
-                               | np.datetime64] | Period | np.datetime64 | str
+        self,
+        reference: (
+            tuple[str | None | np.datetime64, str | None | np.datetime64]
+            | Period
+            | np.datetime64
+            | str
+        ),
     ) -> Period | np.datetime64:
         return _sanitize_time(reference)
 
@@ -215,8 +233,12 @@ class PeriodTester(ITester[Period | np.datetime64, Period]):
 
 
 def _sanitize_time(
-    reference: tuple[str | None | np.datetime64, str | None | np.datetime64]
-    | Period | np.datetime64 | str
+    reference: (
+        tuple[str | None | np.datetime64, str | None | np.datetime64]
+        | Period
+        | np.datetime64
+        | str
+    ),
 ) -> Period | np.datetime64:
     if isinstance(reference, tuple):
         start = reference[0] if reference[0] is not None else dt.datetime.min

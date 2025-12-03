@@ -41,215 +41,339 @@ class Color(Enum):
 
 def test_field_bad_init():
     with pytest.raises(ValueError):
-        FileNameFieldDateJulian(name='foo',
-                                reference=None,
-                                julian_day_format='foo')
+        FileNameFieldDateJulian(name="foo", reference=None, julian_day_format="foo")
 
 
 @pytest.mark.parametrize(
-    'field, encoded, decoded',
-    [(FileNameFieldDatetime(
-        '', '%Y%m%d'), '20231202', np.datetime64('2023-12-02')),
-     (FileNameFieldDateDelta('', '%Y%m%d', np.timedelta64(1, 'D')), '20231202',
-      Period(np.datetime64('2023-12-02'),
-             np.datetime64('2023-12-03'),
-             include_stop=False)),
-     (FileNameFieldDatetime(
-         '', '%Y-%m-%dT%H:%M:%S.%fZ'), '2023-12-02T02:31:15.000000Z',
-      np.datetime64('2023-12-02T02:31:15.000000')),
-     (FileNameFieldEnum('', Color), 'BLUE', Color.BLUE),
-     (FileNameFieldEnum('', Color, 'upper', 'lower'), 'blue', Color.BLUE),
-     (FileNameFieldEnum('', Color, 'lower', 'upper'), 'GRAY', Color.gray),
-     (FileNameFieldInteger(''), '-2', -2),
-     (FileNameFieldFloat(''), '15.2', 15.2),
-     (FileNameFieldFloat(''), '10', 10),
-     (FileNameFieldString(''), 'random_string', 'random_string'),
-     (FileNameFieldPeriod('', '%Y%m%d', '_'), '20231202_20231203',
-      Period(np.datetime64('2023-12-02'), np.datetime64('2023-12-03'))),
-     (FileNameFieldPeriod('', '%Y_%m%d', '_'), '2023_1202_2023_1203',
-      Period(np.datetime64('2023-12-02'), np.datetime64('2023-12-03'))),
-     (FileNameFieldDateJulianDelta('', np.timedelta64(1, 'D'),
-                                   np.datetime64('1950-01-01T00')), '23831',
-      Period(np.datetime64('2015-04-01T00'),
-             np.datetime64('2015-04-02'),
-             include_stop=False)),
-     (FileNameFieldDateJulian('', np.datetime64('1950-01-01T00')), '23831_06',
-      np.datetime64('2015-04-01T06')),
-     (FileNameFieldDateJulian(
-         '', np.datetime64('1950-01-01T00'), julian_day_format='fractional'),
-      '23831.25', np.datetime64('2015-04-01T06'))])
-def test_fields_encode_decode_nominal(field: FileNameField, encoded: str,
-                                      decoded: tp.Any):
+    "field, encoded, decoded",
+    [
+        (FileNameFieldDatetime("", "%Y%m%d"), "20231202", np.datetime64("2023-12-02")),
+        (
+            FileNameFieldDateDelta("", "%Y%m%d", np.timedelta64(1, "D")),
+            "20231202",
+            Period(
+                np.datetime64("2023-12-02"),
+                np.datetime64("2023-12-03"),
+                include_stop=False,
+            ),
+        ),
+        (
+            FileNameFieldDatetime("", "%Y-%m-%dT%H:%M:%S.%fZ"),
+            "2023-12-02T02:31:15.000000Z",
+            np.datetime64("2023-12-02T02:31:15.000000"),
+        ),
+        (FileNameFieldEnum("", Color), "BLUE", Color.BLUE),
+        (FileNameFieldEnum("", Color, "upper", "lower"), "blue", Color.BLUE),
+        (FileNameFieldEnum("", Color, "lower", "upper"), "GRAY", Color.gray),
+        (FileNameFieldInteger(""), "-2", -2),
+        (FileNameFieldFloat(""), "15.2", 15.2),
+        (FileNameFieldFloat(""), "10", 10),
+        (FileNameFieldString(""), "random_string", "random_string"),
+        (
+            FileNameFieldPeriod("", "%Y%m%d", "_"),
+            "20231202_20231203",
+            Period(np.datetime64("2023-12-02"), np.datetime64("2023-12-03")),
+        ),
+        (
+            FileNameFieldPeriod("", "%Y_%m%d", "_"),
+            "2023_1202_2023_1203",
+            Period(np.datetime64("2023-12-02"), np.datetime64("2023-12-03")),
+        ),
+        (
+            FileNameFieldDateJulianDelta(
+                "", np.timedelta64(1, "D"), np.datetime64("1950-01-01T00")
+            ),
+            "23831",
+            Period(
+                np.datetime64("2015-04-01T00"),
+                np.datetime64("2015-04-02"),
+                include_stop=False,
+            ),
+        ),
+        (
+            FileNameFieldDateJulian("", np.datetime64("1950-01-01T00")),
+            "23831_06",
+            np.datetime64("2015-04-01T06"),
+        ),
+        (
+            FileNameFieldDateJulian(
+                "", np.datetime64("1950-01-01T00"), julian_day_format="fractional"
+            ),
+            "23831.25",
+            np.datetime64("2015-04-01T06"),
+        ),
+    ],
+)
+def test_fields_encode_decode_nominal(
+    field: FileNameField, encoded: str, decoded: tp.Any
+):
     assert field.decode(encoded) == decoded
     assert field.encode(decoded) == encoded
 
 
 @pytest.mark.parametrize(
-    'field, input_string',
-    [(FileNameFieldDatetime('', '%Y%m%dT%H'), '20231202'),
-     (FileNameFieldDatetime('', '%Y%m%d'), '20231302'),
-     (FileNameFieldDatetime('', 'invalid'), '20231302'),
-     (FileNameFieldFloat(''), 'pi'), (FileNameFieldInteger(''), '10.2'),
-     (FileNameFieldInteger(''), 'ten'), (FileNameFieldEnum('', Color), 'red'),
-     (FileNameFieldPeriod('', '%Y%m%d', '_'), '20231202T00_20231203'),
-     (FileNameFieldPeriod('', '%Y%m%d', '_'), '20231202-20231203'),
-     (FileNameFieldDateJulianDelta('', np.timedelta64(
-         1, 'D'), np.datetime64('1950-01-01T00')), '2023-12-02'),
-     (FileNameFieldDateJulian('',
-                              np.datetime64('1950-01-01T00'),
-                              julian_day_format='days_hours'), '17831'),
-     (FileNameFieldDateJulian('',
-                              np.datetime64('1950-01-01T00'),
-                              julian_day_format='fractional'), '17831-01'),
-     (FileNameFieldDateJulian('',
-                              np.datetime64('1950-01-01T00'),
-                              julian_day_format='days'), '17831.25')],
+    "field, input_string",
+    [
+        (FileNameFieldDatetime("", "%Y%m%dT%H"), "20231202"),
+        (FileNameFieldDatetime("", "%Y%m%d"), "20231302"),
+        (FileNameFieldDatetime("", "invalid"), "20231302"),
+        (FileNameFieldFloat(""), "pi"),
+        (FileNameFieldInteger(""), "10.2"),
+        (FileNameFieldInteger(""), "ten"),
+        (FileNameFieldEnum("", Color), "red"),
+        (FileNameFieldPeriod("", "%Y%m%d", "_"), "20231202T00_20231203"),
+        (FileNameFieldPeriod("", "%Y%m%d", "_"), "20231202-20231203"),
+        (
+            FileNameFieldDateJulianDelta(
+                "", np.timedelta64(1, "D"), np.datetime64("1950-01-01T00")
+            ),
+            "2023-12-02",
+        ),
+        (
+            FileNameFieldDateJulian(
+                "", np.datetime64("1950-01-01T00"), julian_day_format="days_hours"
+            ),
+            "17831",
+        ),
+        (
+            FileNameFieldDateJulian(
+                "", np.datetime64("1950-01-01T00"), julian_day_format="fractional"
+            ),
+            "17831-01",
+        ),
+        (
+            FileNameFieldDateJulian(
+                "", np.datetime64("1950-01-01T00"), julian_day_format="days"
+            ),
+            "17831.25",
+        ),
+    ],
     ids=[
-        'Non matching string with date format',
-        'Invalid input date',
-        'Invalid date format',
-        'String instead of float number',
-        'Float number instead of integer',
-        'String instead of integer number',
-        'Non matching enum',
-        'Invalid dates in period',
-        'Bad separator in period',
-        'Not a julian day',
-        'Not a julian day with hours',
-        'Not a fractional julian day',
-        'Not a julian day',
-    ])
+        "Non matching string with date format",
+        "Invalid input date",
+        "Invalid date format",
+        "String instead of float number",
+        "Float number instead of integer",
+        "String instead of integer number",
+        "Non matching enum",
+        "Invalid dates in period",
+        "Bad separator in period",
+        "Not a julian day",
+        "Not a julian day with hours",
+        "Not a fractional julian day",
+        "Not a julian day",
+    ],
+)
 def test_fields_decode_error(field: FileNameField, input_string: str):
     with pytest.raises(DecodingError):
         field.decode(input_string)
 
 
-@pytest.mark.parametrize('field, reference, tested, filtered', [
-    (FileNameFieldInteger(''), 2, 2, True),
-    (FileNameFieldInteger(''), [1, 2, 6], 2, True),
-    (FileNameFieldInteger(''), slice(-3, 7), 2, True),
-    (FileNameFieldInteger(''), 1, 2, False),
-    (FileNameFieldInteger(''), [1, 6, 7], 2, False),
-    (FileNameFieldInteger(''), slice(3, 7), 2, False),
-    (FileNameFieldFloat(''), 10.5, 10.5, True),
-    (FileNameFieldFloat(''), 10.5, 2.1, False),
-    (FileNameFieldString(''), 'ref_eq_tested', 'ref_eq_tested', True),
-    (FileNameFieldString(''), 'reference', 'tested', False),
-    (FileNameFieldEnum('', Color), Color.RED, Color.RED, True),
-    (FileNameFieldEnum('', Color), Color.RED, 'red', False),
-    (FileNameFieldEnum('', Color), [Color.BLUE, Color.RED], Color.RED, True),
-    (FileNameFieldEnum('', Color), [Color.BLUE, Color.GREEN
-                                    ], Color.RED, False),
-    (FileNameFieldDatetime('', ''), np.datetime64('2023-01-01'),
-     np.datetime64('2023-01-01'), True),
-    (FileNameFieldDatetime('', ''),
-     Period(np.datetime64('2013-01-01'),
-            np.datetime64('2033-01-01')), np.datetime64('2023-01-01'), True),
-    (FileNameFieldDatetime('', ''), np.datetime64('2023-01-01'),
-     np.datetime64('2023-01-02'), False),
-    (FileNameFieldDatetime('', ''),
-     Period(np.datetime64('1993-01-01'),
-            np.datetime64('2003-01-01')), np.datetime64('2023-01-01'), False),
-    (FileNameFieldPeriod('', ''),
-     Period(np.datetime64('2001-01-01'), np.datetime64('2002-01-01')),
-     Period(np.datetime64('1993-01-01'), np.datetime64('2003-01-01')), True),
-    (FileNameFieldPeriod('', ''), np.datetime64('2000-01-01'),
-     Period(np.datetime64('1993-01-01'), np.datetime64('2003-01-01')), True),
-    (FileNameFieldPeriod('', ''),
-     Period(np.datetime64('1900-01-01'), np.datetime64('1910-01-01')),
-     Period(np.datetime64('1993-01-01'), np.datetime64('2003-01-01')), False),
-    (FileNameFieldDateDelta('', '', np.timedelta64(
-        1, 'D')), np.datetime64('1900-01-01'),
-     Period(np.datetime64('1993-01-01'), np.datetime64('2003-01-01')), False),
-    (FileNameFieldDateDelta('', '', np.timedelta64(1, 'D')),
-     Period(np.datetime64('2001-01-01'), np.datetime64('2002-01-01')),
-     Period(np.datetime64('1993-01-01'), np.datetime64('2003-01-01')), True),
-    (FileNameFieldDateDelta('', '', np.timedelta64(
-        1, 'D')), np.datetime64('2000-01-01'),
-     Period(np.datetime64('1993-01-01'), np.datetime64('2003-01-01')), True),
-    (FileNameFieldDateDelta('', '', np.timedelta64(1, 'D')),
-     Period(np.datetime64('1900-01-01'), np.datetime64('1910-01-01')),
-     Period(np.datetime64('1993-01-01'), np.datetime64('2003-01-01')), False),
-    (FileNameFieldDateDelta('', '', np.timedelta64(
-        1, 'D')), np.datetime64('1900-01-01'),
-     Period(np.datetime64('1993-01-01'), np.datetime64('2003-01-01')), False),
-    (FileNameFieldDateJulianDelta('', np.timedelta64(1, 'D'),
-                                  np.datetime64('1950-01-01T00')),
-     Period(np.datetime64('1900-01-01'), np.datetime64('1910-01-01')),
-     Period(np.datetime64('1993-01-01'), np.datetime64('2003-01-01')), False),
-    (FileNameFieldDateJulianDelta('', np.timedelta64(
-        1, 'D'), np.datetime64('1950-01-01T00')), np.datetime64('2000-01-01'),
-     Period(np.datetime64('1993-01-01'), np.datetime64('2003-01-01')), True),
-    (FileNameFieldDateJulian('', np.datetime64('1950-01-01T00')),
-     np.datetime64('2023-01-01'), np.datetime64('2023-01-01'), True),
-    (FileNameFieldDateJulian('', np.datetime64('1950-01-01T00')),
-     Period(np.datetime64('2013-01-01'),
-            np.datetime64('2033-01-01')), np.datetime64('2023-01-01'), True),
-    (FileNameFieldDateJulian('', np.datetime64('1950-01-01T00')),
-     np.datetime64('2023-01-01'), np.datetime64('2023-01-02'), False),
-    (FileNameFieldDateJulian('', np.datetime64('1950-01-01T00')),
-     Period(np.datetime64('1993-01-01'),
-            np.datetime64('2003-01-01')), np.datetime64('2023-01-01'), False),
-])
+@pytest.mark.parametrize(
+    "field, reference, tested, filtered",
+    [
+        (FileNameFieldInteger(""), 2, 2, True),
+        (FileNameFieldInteger(""), [1, 2, 6], 2, True),
+        (FileNameFieldInteger(""), slice(-3, 7), 2, True),
+        (FileNameFieldInteger(""), 1, 2, False),
+        (FileNameFieldInteger(""), [1, 6, 7], 2, False),
+        (FileNameFieldInteger(""), slice(3, 7), 2, False),
+        (FileNameFieldFloat(""), 10.5, 10.5, True),
+        (FileNameFieldFloat(""), 10.5, 2.1, False),
+        (FileNameFieldString(""), "ref_eq_tested", "ref_eq_tested", True),
+        (FileNameFieldString(""), "reference", "tested", False),
+        (FileNameFieldEnum("", Color), Color.RED, Color.RED, True),
+        (FileNameFieldEnum("", Color), Color.RED, "red", False),
+        (FileNameFieldEnum("", Color), [Color.BLUE, Color.RED], Color.RED, True),
+        (FileNameFieldEnum("", Color), [Color.BLUE, Color.GREEN], Color.RED, False),
+        (
+            FileNameFieldDatetime("", ""),
+            np.datetime64("2023-01-01"),
+            np.datetime64("2023-01-01"),
+            True,
+        ),
+        (
+            FileNameFieldDatetime("", ""),
+            Period(np.datetime64("2013-01-01"), np.datetime64("2033-01-01")),
+            np.datetime64("2023-01-01"),
+            True,
+        ),
+        (
+            FileNameFieldDatetime("", ""),
+            np.datetime64("2023-01-01"),
+            np.datetime64("2023-01-02"),
+            False,
+        ),
+        (
+            FileNameFieldDatetime("", ""),
+            Period(np.datetime64("1993-01-01"), np.datetime64("2003-01-01")),
+            np.datetime64("2023-01-01"),
+            False,
+        ),
+        (
+            FileNameFieldPeriod("", ""),
+            Period(np.datetime64("2001-01-01"), np.datetime64("2002-01-01")),
+            Period(np.datetime64("1993-01-01"), np.datetime64("2003-01-01")),
+            True,
+        ),
+        (
+            FileNameFieldPeriod("", ""),
+            np.datetime64("2000-01-01"),
+            Period(np.datetime64("1993-01-01"), np.datetime64("2003-01-01")),
+            True,
+        ),
+        (
+            FileNameFieldPeriod("", ""),
+            Period(np.datetime64("1900-01-01"), np.datetime64("1910-01-01")),
+            Period(np.datetime64("1993-01-01"), np.datetime64("2003-01-01")),
+            False,
+        ),
+        (
+            FileNameFieldDateDelta("", "", np.timedelta64(1, "D")),
+            np.datetime64("1900-01-01"),
+            Period(np.datetime64("1993-01-01"), np.datetime64("2003-01-01")),
+            False,
+        ),
+        (
+            FileNameFieldDateDelta("", "", np.timedelta64(1, "D")),
+            Period(np.datetime64("2001-01-01"), np.datetime64("2002-01-01")),
+            Period(np.datetime64("1993-01-01"), np.datetime64("2003-01-01")),
+            True,
+        ),
+        (
+            FileNameFieldDateDelta("", "", np.timedelta64(1, "D")),
+            np.datetime64("2000-01-01"),
+            Period(np.datetime64("1993-01-01"), np.datetime64("2003-01-01")),
+            True,
+        ),
+        (
+            FileNameFieldDateDelta("", "", np.timedelta64(1, "D")),
+            Period(np.datetime64("1900-01-01"), np.datetime64("1910-01-01")),
+            Period(np.datetime64("1993-01-01"), np.datetime64("2003-01-01")),
+            False,
+        ),
+        (
+            FileNameFieldDateDelta("", "", np.timedelta64(1, "D")),
+            np.datetime64("1900-01-01"),
+            Period(np.datetime64("1993-01-01"), np.datetime64("2003-01-01")),
+            False,
+        ),
+        (
+            FileNameFieldDateJulianDelta(
+                "", np.timedelta64(1, "D"), np.datetime64("1950-01-01T00")
+            ),
+            Period(np.datetime64("1900-01-01"), np.datetime64("1910-01-01")),
+            Period(np.datetime64("1993-01-01"), np.datetime64("2003-01-01")),
+            False,
+        ),
+        (
+            FileNameFieldDateJulianDelta(
+                "", np.timedelta64(1, "D"), np.datetime64("1950-01-01T00")
+            ),
+            np.datetime64("2000-01-01"),
+            Period(np.datetime64("1993-01-01"), np.datetime64("2003-01-01")),
+            True,
+        ),
+        (
+            FileNameFieldDateJulian("", np.datetime64("1950-01-01T00")),
+            np.datetime64("2023-01-01"),
+            np.datetime64("2023-01-01"),
+            True,
+        ),
+        (
+            FileNameFieldDateJulian("", np.datetime64("1950-01-01T00")),
+            Period(np.datetime64("2013-01-01"), np.datetime64("2033-01-01")),
+            np.datetime64("2023-01-01"),
+            True,
+        ),
+        (
+            FileNameFieldDateJulian("", np.datetime64("1950-01-01T00")),
+            np.datetime64("2023-01-01"),
+            np.datetime64("2023-01-02"),
+            False,
+        ),
+        (
+            FileNameFieldDateJulian("", np.datetime64("1950-01-01T00")),
+            Period(np.datetime64("1993-01-01"), np.datetime64("2003-01-01")),
+            np.datetime64("2023-01-01"),
+            False,
+        ),
+    ],
+)
 def test_field_test(field, reference, tested, filtered):
     assert field.test(reference, tested) == filtered
 
 
 @pytest.mark.parametrize(
-    'field, expected_type',
-    [(FileNameFieldString(''), str), (FileNameFieldFloat(''), float),
-     (FileNameFieldInteger(''), int), (FileNameFieldEnum('', Color), Color),
-     (FileNameFieldDatetime('', ''), np.datetime64),
-     (FileNameFieldDateJulian('',
-                              np.datetime64('1950-01-01T00')), np.datetime64),
-     (FileNameFieldPeriod('', ''), Period),
-     (FileNameFieldDateJulianDelta('', np.timedelta64(1, 'D'),
-                                   np.datetime64('1950-01-01T00')), Period),
-     (FileNameFieldDateDelta('', '', np.timedelta64(1, 'D')), Period)])
+    "field, expected_type",
+    [
+        (FileNameFieldString(""), str),
+        (FileNameFieldFloat(""), float),
+        (FileNameFieldInteger(""), int),
+        (FileNameFieldEnum("", Color), Color),
+        (FileNameFieldDatetime("", ""), np.datetime64),
+        (FileNameFieldDateJulian("", np.datetime64("1950-01-01T00")), np.datetime64),
+        (FileNameFieldPeriod("", ""), Period),
+        (
+            FileNameFieldDateJulianDelta(
+                "", np.timedelta64(1, "D"), np.datetime64("1950-01-01T00")
+            ),
+            Period,
+        ),
+        (FileNameFieldDateDelta("", "", np.timedelta64(1, "D")), Period),
+    ],
+)
 def test_field_type(field, expected_type):
     assert field.type == expected_type
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def convention():
     regex = re.compile(
-        r'file_(?P<field_i>\d+)_(?P<field_f>[+-]?([0-9]*[.])?[0-9]+)_(?P<field_s>[a-zA-Z0-9.-]+)_(?P<field_date>\d{8})_(?P<field_enum>\w+)_(?P<field_period>\d{8}_\d{8})_(?P<field_date_delta>\d{8}).txt'
+        r"file_(?P<field_i>\d+)_(?P<field_f>[+-]?([0-9]*[.])?[0-9]+)_(?P<field_s>[a-zA-Z0-9.-]+)_(?P<field_date>\d{8})_(?P<field_enum>\w+)_(?P<field_period>\d{8}_\d{8})_(?P<field_date_delta>\d{8}).txt"
     )
     fields = [
-        FileNameFieldInteger('field_i'),
-        FileNameFieldFloat('field_f'),
-        FileNameFieldString('field_s'),
-        FileNameFieldDatetime('field_date', '%Y%m%d'),
-        FileNameFieldEnum('field_enum', Color),
-        FileNameFieldPeriod('field_period', '%Y%m%d'),
-        FileNameFieldDateDelta('field_date_delta', '%Y%m%d',
-                               np.timedelta64(1, 'h')),
+        FileNameFieldInteger("field_i"),
+        FileNameFieldFloat("field_f"),
+        FileNameFieldString("field_s"),
+        FileNameFieldDatetime("field_date", "%Y%m%d"),
+        FileNameFieldEnum("field_enum", Color),
+        FileNameFieldPeriod("field_period", "%Y%m%d"),
+        FileNameFieldDateDelta("field_date_delta", "%Y%m%d", np.timedelta64(1, "h")),
     ]
-    generation_string = 'file_{field_i:>03d}_{field_f}_{field_s}_{field_date!f}_{field_enum!f}_{field_period!f}_{field_date_delta!f}.txt'
+    generation_string = "file_{field_i:>03d}_{field_f}_{field_s}_{field_date!f}_{field_enum!f}_{field_period!f}_{field_date_delta!f}.txt"
     return FileNameConvention(regex, fields, generation_string)
 
 
 @pytest.fixture
 def expected_record():
-    return (2, 0.25, 'foo-bar', np.datetime64('2023-02-01'), Color.RED,
-            Period(np.datetime64('2012-11-01'), np.datetime64('2013-07-05')),
-            Period(np.datetime64('2001-01-01'),
-                   np.datetime64('2001-01-01T01'),
-                   include_stop=False))
+    return (
+        2,
+        0.25,
+        "foo-bar",
+        np.datetime64("2023-02-01"),
+        Color.RED,
+        Period(np.datetime64("2012-11-01"), np.datetime64("2013-07-05")),
+        Period(
+            np.datetime64("2001-01-01"),
+            np.datetime64("2001-01-01T01"),
+            include_stop=False,
+        ),
+    )
 
 
 @pytest.fixture
 def expected_filename():
-    return 'file_002_0.25_foo-bar_20230201_RED_20121101_20130705_20010101.txt'
+    return "file_002_0.25_foo-bar_20230201_RED_20121101_20130705_20010101.txt"
 
 
 def test_filename_convention_get_field(convention):
-    assert convention.get_field('field_f') == convention.fields[1]
+    assert convention.get_field("field_f") == convention.fields[1]
 
 
 def test_filename_convention_get_field_error(convention):
     with pytest.raises(KeyError):
-        convention.get_field('dummy')
+        convention.get_field("dummy")
 
 
 def test_filename_convention_match(convention, expected_filename):
@@ -259,12 +383,11 @@ def test_filename_convention_match(convention, expected_filename):
 
 
 def test_filename_convention_match_error(convention):
-    filename = 'bad_filename.pp'
+    filename = "bad_filename.pp"
     assert not convention.match(filename)
 
 
-def test_filename_convention_parse(convention, expected_record,
-                                   expected_filename):
+def test_filename_convention_parse(convention, expected_record, expected_filename):
     record = convention.parse(convention.match(expected_filename))
     assert record == expected_record
 
@@ -275,13 +398,13 @@ def test_filename_convention_parse_default(convention, expected_record):
     new_fields = convention.fields
     new_fields[0].default = -127
     regex = re.compile(
-        r'file_(?P<field_i>\d+)*(_)*(?P<field_f>[+-]?([0-9]*[.])?[0-9]+)_(?P<field_s>[a-zA-Z0-9.-]+)_(?P<field_date>\d{8})_(?P<field_enum>\w+)_(?P<field_period>\d{8}_\d{8})_(?P<field_date_delta>\d{8}).txt'
+        r"file_(?P<field_i>\d+)*(_)*(?P<field_f>[+-]?([0-9]*[.])?[0-9]+)_(?P<field_s>[a-zA-Z0-9.-]+)_(?P<field_date>\d{8})_(?P<field_enum>\w+)_(?P<field_period>\d{8}_\d{8})_(?P<field_date_delta>\d{8}).txt"
     )
     new_record = list(expected_record)
     new_record[0] = -127
 
     new_parser = FileNameConvention(regex, new_fields)
-    filename = 'file_.25_foo-bar_20230201_RED_20121101_20130705_20010101.txt'
+    filename = "file_.25_foo-bar_20230201_RED_20121101_20130705_20010101.txt"
     record = new_parser.parse(new_parser.match(filename))
     assert all([r == e for r, e in zip(record, new_record)])
 
@@ -292,67 +415,78 @@ def test_filename_convention_parse_error(convention, expected_record):
         convention.parse(None)
 
 
-def test_filename_convention_generate(convention, expected_record,
-                                      expected_filename):
-    assert expected_filename == convention.generate(**{
-        field.name: v
-        for field, v in zip(convention.fields, expected_record)
-    })
+def test_filename_convention_generate(convention, expected_record, expected_filename):
+    assert expected_filename == convention.generate(
+        **{field.name: v for field, v in zip(convention.fields, expected_record)}
+    )
 
 
-def test_filename_convention_generate_missing_variables(
-        convention, expected_record):
+def test_filename_convention_generate_missing_variables(convention, expected_record):
     with pytest.raises(ValueError):
         convention.generate(
             **{
                 field.name: v
                 for field, v in zip(convention.fields[:-1], expected_record)
-            })
+            }
+        )
 
 
 def test_filename_convention_bad_init():
-    regex = re.compile(r'file_(?P<group_name>\w+).txt')
-    with pytest.raises(ValueError, match='Regex'):
+    regex = re.compile(r"file_(?P<group_name>\w+).txt")
+    with pytest.raises(ValueError, match="Regex"):
         # FileNameFields have a field that is not in the regex
-        FileNameConvention(regex, fields=[FileNameFieldString('group_name2')])
+        FileNameConvention(regex, fields=[FileNameFieldString("group_name2")])
 
-    with pytest.raises(ValueError, match='convention'):
+    with pytest.raises(ValueError, match="convention"):
         # regex has a field that is not in FileNameFields
         FileNameConvention(regex, fields=[])
 
-    with pytest.raises(ValueError, match='Generation string'):
+    with pytest.raises(ValueError, match="Generation string"):
         # FileNameFields have a field that is not in the generation string
-        FileNameConvention(regex,
-                           fields=[FileNameFieldString('group_name')],
-                           generation_string='file.txt')
+        FileNameConvention(
+            regex,
+            fields=[FileNameFieldString("group_name")],
+            generation_string="file.txt",
+        )
 
-    with pytest.raises(ValueError, match='generation string'):
+    with pytest.raises(ValueError, match="generation string"):
         # generation_string has a field that is not in the generation string
         FileNameConvention(
             regex,
-            fields=[FileNameFieldString('group_name')],
-            generation_string='file_{group_name}_ {group_name2}.txt')
+            fields=[FileNameFieldString("group_name")],
+            generation_string="file_{group_name}_ {group_name2}.txt",
+        )
 
 
 def test_record_filter(expected_record, convention):
-    record_filter = RecordFilter(convention.fields,
-                                 field_f=0.25,
-                                 field_s='foo-bar')
+    record_filter = RecordFilter(convention.fields, field_f=0.25, field_s="foo-bar")
     assert record_filter.test(expected_record)
 
 
 @pytest.mark.parametrize(
-    'field, value, value_sanitized',
-    [('field_i', 2, 2), ('field_f', 0.25, 0.25),
-     ('field_s', 'foo-bar', 'foo-bar'), ('field_enum', 'BLUE', Color.BLUE),
-     ('field_enum', ('BLUE', 'RED'), (Color.BLUE, Color.RED)),
-     ('field_enum', ['BLUE', 'RED'], (Color.BLUE, Color.RED)),
-     ('field_date', ('2023-01-01', None),
-      Period(np.datetime64('2023-01-01'),
-             np.datetime64('9999-12-31T23:59:59.999999'))),
-     ('field_period', (None, '2023-01-01'),
-      Period(np.datetime64('0001-01-01'), np.datetime64('2023-01-01'))),
-     ('field_date_delta', '2023-01-01', np.datetime64('2023-01-01'))])
+    "field, value, value_sanitized",
+    [
+        ("field_i", 2, 2),
+        ("field_f", 0.25, 0.25),
+        ("field_s", "foo-bar", "foo-bar"),
+        ("field_enum", "BLUE", Color.BLUE),
+        ("field_enum", ("BLUE", "RED"), (Color.BLUE, Color.RED)),
+        ("field_enum", ["BLUE", "RED"], (Color.BLUE, Color.RED)),
+        (
+            "field_date",
+            ("2023-01-01", None),
+            Period(
+                np.datetime64("2023-01-01"), np.datetime64("9999-12-31T23:59:59.999999")
+            ),
+        ),
+        (
+            "field_period",
+            (None, "2023-01-01"),
+            Period(np.datetime64("0001-01-01"), np.datetime64("2023-01-01")),
+        ),
+        ("field_date_delta", "2023-01-01", np.datetime64("2023-01-01")),
+    ],
+)
 def test_record_filter_sanitize(convention, field, value, value_sanitized):
     expected = RecordFilter(convention.fields, **{field: value})
     actual = RecordFilter(convention.fields, **{field: value_sanitized})
@@ -362,64 +496,62 @@ def test_record_filter_sanitize(convention, field, value, value_sanitized):
 
 def test_record_filter_bad_keys(convention):
     with pytest.raises(FileListingError):
-        RecordFilter(convention.fields, field_f=0.25, fieldA='10')
+        RecordFilter(convention.fields, field_f=0.25, fieldA="10")
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def filepaths() -> list[str]:
     # The files that we will use to test the listing and filtering using the
     # file names will allow us
     return [
-        'root/RED/LR_000/file_000_.25_foo-bar_20230201_RED_20121101_20130705_20010101.txt',
-        'root/BLUE/LR_001/file_001_.25_foo-bar_20230202_BLUE_20121101_20130705_20010101.txt',
-        'root/GREEN/LR_002/file_002_.25_foo-bar_20230203_GREEN_20121101_20130705_20010101.txt',
-        'root/RED/LR_003/file_003_1.75_foo-bar_20230204_RED_20121101_20130705_20010101.txt',
-        'root/BLUE/LR_004/file_004_1.75_foo-bar_20230205_BLUE_20121101_20130705_20010101.txt',
-        'root/GREEN/LR_005/file_005_1.75_foo-bar_20230206_GREEN_20121101_20130705_20010101.txt',
-        'root/RED/HR_006/file_006_5.6_baz_20230207_RED_20221101_20230705_19500101.txt',
-        'root/BLUE/HR_007/file_007_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt',
-        'root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt',
+        "root/RED/LR_000/file_000_.25_foo-bar_20230201_RED_20121101_20130705_20010101.txt",
+        "root/BLUE/LR_001/file_001_.25_foo-bar_20230202_BLUE_20121101_20130705_20010101.txt",
+        "root/GREEN/LR_002/file_002_.25_foo-bar_20230203_GREEN_20121101_20130705_20010101.txt",
+        "root/RED/LR_003/file_003_1.75_foo-bar_20230204_RED_20121101_20130705_20010101.txt",
+        "root/BLUE/LR_004/file_004_1.75_foo-bar_20230205_BLUE_20121101_20130705_20010101.txt",
+        "root/GREEN/LR_005/file_005_1.75_foo-bar_20230206_GREEN_20121101_20130705_20010101.txt",
+        "root/RED/HR_006/file_006_5.6_baz_20230207_RED_20221101_20230705_19500101.txt",
+        "root/BLUE/HR_007/file_007_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt",
+        "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
     ]
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def layout(convention: FileNameConvention) -> Layout:
-    return Layout([
-        FileNameConvention(re.compile(r'(?P<field_enum>\w+)'),
-                           [convention.get_field('field_enum')],
-                           '{field_enum!f}'),
-        FileNameConvention(
-            re.compile(r'(?P<resolution>\w+)_(?P<field_i>\d{3})'), [
-                FileNameFieldString('resolution'),
-                FileNameFieldInteger('field_i')
-            ], '{resolution!f}_{field_i:>03d}')
-    ])
+    return Layout(
+        [
+            FileNameConvention(
+                re.compile(r"(?P<field_enum>\w+)"),
+                [convention.get_field("field_enum")],
+                "{field_enum!f}",
+            ),
+            FileNameConvention(
+                re.compile(r"(?P<resolution>\w+)_(?P<field_i>\d{3})"),
+                [FileNameFieldString("resolution"), FileNameFieldInteger("field_i")],
+                "{resolution!f}_{field_i:>03d}",
+            ),
+        ]
+    )
 
 
 def test_layout_names(layout: Layout):
-    assert layout.names == {'field_enum', 'field_i', 'resolution'}
+    assert layout.names == {"field_enum", "field_i", "resolution"}
 
 
 def test_layout_generate(layout: Layout):
-    actual = layout.generate('root',
-                             field_enum=Color.RED,
-                             field_i=12,
-                             resolution='HR')
-    expected = 'root/RED/HR_012'
+    actual = layout.generate("root", field_enum=Color.RED, field_i=12, resolution="HR")
+    expected = "root/RED/HR_012"
     assert actual == expected
 
 
 def test_layout_generate_missing_field(layout: Layout):
     with pytest.raises(ValueError):
-        layout.generate('root', field_i=12, resolution='HR')
+        layout.generate("root", field_i=12, resolution="HR")
 
 
 def test_layout_generate_bad_field(layout: Layout):
     with pytest.raises(ValueError):
-        layout.generate('root',
-                        field_enum=Color.RED,
-                        field_i='12',
-                        resolution='HR')
+        layout.generate("root", field_enum=Color.RED, field_i="12", resolution="HR")
 
 
 class Size(Enum):
@@ -428,112 +560,101 @@ class Size(Enum):
     L = auto()
 
 
-@pytest.fixture(scope='session')
-def composite_layout(convention: FileNameConvention,
-                     layout: Layout) -> CompositeLayout:
-    layout_2 = Layout([
-        layout.conventions[0],
-        FileNameConvention(re.compile(r'(?P<field_size>S|M|L)'),
-                           [FileNameFieldEnum('field_size', Size)],
-                           '{field_size!f}'), layout.conventions[1]
-    ])
+@pytest.fixture(scope="session")
+def composite_layout(convention: FileNameConvention, layout: Layout) -> CompositeLayout:
+    layout_2 = Layout(
+        [
+            layout.conventions[0],
+            FileNameConvention(
+                re.compile(r"(?P<field_size>S|M|L)"),
+                [FileNameFieldEnum("field_size", Size)],
+                "{field_size!f}",
+            ),
+            layout.conventions[1],
+        ]
+    )
     return CompositeLayout([layout_2, layout])
 
 
 def test_composite_layout_names(composite_layout: CompositeLayout):
     assert composite_layout.names == {
-        'field_enum', 'field_i', 'resolution', 'field_size'
+        "field_enum",
+        "field_i",
+        "resolution",
+        "field_size",
     }
 
 
 def test_composite_layout_generate_0(composite_layout: CompositeLayout):
-    actual = composite_layout.generate('root',
-                                       field_enum=Color.RED,
-                                       field_i=12,
-                                       resolution='HR')
-    expected = 'root/RED/HR_012'
+    actual = composite_layout.generate(
+        "root", field_enum=Color.RED, field_i=12, resolution="HR"
+    )
+    expected = "root/RED/HR_012"
     assert actual == expected
 
 
 def test_composite_layout_generate_1(composite_layout: CompositeLayout):
-    actual = composite_layout.generate('root',
-                                       field_enum=Color.RED,
-                                       field_i=12,
-                                       resolution='HR',
-                                       field_size=Size.S)
-    expected = 'root/RED/S/HR_012'
+    actual = composite_layout.generate(
+        "root", field_enum=Color.RED, field_i=12, resolution="HR", field_size=Size.S
+    )
+    expected = "root/RED/S/HR_012"
     assert actual == expected
 
 
 def test_composite_layout_generate_missing_field(composite_layout: Layout):
     with pytest.raises(ValueError):
-        composite_layout.generate('root', field_i=12, resolution='HR')
+        composite_layout.generate("root", field_i=12, resolution="HR")
 
 
-def test_composite_layout_generate_bad_field(
-        composite_layout: CompositeLayout):
+def test_composite_layout_generate_bad_field(composite_layout: CompositeLayout):
     with pytest.raises(ValueError):
-        composite_layout.generate('root',
-                                  field_enum=Color.RED,
-                                  field_i='12',
-                                  resolution='HR')
+        composite_layout.generate(
+            "root", field_enum=Color.RED, field_i="12", resolution="HR"
+        )
 
 
-@pytest.mark.parametrize('filters, level, node, expected', [
-    ({}, 0, 'BLUE', True),
-    ({
-        'field_enum': 'RED'
-    }, 0, 'BLUE', False),
-    ({
-        'field_enum': 'BLUE'
-    }, 0, 'BLUE', True),
-    ({}, 1, 'HR_007', True),
-    ({
-        'resolution': 'HR'
-    }, 1, 'HR_007', True),
-    ({
-        'resolution': 'LR'
-    }, 1, 'HR_007', False),
-    ({
-        'field_i': 7
-    }, 1, 'HR_007', True),
-    ({
-        'field_i': 12
-    }, 1, 'HR_007', False),
-    ({}, 1, 'M', True),
-    ({
-        'field_size': 'M'
-    }, 1, 'M', True),
-    ({
-        'field_size': 'L'
-    }, 1, 'M', False),
-    ({}, 2, 'HR_007', True),
-    ({
-        'resolution': 'HR'
-    }, 2, 'HR_007', True),
-    ({
-        'resolution': 'LR'
-    }, 2, 'HR_007', False),
-    ({
-        'field_i': 7
-    }, 2, 'HR_007', True),
-    ({
-        'field_i': 12
-    }, 2, 'HR_007', False),
-])
-def test_composite_layout_test(composite_layout: CompositeLayout,
-                               filters: dict[str, tp.tp.Any], level: int,
-                               node: str, expected: bool):
+@pytest.mark.parametrize(
+    "filters, level, node, expected",
+    [
+        ({}, 0, "BLUE", True),
+        ({"field_enum": "RED"}, 0, "BLUE", False),
+        ({"field_enum": "BLUE"}, 0, "BLUE", True),
+        ({}, 1, "HR_007", True),
+        ({"resolution": "HR"}, 1, "HR_007", True),
+        ({"resolution": "LR"}, 1, "HR_007", False),
+        ({"field_i": 7}, 1, "HR_007", True),
+        ({"field_i": 12}, 1, "HR_007", False),
+        ({}, 1, "M", True),
+        ({"field_size": "M"}, 1, "M", True),
+        ({"field_size": "L"}, 1, "M", False),
+        ({}, 2, "HR_007", True),
+        ({"resolution": "HR"}, 2, "HR_007", True),
+        ({"resolution": "LR"}, 2, "HR_007", False),
+        ({"field_i": 7}, 2, "HR_007", True),
+        ({"field_i": 12}, 2, "HR_007", False),
+    ],
+)
+def test_composite_layout_test(
+    composite_layout: CompositeLayout,
+    filters: dict[str, tp.tp.Any],
+    level: int,
+    node: str,
+    expected: bool,
+):
     composite_layout.set_filters(**filters)
     assert composite_layout.test(level, node) is expected
 
 
-@pytest.mark.parametrize('level, node', [
-    (0, 'foo'),
-    (1, 'bar'),
-])
-def test_composite_layout_warn(composite_layout: CompositeLayout, level: int,
-                               node: str):
+@pytest.mark.parametrize(
+    "level, node",
+    [
+        (0, "foo"),
+        (1, "bar"),
+    ],
+)
+def test_composite_layout_warn(
+    composite_layout: CompositeLayout, level: int, node: str
+):
     composite_layout.set_filters()
     with pytest.warns(UserWarning):
         assert not composite_layout.test(level, node)
@@ -541,16 +662,16 @@ def test_composite_layout_warn(composite_layout: CompositeLayout, level: int,
 
 def test_composite_layout_unknown_filters(composite_layout: CompositeLayout):
     with pytest.warns(UserWarning):
-        composite_layout.set_filters(foo='bar')
+        composite_layout.set_filters(foo="bar")
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def memory_fs(filepaths: list[str]) -> MemoryFileSystem:
     fs = MemoryFileSystem()
-    fs.mkdir('/folder')
+    fs.mkdir("/folder")
     for filepath in filepaths:
         filepath = Path(filepath)
-        fs.touch(f'/folder/{filepath.name}')
+        fs.touch(f"/folder/{filepath.name}")
 
         fs.makedirs(filepath.parent, exist_ok=True)
         fs.touch(filepath)
@@ -559,106 +680,122 @@ def memory_fs(filepaths: list[str]) -> MemoryFileSystem:
 
 def test_file_system_tree_find(memory_fs: MemoryFileSystem):
     it = FileSystemIterable(memory_fs)
-    assert list(it.find('/folder')) == memory_fs.find('/folder')
+    assert list(it.find("/folder")) == memory_fs.find("/folder")
 
 
 def test_file_system_tree_unknown_filter(memory_fs: MemoryFileSystem):
     it = FileSystemIterable(memory_fs)
     with pytest.warns(UserWarning):
-        next(it.find('/folder', dummy='baz'))
+        next(it.find("/folder", dummy="baz"))
 
 
-def test_file_system_tree_layout_find_in_flattened(memory_fs: MemoryFileSystem,
-                                                   layout: Layout):
+def test_file_system_tree_layout_find_in_flattened(
+    memory_fs: MemoryFileSystem, layout: Layout
+):
     it = FileSystemIterable(memory_fs)
     it_layout = FileSystemIterable(memory_fs, layout)
 
-    assert len(list(it.find('/folder'))) == len(list(it_layout.find('/root')))
-    assert set(it.find('/folder')) == set(it_layout.find('/folder'))
+    assert len(list(it.find("/folder"))) == len(list(it_layout.find("/root")))
+    assert set(it.find("/folder")) == set(it_layout.find("/folder"))
 
 
-def test_file_system_tree_layout_discrepency(memory_fs: MemoryFileSystem,
-                                             layout: Layout):
+def test_file_system_tree_layout_discrepency(
+    memory_fs: MemoryFileSystem, layout: Layout
+):
     it_layout = FileSystemIterable(memory_fs, layout)
 
     # Nothing is found because all folders are eliminated from the search. The
     # layout should give us hints about the mismatch
     with pytest.warns(UserWarning):
-        assert len(list(it_layout.find('/root/RED', field_i=1))) == 0
+        assert len(list(it_layout.find("/root/RED", field_i=1))) == 0
 
 
-def test_file_system_tree_layout_common_filters(memory_fs: MemoryFileSystem,
-                                                layout: Layout,
-                                                filepaths: list[str]):
+def test_file_system_tree_layout_common_filters(
+    memory_fs: MemoryFileSystem, layout: Layout, filepaths: list[str]
+):
     it_layout = FileSystemIterable(memory_fs, layout)
-    expected = [
-        Path(x).name for ii, x in enumerate(filepaths) if ii in [1, 4, 5]
-    ]
-    actual = sorted(
-        [Path(x).name for x in it_layout.find('/root', field_i=[1, 4, 5])])
+    expected = [Path(x).name for ii, x in enumerate(filepaths) if ii in [1, 4, 5]]
+    actual = sorted([Path(x).name for x in it_layout.find("/root", field_i=[1, 4, 5])])
     assert actual == expected
 
 
 def test_file_system_tree_layout_independent_filter(
-        memory_fs: MemoryFileSystem, layout: Layout, filepaths: list[str]):
+    memory_fs: MemoryFileSystem, layout: Layout, filepaths: list[str]
+):
     it_layout = FileSystemIterable(memory_fs, layout)
-    expected = [
-        Path(x).name for ii, x in enumerate(filepaths) if ii in [1, 4, 5]
-    ]
-    actual = sorted([
-        Path(x).name for x in it_layout.find(
-            '/root', resolution='LR', field_i=[1, 4, 5, 6, 7, 8])
-    ])
+    expected = [Path(x).name for ii, x in enumerate(filepaths) if ii in [1, 4, 5]]
+    actual = sorted(
+        [
+            Path(x).name
+            for x in it_layout.find(
+                "/root", resolution="LR", field_i=[1, 4, 5, 6, 7, 8]
+            )
+        ]
+    )
     assert actual == expected
 
 
-def test_file_system_tree_layout_unknown_filter(memory_fs: MemoryFileSystem,
-                                                layout: Layout):
+def test_file_system_tree_layout_unknown_filter(
+    memory_fs: MemoryFileSystem, layout: Layout
+):
     it_layout = FileSystemIterable(memory_fs, layout)
     with pytest.warns(UserWarning):
-        next(it_layout.find('/root', dummy='bar'))
+        next(it_layout.find("/root", dummy="bar"))
 
 
-def test_file_system_tree_layout_details(memory_fs: MemoryFileSystem,
-                                         layout: Layout):
+def test_file_system_tree_layout_details(memory_fs: MemoryFileSystem, layout: Layout):
     it_layout = FileSystemIterable(memory_fs, layout)
-    detailed = list(it_layout.find('/root', resolution='LR', detail=True))
-    simple = set(it_layout.find('/root', resolution='LR', detail=False))
+    detailed = list(it_layout.find("/root", resolution="LR", detail=True))
+    simple = set(it_layout.find("/root", resolution="LR", detail=False))
 
-    assert detailed[0].keys() == {'name', 'size', 'type', 'created'}
-    assert {x['name'] for x in detailed} == simple
+    assert detailed[0].keys() == {"name", "size", "type", "created"}
+    assert {x["name"] for x in detailed} == simple
 
 
 @pytest.fixture
-def discoverer(convention: FileNameConvention, memory_fs: MemoryFileSystem,
-               layout: Layout) -> FileDiscoverer:
+def discoverer(
+    convention: FileNameConvention, memory_fs: MemoryFileSystem, layout: Layout
+) -> FileDiscoverer:
     return FileDiscoverer(convention, FileSystemIterable(memory_fs, layout))
 
 
 @pytest.mark.parametrize(
-    'filters, expected_selection',
-    [(dict(field_enum=Color.RED, field_f=1.75), [3]),
-     (dict(field_period=Period(np.datetime64('2011-01-01'),
-                               np.datetime64('2013-12-31'))), list(range(6))),
-     (dict(
-         field_date=Period(np.datetime64('2023-02-03'),
-                           np.datetime64('2023-02-08')),
-         field_s='baz',
-     ), [6, 7]),
-     (dict(field_f=0.25, field_date_delta=np.datetime64('1950-01-01')), []),
-     (dict(resolution='HR', field_i=list(range(0, 10, 2))), [6, 8])])
+    "filters, expected_selection",
+    [
+        (dict(field_enum=Color.RED, field_f=1.75), [3]),
+        (
+            dict(
+                field_period=Period(
+                    np.datetime64("2011-01-01"), np.datetime64("2013-12-31")
+                )
+            ),
+            list(range(6)),
+        ),
+        (
+            dict(
+                field_date=Period(
+                    np.datetime64("2023-02-03"), np.datetime64("2023-02-08")
+                ),
+                field_s="baz",
+            ),
+            [6, 7],
+        ),
+        (dict(field_f=0.25, field_date_delta=np.datetime64("1950-01-01")), []),
+        (dict(resolution="HR", field_i=list(range(0, 10, 2))), [6, 8]),
+    ],
+)
 def test_file_discoverer(discoverer, filters, expected_selection):
-    df = discoverer.list('/root', **filters)
-    assert np.array_equal(sorted(df['field_i'].values), expected_selection)
-    assert 'filename' in df.columns
+    df = discoverer.list("/root", **filters)
+    assert np.array_equal(sorted(df["field_i"].values), expected_selection)
+    assert "filename" in df.columns
 
 
 def test_file_discoverer_stat_fields(discoverer):
-    df = discoverer.list('/folder', stat_fields=('size', 'type'))
-    assert np.array_equal(df['size'].values, np.full(9, fill_value=0))
-    assert np.array_equal(df['type'].values, np.full(9, fill_value='file'))
+    df = discoverer.list("/folder", stat_fields=("size", "type"))
+    assert np.array_equal(df["size"].values, np.full(9, fill_value=0))
+    assert np.array_equal(df["type"].values, np.full(9, fill_value="file"))
 
 
 def test_file_discoverer_stat_fields_error(discoverer):
     with pytest.raises(KeyError):
-        discoverer.list('/folder', stat_fields=('foo', ))
+        discoverer.list("/folder", stat_fields=("foo",))

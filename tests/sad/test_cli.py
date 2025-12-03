@@ -14,8 +14,8 @@ runner = CliRunner()
 @pytest.fixture
 def clean_user_config():
     try:
-        original = (Path('~') / '.config' / 'sad').expanduser()
-        backup = (Path('~') / '.config' / 'sad.backup').expanduser()
+        original = (Path("~") / ".config" / "sad").expanduser()
+        backup = (Path("~") / ".config" / "sad.backup").expanduser()
         shutil.move(original, backup)
         yield
         shutil.rmtree(original)
@@ -27,21 +27,21 @@ def clean_user_config():
 @pytest.fixture
 def clean_env():
     return {
-        'SAD_DATA': None,
-        'SAD_DATA_KARIN_FOOTPRINTS': None,
-        'SAD_DATA_GSHHG': None,
+        "SAD_DATA": None,
+        "SAD_DATA_KARIN_FOOTPRINTS": None,
+        "SAD_DATA_GSHHG": None,
         # Set a large width for the terminal to avoid overflow handling by rich
-        'COLUMNS': '120'
+        "COLUMNS": "120",
     }
 
 
 def test_summary(clean_user_config, clean_env):
-    result = runner.invoke(app, ['summary'], env=clean_env)
+    result = runner.invoke(app, ["summary"], env=clean_env)
 
     expected_lines = [
-        ['Type', 'Available', 'Keys', 'Lookup Folders'],
-        ['gshhg', '0/15', 'GSHHS_c,GSHHS_f,GSHHS_h', '.config/sad'],
-        ['karin_footprints', '0/2', 'calval,science', '.config/sad']
+        ["Type", "Available", "Keys", "Lookup Folders"],
+        ["gshhg", "0/15", "GSHHS_c,GSHHS_f,GSHHS_h", ".config/sad"],
+        ["karin_footprints", "0/2", "calval,science", ".config/sad"],
     ]
 
     assert result.exit_code == 0
@@ -51,14 +51,16 @@ def test_summary(clean_user_config, clean_env):
 
 
 def test_details(clean_user_config, clean_env):
-    result = runner.invoke(app, ['details', 'karin_footprints'], env=clean_env)
+    result = runner.invoke(app, ["details", "karin_footprints"], env=clean_env)
 
     expected_lines = [
-        ['Keys', 'File Name', 'Folder', 'Present'],
-        ['calval', 'sph_calval_swath.zip', '.config/sad', 'False'],
+        ["Keys", "File Name", "Folder", "Present"],
+        ["calval", "sph_calval_swath.zip", ".config/sad", "False"],
         [
-            'science', 'swot_science_orbit_sept2015-v2_10s_swath.zip',
-            '.config/sad', 'False'
+            "science",
+            "swot_science_orbit_sept2015-v2_10s_swath.zip",
+            ".config/sad",
+            "False",
         ],
     ]
 
@@ -69,18 +71,22 @@ def test_details(clean_user_config, clean_env):
 
 
 def test_env(tmp_path):
-    expected_lines = [['SAD_DATA', 'UNSET'],
-                      ['SAD_DATA_GSHHG', tmp_path.as_posix()],
-                      ['SAD_DATA_KARIN_FOOTPRINTS', 'INVALID']]
+    expected_lines = [
+        ["SAD_DATA", "UNSET"],
+        ["SAD_DATA_GSHHG", tmp_path.as_posix()],
+        ["SAD_DATA_KARIN_FOOTPRINTS", "INVALID"],
+    ]
 
-    result = runner.invoke(app, ['env'],
-                           env={
-                               'SAD_DATA': None,
-                               'SAD_DATA_KARIN_FOOTPRINTS':
-                               tmp_path.as_posix(),
-                               'SAD_DATA_GSHHG': '',
-                               'COLUMNS': '120'
-                           })
+    result = runner.invoke(
+        app,
+        ["env"],
+        env={
+            "SAD_DATA": None,
+            "SAD_DATA_KARIN_FOOTPRINTS": tmp_path.as_posix(),
+            "SAD_DATA_GSHHG": "",
+            "COLUMNS": "120",
+        },
+    )
 
     assert result.exit_code == 0
     for line in expected_lines:
@@ -91,19 +97,19 @@ def test_env(tmp_path):
 @pytest.fixture
 def download_env(tmp_path):
     return {
-        'SAD_DATA': tmp_path.as_posix(),
-        'SAD_DATA_KARIN_FOOTPRINTS': None,
-        'SAD_DATA_GSHHG': None,
+        "SAD_DATA": tmp_path.as_posix(),
+        "SAD_DATA_KARIN_FOOTPRINTS": None,
+        "SAD_DATA_GSHHG": None,
         # Set a large width for the terminal to avoid overflow handling by rich
-        'COLUMNS': '120'
+        "COLUMNS": "120",
     }
 
 
 def test_download(download_env):
-    result = runner.invoke(app, ['summary'], env=download_env)
+    result = runner.invoke(app, ["summary"], env=download_env)
     assert result.exit_code == 0
-    assert '0/15' in result.stdout
-    assert '0/2' in result.stdout
+    assert "0/15" in result.stdout
+    assert "0/2" in result.stdout
 
     # Custom behavior for the mock
     def fake_download(remote_file: str, target_folder: Path) -> Path:
@@ -114,13 +120,15 @@ def test_download(download_env):
     with ExitStack() as stack:
         for cls in [GSHHG, KarinFootprints]:
             stack.enter_context(
-                patch.object(cls, '_download', side_effect=fake_download))
-        result = runner.invoke(app, ['download', download_env['SAD_DATA']],
-                               env=download_env)
+                patch.object(cls, "_download", side_effect=fake_download)
+            )
+        result = runner.invoke(
+            app, ["download", download_env["SAD_DATA"]], env=download_env
+        )
 
     assert result.exit_code == 0
 
-    result = runner.invoke(app, ['summary'], env=download_env)
+    result = runner.invoke(app, ["summary"], env=download_env)
     assert result.exit_code == 0
-    assert '15/15' in result.stdout
-    assert '2/2' in result.stdout
+    assert "15/15" in result.stdout
+    assert "2/2" in result.stdout

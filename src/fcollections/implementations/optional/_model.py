@@ -17,18 +17,18 @@ class IAreaSelector(abc.ABC):
     latitude: str
         latitude field name in data
     """
+
     longitude: str
     latitude: str
 
-    def __init__(self,
-                 longitude: str = 'longitude',
-                 latitude: str = 'latitude'):
+    def __init__(self, longitude: str = "longitude", latitude: str = "latitude"):
         self.longitude = longitude
         self.latitude = latitude
 
     @abc.abstractmethod
-    def apply(self, ds: xr_t.Dataset, bbox: tuple[float, float, float,
-                                                  float]) -> xr_t.Dataset:
+    def apply(
+        self, ds: xr_t.Dataset, bbox: tuple[float, float, float, float]
+    ) -> xr_t.Dataset:
         """Apply a geographical selection on a dataset.
 
         Parameters

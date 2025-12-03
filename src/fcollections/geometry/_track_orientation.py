@@ -11,11 +11,13 @@ if tp.TYPE_CHECKING:
     import numpy.typing as np_t
 
 
-def track_orientation(latitude: np.ndarray,
-                      longitude: np.ndarray,
-                      along_track_axis: int = 0,
-                      half_width: int = 1,
-                      spheroid: Spheroid = Spheroid()):
+def track_orientation(
+    latitude: np.ndarray,
+    longitude: np.ndarray,
+    along_track_axis: int = 0,
+    half_width: int = 1,
+    spheroid: Spheroid = Spheroid(),
+):
     """Determine angle of satellite track with respect the meridian passing the
     track.
 
@@ -50,10 +52,9 @@ def track_orientation(latitude: np.ndarray,
     latitudes = np.radians(latitude)
     earth_radius = spheroid.mean_radius()
 
-    delta_lon = (
-        slice_along_axis(longitudes, along_track_axis, slice(half_width,
-                                                             None)) -
-        slice_along_axis(longitudes, along_track_axis, slice(0, -half_width)))
+    delta_lon = slice_along_axis(
+        longitudes, along_track_axis, slice(half_width, None)
+    ) - slice_along_axis(longitudes, along_track_axis, slice(0, -half_width))
 
     # Normalizing the delta_lon between [-pi, pi] will ensure we take the shortest
     # of the two paths available for the distance computation
@@ -62,10 +63,8 @@ def track_orientation(latitude: np.ndarray,
     # For prograde orbit (lon goes from 359.5° to 0.5° -> delta_lon = -359° -> +1°)
     delta_lon[delta_lon < -np.pi] = delta_lon[delta_lon < -np.pi] + 2 * np.pi
 
-    slice_after = slice_along_axis(latitudes, along_track_axis,
-                                   slice(half_width, None))
-    slice_before = slice_along_axis(latitudes, along_track_axis,
-                                    slice(0, -half_width))
+    slice_after = slice_along_axis(latitudes, along_track_axis, slice(half_width, None))
+    slice_before = slice_along_axis(latitudes, along_track_axis, slice(0, -half_width))
     delta_lat = slice_after - slice_before
     dy = earth_radius * delta_lat
 
@@ -80,9 +79,9 @@ def track_orientation(latitude: np.ndarray,
     padding_after[along_track_axis] = (0, half_width)
 
     dx = np.pad(dx_before, pad_width=padding_before) + np.pad(
-        dx_after, pad_width=padding_after)
-    dy = np.pad(dy, pad_width=padding_before) + np.pad(dy,
-                                                       pad_width=padding_after)
+        dx_after, pad_width=padding_after
+    )
+    dy = np.pad(dy, pad_width=padding_before) + np.pad(dy, pad_width=padding_after)
 
     # This gives the angle relative to the equator. Arctan2 is needed to keep
     # the direction info (direction = sens in french)
@@ -123,9 +122,13 @@ def rotate_derivatives(
     dvY_dY: float | np_t.NDArray[np.float64],
     dvX_dY: float | np_t.NDArray[np.float64],
     dvY_dX: float | np_t.NDArray[np.float64],
-    angles_I_i: float | np_t.NDArray[np.float64]
-) -> tuple[float | np_t.NDArray[np.float64], float | np_t.NDArray[np.float64],
-           float | np_t.NDArray[np.float64], float | np_t.NDArray[np.float64]]:
+    angles_I_i: float | np_t.NDArray[np.float64],
+) -> tuple[
+    float | np_t.NDArray[np.float64],
+    float | np_t.NDArray[np.float64],
+    float | np_t.NDArray[np.float64],
+    float | np_t.NDArray[np.float64],
+]:
     """Given a vector v rotate its derivatives from the (I, J) from to the (i,
     j) frame.
 
@@ -163,8 +166,11 @@ def rotate_derivatives(
     --------
     rotate_vector: can rotate a vector to express it in the proper frame
     """
-    cos2, sin2, cossin = (np.cos(angles_I_i)**2, np.sin(angles_I_i)**2,
-                          np.cos(angles_I_i) * np.sin(angles_I_i))
+    cos2, sin2, cossin = (
+        np.cos(angles_I_i) ** 2,
+        np.sin(angles_I_i) ** 2,
+        np.cos(angles_I_i) * np.sin(angles_I_i),
+    )
     dvx_dx = dvX_dX * cos2 + dvY_dY * sin2 - dvX_dY * cossin - dvY_dX * cossin
     dvy_dy = dvX_dX * sin2 + dvY_dY * cos2 + dvX_dY * cossin + dvY_dX * cossin
     dvy_dx = dvX_dX * cossin - dvY_dY * cossin - dvX_dY * sin2 + dvY_dX * cos2

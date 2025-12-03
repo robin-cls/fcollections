@@ -10,19 +10,19 @@ from ._model import StandardLongitudeConvention, guess_longitude_convention
 
 logger = logging.getLogger(__name__)
 
-GEOMETRIES_PATH = 'KaRIn_2kms_[phase]_geometries.geojson'
+GEOMETRIES_PATH = "KaRIn_2kms_[phase]_geometries.geojson"
 
 
 def _read_geometries_file(phase: Phase) -> gpd.GeoDataFrame:
-    karin_2kms_geometries_file = GEOMETRIES_PATH.replace(
-        '[phase]', phase.short_name)
+    karin_2kms_geometries_file = GEOMETRIES_PATH.replace("[phase]", phase.short_name)
 
     return gpd.read_file(karin_2kms_geometries_file)
 
 
 def query_geometries(
-        half_orbit_numbers: int | list[int],
-        phase: Phase | str = MissionsPhases.science.value) -> gpd.GeoDataFrame:
+    half_orbit_numbers: int | list[int],
+    phase: Phase | str = MissionsPhases.science.value,
+) -> gpd.GeoDataFrame:
     """Query the geometries of the given half orbits.
 
     Parameters
@@ -49,20 +49,22 @@ def query_geometries(
 
     swath_geometries = _read_geometries_file(phase)
 
-    selection = swath_geometries.loc[swath_geometries.pass_number.isin(
-        half_orbit_numbers)]
+    selection = swath_geometries.loc[
+        swath_geometries.pass_number.isin(half_orbit_numbers)
+    ]
 
     if selection.empty:
         raise KeyError(
-            f'None of the requested half orbit numbers: {half_orbit_numbers} exist'
+            f"None of the requested half orbit numbers: {half_orbit_numbers} exist"
         )
 
     return selection
 
 
 def query_half_orbits_intersect(
-        bbox: tuple[float, float, float, float],
-        phase: Phase | str = MissionsPhases.science.value) -> gpd.GeoDataFrame:
+    bbox: tuple[float, float, float, float],
+    phase: Phase | str = MissionsPhases.science.value,
+) -> gpd.GeoDataFrame:
     """Query half orbits that intersect the bbox.
 
     Parameters
@@ -93,14 +95,14 @@ def query_half_orbits_intersect(
 
     # Create a dict with input bbox normalized in both standard conventions
     bbox_conv_dict = {
-        conv: [(x_min, lat_min, x_max, lat_max)
-               for (x_min, x_max) in conv.value.normalize_and_split(lon_range)]
+        conv: [
+            (x_min, lat_min, x_max, lat_max)
+            for (x_min, x_max) in conv.value.normalize_and_split(lon_range)
+        ]
         for conv in StandardLongitudeConvention
     }
 
-    select = swath_geometries.apply(_filter_intersect,
-                                    bbox_conv=bbox_conv_dict,
-                                    axis=1)
+    select = swath_geometries.apply(_filter_intersect, bbox_conv=bbox_conv_dict, axis=1)
 
     return swath_geometries[select]
 
@@ -109,7 +111,8 @@ def _filter_intersect(row, bbox_conv):
     # Get half orbit's convention
     pass_coords = list(row.geometry.exterior.coords)
     convention = guess_longitude_convention(
-        np.array([lon for (lon, lat) in pass_coords]))
+        np.array([lon for (lon, lat) in pass_coords])
+    )
 
     # Get the bbox converted to this convention
     bbox_splits = bbox_conv[convention]
@@ -117,7 +120,6 @@ def _filter_intersect(row, bbox_conv):
     half_orbit_polygon = shp.Polygon(pass_coords)
     # Compute intersection between pass geometry and the bbox
     # bbox longitude range may have been splitted
-    return np.any([
-        half_orbit_polygon.intersects(shp.geometry.box(*bbox))
-        for bbox in bbox_splits
-    ])
+    return np.any(
+        [half_orbit_polygon.intersects(shp.geometry.box(*bbox)) for bbox in bbox_splits]
+    )

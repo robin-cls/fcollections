@@ -14,7 +14,7 @@ from fcollections.time import (
     numpy_to_julian_day,
 )
 
-T = tp.TypeVar('T')
+T = tp.TypeVar("T")
 
 
 class ICodec(abc.ABC, tp.Generic[T]):
@@ -156,8 +156,10 @@ class EnumCodec(ICodec[type[Enum]]):
         try:
             output_enum = self.enum_cls[input_string]
         except KeyError as exc:
-            msg = (f"'{input_string}' could not be converted to a "
-                   f'{self.enum_cls.__name__} enum.')
+            msg = (
+                f"'{input_string}' could not be converted to a "
+                f"{self.enum_cls.__name__} enum."
+            )
             raise DecodingError(msg) from exc
 
         return output_enum
@@ -175,15 +177,15 @@ class DateTimeCodec(ICodec[np.datetime64]):
     """Coder-Decoder implementation for datetimes."""
 
     def __init__(self, date_fmt: str | list[str]):
-        if isinstance(date_fmt, str): date_fmt = [date_fmt]
+        if isinstance(date_fmt, str):
+            date_fmt = [date_fmt]
         self.date_fmt = date_fmt
 
     def decode(self, input_string: str) -> np.datetime64:
         output_date = None
         for d_fmt in self.date_fmt:
             try:
-                output_date = np.datetime64(
-                    dt.datetime.strptime(input_string, d_fmt))
+                output_date = np.datetime64(dt.datetime.strptime(input_string, d_fmt))
                 break
             except ValueError:
                 continue
@@ -192,8 +194,10 @@ class DateTimeCodec(ICodec[np.datetime64]):
             # In case the date conversion failed. This should not happen if
             # the input regex is properly configured (with groups defined with
             # \d)
-            msg = (f"'{input_string}' could not be converted to a numpy "
-                   f'datetime using formats {self.date_fmt}.')
+            msg = (
+                f"'{input_string}' could not be converted to a numpy "
+                f"datetime using formats {self.date_fmt}."
+            )
             raise DecodingError(msg)
 
         return output_date
@@ -202,8 +206,7 @@ class DateTimeCodec(ICodec[np.datetime64]):
         # dt.datetime does not handle nanosecond precision, so we must convert
         # the numpy timestamp before using dt.datetime to encode the date with
         # the given format
-        return data.astype('M8[us]').astype(dt.datetime).strftime(
-            self.date_fmt[0])
+        return data.astype("M8[us]").astype(dt.datetime).strftime(self.date_fmt[0])
 
 
 class PeriodDeltaCodec(ICodec[Period]):
@@ -240,9 +243,9 @@ class PeriodDeltaCodec(ICodec[Period]):
 
     def decode(self, input_string: str) -> Period:
         output_date = super().decode(input_string)
-        return Period(output_date,
-                      output_date + self.delta,
-                      include_stop=self.include_stop)
+        return Period(
+            output_date, output_date + self.delta, include_stop=self.include_stop
+        )
 
     def encode(self, data: Period) -> str:
         return super().encode(data.start)
@@ -269,7 +272,7 @@ class PeriodCodec(ICodec[Period]):
     def __init__(
         self,
         date_fmt: str,
-        separator='_',
+        separator="_",
     ):
         self.date_fmt = date_fmt
         self.separator = separator
@@ -279,11 +282,10 @@ class PeriodCodec(ICodec[Period]):
         if self.separator in self.date_fmt:
             # Find the middle separator and split to get the begin/end dates
             positions = [
-                match.start()
-                for match in re.finditer(self.separator, input_string)
+                match.start() for match in re.finditer(self.separator, input_string)
             ]
             po = positions[len(positions) // 2]
-            split = [input_string[:po], input_string[po + 1:]]
+            split = [input_string[:po], input_string[po + 1 :]]
         else:
             # Split the period in 2 to get the begin/end dates
             split = input_string.split(self.separator)
@@ -291,22 +293,23 @@ class PeriodCodec(ICodec[Period]):
         if len(split) != 2:
             msg = (
                 f"'{input_string} could not be converted to a Period because"
-                ' it could not be separated in two begin/end dates using '
-                f"separator '{self.separator}'")
+                " it could not be separated in two begin/end dates using "
+                f"separator '{self.separator}'"
+            )
             raise DecodingError(msg)
 
         try:
-            start_date = np.datetime64(
-                dt.datetime.strptime(split[0], self.date_fmt))
-            end_date = np.datetime64(
-                dt.datetime.strptime(split[1], self.date_fmt))
+            start_date = np.datetime64(dt.datetime.strptime(split[0], self.date_fmt))
+            end_date = np.datetime64(dt.datetime.strptime(split[1], self.date_fmt))
         except ValueError as exc:
             # In case the date conversion failed. This should not happen if
             # the input regex is properly configured (with groups defined with
             # \d)
-            msg = (f"'{input_string}' could not be converted to a Period "
-                   'because one of its dates could not be converted to a '
-                   'datetime')
+            msg = (
+                f"'{input_string}' could not be converted to a Period "
+                "because one of its dates could not be converted to a "
+                "datetime"
+            )
             raise DecodingError(msg) from exc
 
         return Period(start_date, end_date)
@@ -315,10 +318,8 @@ class PeriodCodec(ICodec[Period]):
         # dt.datetime does not handle nanosecond precision, so we must convert
         # the numpy timestamp before using dt.datetime to encode the date with
         # the given format
-        start = data.start.astype('M8[us]').astype(dt.datetime).strftime(
-            self.date_fmt)
-        stop = data.stop.astype('M8[us]').astype(dt.datetime).strftime(
-            self.date_fmt)
+        start = data.start.astype("M8[us]").astype(dt.datetime).strftime(self.date_fmt)
+        stop = data.stop.astype("M8[us]").astype(dt.datetime).strftime(self.date_fmt)
         return start + self.separator + stop
 
 
@@ -338,28 +339,30 @@ class JulianDayCodec(ICodec[np.datetime64]):
         If the input julian_day_format does not match any expected format
     """
 
-    FORMATS = ['days', 'days_hours', 'fractional']
+    FORMATS = ["days", "days_hours", "fractional"]
 
     def __init__(self, julian_day_format: str, reference: np.datetime64):
         if julian_day_format not in self.FORMATS:
-            msg = f'Unknown julian day format {julian_day_format}, acceptable options are {self.FORMATS}'
+            msg = f"Unknown julian day format {julian_day_format}, acceptable options are {self.FORMATS}"
             raise ValueError(msg)
         self.format = julian_day_format
         self.reference = reference
 
     def decode(self, input_string: str) -> np.datetime64:
         try:
-            if self.format == 'days_hours':
-                split = input_string.split('_')
+            if self.format == "days_hours":
+                split = input_string.split("_")
                 output_date = julian_day_to_numpy(
-                    (int(split[0]), int(split[1]), 0),
-                    reference=self.reference)
-            elif self.format == 'days':
-                output_date = julian_day_to_numpy((int(input_string), 0, 0),
-                                                  reference=self.reference)
+                    (int(split[0]), int(split[1]), 0), reference=self.reference
+                )
+            elif self.format == "days":
+                output_date = julian_day_to_numpy(
+                    (int(input_string), 0, 0), reference=self.reference
+                )
             else:
                 output_date = fractional_julian_day_to_numpy(
-                    float(input_string), reference=self.reference)
+                    float(input_string), reference=self.reference
+                )
             return output_date
         except (ValueError, IndexError) as e:
             raise DecodingError(
@@ -369,16 +372,16 @@ class JulianDayCodec(ICodec[np.datetime64]):
     def encode(self, data: np.datetime64) -> str:
         # Convert the start. Much like the decoding, the delta is a given
         # variable and should not be part of the encoded string
-        if self.format == 'days_hours':
-            days, hours, _ = numpy_to_julian_day(data,
-                                                 reference=self.reference)
-            return f'{days:0>5d}_{hours:0>2d}'
-        elif self.format == 'days':
+        if self.format == "days_hours":
+            days, hours, _ = numpy_to_julian_day(data, reference=self.reference)
+            return f"{days:0>5d}_{hours:0>2d}"
+        elif self.format == "days":
             days, _, _ = numpy_to_julian_day(data, reference=self.reference)
-            return f'{days:0>2d}'
+            return f"{days:0>2d}"
         else:
             fractional_days = numpy_to_fractional_julian_day(
-                data, reference=self.reference)
+                data, reference=self.reference
+            )
             return str(fractional_days)
 
 

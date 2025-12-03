@@ -123,10 +123,9 @@ class Layout(ILayout):
         elements = []
         for convention in self.conventions:
             names = [f.name for f in convention.fields]
-            element = convention.generate(**{
-                k: v
-                for k, v in fields.items() if k in names
-            })
+            element = convention.generate(
+                **{k: v for k, v in fields.items() if k in names}
+            )
             elements.append(element)
 
         return os.path.join(root, *elements)
@@ -137,32 +136,32 @@ class Layout(ILayout):
         for level, convention in enumerate(self.conventions):
             names = [f.name for f in convention.fields]
 
-            filtered_references = {
-                k: v
-                for k, v in references.items() if k in names
-            }
+            filtered_references = {k: v for k, v in references.items() if k in names}
             unknown_references -= set(filtered_references)
-            logger.debug('Setting layout level %d filters to %s', level,
-                         filtered_references)
-            filters.append(
-                RecordFilter(convention.fields, **filtered_references))
+            logger.debug(
+                "Setting layout level %d filters to %s", level, filtered_references
+            )
+            filters.append(RecordFilter(convention.fields, **filtered_references))
 
         if len(unknown_references) > 0:
-            msg = ('Layout has been configured with unknown references '
-                   f"'{unknown_references}'. They will be ignored.")
+            msg = (
+                "Layout has been configured with unknown references "
+                f"'{unknown_references}'. They will be ignored."
+            )
             warnings.warn(msg)
 
         self.filters: list[RecordFilter] = filters
 
     def test(self, level: int, node: str) -> bool:
-        convention, record_filter = self.conventions[level], self.filters[
-            level]
+        convention, record_filter = self.conventions[level], self.filters[level]
         try:
             record = convention.parse(convention.match(node))
         except (DecodingError, AttributeError):
-            msg = (f'Actual node {node} did not match the expected convention '
-                   f'{convention.regex}. This is probably due to a mismatch '
-                   'between the layout and the actual tree structure')
+            msg = (
+                f"Actual node {node} did not match the expected convention "
+                f"{convention.regex}. This is probably due to a mismatch "
+                "between the layout and the actual tree structure"
+            )
             warnings.warn(msg)
             return False
         return record_filter.test(record)
@@ -172,8 +171,12 @@ class Layout(ILayout):
         return set(
             functools.reduce(
                 lambda x, y: x + y,
-                map(lambda convention: [f.name for f in convention.fields],
-                    self.conventions)))
+                map(
+                    lambda convention: [f.name for f in convention.fields],
+                    self.conventions,
+                ),
+            )
+        )
 
 
 class CompositeLayout(ILayout):
@@ -203,7 +206,7 @@ class CompositeLayout(ILayout):
 
     def test(self, level: int, node: str) -> bool:
         bad = 0
-        with warnings.catch_warnings(action='error'):
+        with warnings.catch_warnings(action="error"):
             # The default Layout implementation tries to detect a mismatch
             # between the configured layout and the actual tree. The Composite
             # layout tries to emulate the same behavior: a warning is emitted if
@@ -222,9 +225,10 @@ class CompositeLayout(ILayout):
 
         if bad == len(self._layouts):
             msg = (
-                f'Node {node} did not match any of the possible conventions.'
-                ' This is probably due to a mismatch between the layouts and'
-                ' the actual tree structure')
+                f"Node {node} did not match any of the possible conventions."
+                " This is probably due to a mismatch between the layouts and"
+                " the actual tree structure"
+            )
             warnings.warn(msg)
         return False
 
@@ -232,37 +236,36 @@ class CompositeLayout(ILayout):
         for ii, layout in enumerate(self._layouts):
             try:
                 path = layout.generate(root, **fields)
-                logger.debug('Layout [%d] path generation success', ii)
+                logger.debug("Layout [%d] path generation success", ii)
                 return path
             except ValueError:
-                logger.debug('Layout [%d] path generation failed, trying next',
-                             ii)
-        msg = 'None of the configured layout could generate a path'
+                logger.debug("Layout [%d] path generation failed, trying next", ii)
+        msg = "None of the configured layout could generate a path"
         raise ValueError(msg)
 
     def set_filters(self, **references: abc.Any):
         unknown_references = set(references)
-        filtered_references = {
-            k: v
-            for k, v in references.items() if k in self.names
-        }
+        filtered_references = {k: v for k, v in references.items() if k in self.names}
         unknown_references -= set(filtered_references)
 
-        with warnings.catch_warnings(action='ignore'):
+        with warnings.catch_warnings(action="ignore"):
             # Irrelevant filters will automatically be ignored by the underlying
             # layouts
             for layout in self._layouts:
                 layout.set_filters(**filtered_references)
 
         if len(unknown_references) > 0:
-            msg = ('Layout has been configured with unknown references '
-                   f"'{unknown_references}'. They will be ignored.")
+            msg = (
+                "Layout has been configured with unknown references "
+                f"'{unknown_references}'. They will be ignored."
+            )
             warnings.warn(msg)
 
     @property
     def names(self) -> set[str]:
-        return functools.reduce(lambda a, b: a | b,
-                                [layout.names for layout in self._layouts])
+        return functools.reduce(
+            lambda a, b: a | b, [layout.names for layout in self._layouts]
+        )
 
 
 class ITreeIterable(abc.ABC):
@@ -295,10 +298,9 @@ class ITreeIterable(abc.ABC):
         self.layout = layout
 
     @abc.abstractmethod
-    def find(self,
-             root: str,
-             detail: bool = False,
-             **filters: tp.Any) -> tp.Iterator[str | dict[str, str]]:
+    def find(
+        self, root: str, detail: bool = False, **filters: tp.Any
+    ) -> tp.Iterator[str | dict[str, str]]:
         """List all leafs below the given node.
 
         Parameters
@@ -334,39 +336,39 @@ class FileSystemIterable(ITreeIterable):
     """
 
     def __init__(
-            self,
-            fs: AbstractFileSystem = LocalFileSystem(follow_symlinks=True),
-            layout: Layout | None = None):
+        self,
+        fs: AbstractFileSystem = LocalFileSystem(follow_symlinks=True),
+        layout: Layout | None = None,
+    ):
         super().__init__(layout)
         self.fs = fs
 
-    def find(self,
-             root: str,
-             detail: bool = False,
-             **filters: tp.Any) -> tp.Iterator[str | dict[str, str]]:
+    def find(
+        self, root: str, detail: bool = False, **filters: tp.Any
+    ) -> tp.Iterator[str | dict[str, str]]:
 
         if len(filters) > 0 and self.layout is None:
-            msg = (f'Filters {filters.keys()} have been defined for the file '
-                   'system tree walk, but no layout is configured. These '
-                   'filters will be ignored')
+            msg = (
+                f"Filters {filters.keys()} have been defined for the file "
+                "system tree walk, but no layout is configured. These "
+                "filters will be ignored"
+            )
             warnings.warn(msg)
 
         if self.layout is not None:
             self.layout.set_filters(**filters)
 
-        for current, folders, files in self.fs.walk(root,
-                                                    topdown=True,
-                                                    detail=detail):
+        for current, folders, files in self.fs.walk(root, topdown=True, detail=detail):
             if self.layout is not None:
                 level = len(Path(current).relative_to(root).parts)
 
             for folder in tuple(folders):
                 # Will also give the folder name if details=True (folders is a
                 # dict with the folders names as keys)
-                if self.layout is not None and not self.layout.test(
-                        level, folder):
-                    logger.debug('Ignore folder %s',
-                                 os.path.join(root, current, folder))
+                if self.layout is not None and not self.layout.test(level, folder):
+                    logger.debug(
+                        "Ignore folder %s", os.path.join(root, current, folder)
+                    )
                     if not detail:
                         # Remove list element
                         folders.remove(folder)
@@ -375,8 +377,9 @@ class FileSystemIterable(ITreeIterable):
                         # tuple copy of the folders keys
                         del folders[folder]
                 else:
-                    logger.debug('Search folder %s',
-                                 os.path.join(root, current, folder))
+                    logger.debug(
+                        "Search folder %s", os.path.join(root, current, folder)
+                    )
 
             if detail:
                 yield from files.values()
@@ -407,9 +410,7 @@ class RecordFilter:
         # RecordFilter, which is why we can assume that the fields and record
         # are in matching order here
         try:
-            self.index_in_record = [
-                fields_names.index(key) for key in filter_keys
-            ]
+            self.index_in_record = [fields_names.index(key) for key in filter_keys]
         except ValueError as exc:
             unknown_keys = set(filter_keys) - set(fields_names)
             raise FileListingError(
@@ -431,13 +432,15 @@ class RecordFilter:
         boolean
             true if the record is filtered
         """
-        return all(self.fields[index].test(reference, record[index])
-                   for reference, index in zip(self.references.values(),
-                                               self.index_in_record))
+        return all(
+            self.fields[index].test(reference, record[index])
+            for reference, index in zip(self.references.values(), self.index_in_record)
+        )
 
     def _sanitize_references(self):
-        for (key, reference), index in zip(self.references.items(),
-                                           self.index_in_record):
+        for (key, reference), index in zip(
+            self.references.items(), self.index_in_record
+        ):
             self.references[key] = self.fields[index].sanitize(reference)
 
 
@@ -452,18 +455,19 @@ class FileDiscoverer:
         fsspec file system. Default: LocalFileSystem
     """
 
-    def __init__(self,
-                 parser: FileNameConvention,
-                 iterable: ITreeIterable = FileSystemIterable()):
+    def __init__(
+        self, parser: FileNameConvention, iterable: ITreeIterable = FileSystemIterable()
+    ):
         self.iterable = iterable
         self.convention = parser
 
-    def list(self,
-             path: str,
-             predicates: tuple[tp.Callable[tuple[tp.Any, ...], bool],
-                               ...] = (),
-             stat_fields: tuple[str] = (),
-             **filters) -> pda.DataFrame:
+    def list(
+        self,
+        path: str,
+        predicates: tuple[tp.Callable[tuple[tp.Any, ...], bool], ...] = (),
+        stat_fields: tuple[str] = (),
+        **filters,
+    ) -> pda.DataFrame:
         """List files in file system.
 
         Parameters
@@ -505,8 +509,7 @@ class FileDiscoverer:
 
         if self.iterable.layout is not None:
             layout_filters = {
-                k: v
-                for k, v in filters.items() if k in self.iterable.layout.names
+                k: v for k, v in filters.items() if k in self.iterable.layout.names
             }
         else:
             layout_filters = {}
@@ -519,20 +522,28 @@ class FileDiscoverer:
                     record_filter.test,
                     # Parse the result and append the filename to the record
                     map(
-                        lambda file_match:
-                        (*self.convention.parse(file_match[1]), file_match[0]),
+                        lambda file_match: (
+                            *self.convention.parse(file_match[1]),
+                            file_match[0],
+                        ),
                         # Filter out non matching files
                         filter(
                             lambda file_match: file_match[1] is not None,
                             # Match file names
                             map(
-                                lambda file: (file,
-                                              self.convention.match(
-                                                  os.path.basename(file))),
+                                lambda file: (
+                                    file,
+                                    self.convention.match(os.path.basename(file)),
+                                ),
                                 # Walk the folder and find the files
-                                self.iterable.find(path,
-                                                   detail=False,
-                                                   **layout_filters))))))
+                                self.iterable.find(
+                                    path, detail=False, **layout_filters
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            )
         else:
             records = (
                 # Filter non matching filenames
@@ -541,30 +552,39 @@ class FileDiscoverer:
                     # Parse the result and append the filename and its requested
                     # metadata to the record
                     map(
-                        lambda file_match_stats:
-                        (*self.convention.parse(file_match_stats[1]),
-                         file_match_stats[0], *file_match_stats[2]),
+                        lambda file_match_stats: (
+                            *self.convention.parse(file_match_stats[1]),
+                            file_match_stats[0],
+                            *file_match_stats[2],
+                        ),
                         # Filter out non matching files
                         filter(
-                            lambda file_match_stats: file_match_stats[1] is
-                            not None,
+                            lambda file_match_stats: file_match_stats[1] is not None,
                             # Match file names and filter the stats we want
                             map(
-                                lambda file_stats:
-                                (file_stats['name'],
-                                 self.convention.match(
-                                     os.path.basename(file_stats['name'])),
-                                 tuple(file_stats[k] for k in stat_fields)),
+                                lambda file_stats: (
+                                    file_stats["name"],
+                                    self.convention.match(
+                                        os.path.basename(file_stats["name"])
+                                    ),
+                                    tuple(file_stats[k] for k in stat_fields),
+                                ),
                                 # Walk the folder and find the files
-                                self.iterable.find(path,
-                                                   detail=True,
-                                                   **layout_filters))))))
+                                self.iterable.find(path, detail=True, **layout_filters),
+                            ),
+                        ),
+                    ),
+                )
+            )
 
         for predicate in predicates:
             records = filter(predicate, records)
 
-        df = pda.DataFrame(records,
-                           columns=[f.name for f in self.convention.fields] +
-                           ['filename'] + list(stat_fields))
+        df = pda.DataFrame(
+            records,
+            columns=[f.name for f in self.convention.fields]
+            + ["filename"]
+            + list(stat_fields),
+        )
 
         return df
