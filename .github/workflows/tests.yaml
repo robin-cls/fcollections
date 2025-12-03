@@ -22,6 +22,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[testing,geo]"
+      - name: Debug fcollections import
+        run: |
+          python -c "import fcollections,sys,inspect; print('fcollections file:', getattr(fcollections,'file',None)); print('sys.path[:6]=',sys.path[:6])"
+          python -c "import pkgutil; print('pkgutil.find_loader:', pkgutil.find_loader('fcollections'))"
+          pip show fcollections || true
       - name: Run unit tests
         run: |
           pytest tests --cov=src --cov-report=xml:coverage-ut.xml --cov-report=term
