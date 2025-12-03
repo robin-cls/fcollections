@@ -35,7 +35,7 @@ geo = ["shapely", "geopandas", "pyinterp", "dask"]
 sad = "fcollections.sad:main"
 
 [build-system]
-requires = ["setuptools >= 77.0.3"]
+requires = ["setuptools >= 77.0.3", "cmake"]
 build-backend = "setuptools.build_meta"
 
 [tool.isort]
