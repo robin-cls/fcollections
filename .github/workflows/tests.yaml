@@ -58,6 +58,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-coverage
+          include-hidden-files: true
           path: |
             .coverage-ut
             coverage-ut.xml
@@ -113,6 +114,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-nogeo-coverage
+          include-hidden-files: true
           path: |
             .coverage-ut-nogeo
             coverage-ut-nogeo.xml
@@ -137,6 +139,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: integration-test-coverage
+          include-hidden-files: true
           path: |
             .coverage-it
             coverage-it.xml
@@ -159,23 +162,16 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: unit-test-coverage
-          path: coverage-artifacts
       - name: Download unit tests no geo coverage artifacts
         uses: actions/download-artifact@v4
         with:
           name: unit-test-nogeo-coverage
-          path: coverage-artifact
       - name: Download integration tests coverage artifacts
         uses: actions/download-artifact@v4
         with:
           name: integration-test-coverage
-          path: coverage-artifacts
       - name: Combine coverage reports
         run: |
-          ls -l coverage-artifacts
-          mv coverage-artifacts/.coverage-ut .coverage-ut
-          mv coverage-artifacts/.coverage-ut-nogeo .coverage-ut-nogeo
-          mv coverage-artifacts/.coverage-it .coverage-it
           coverage combine .coverage-ut .coverage-ut-nogeo .coverage-it
           coverage report
           coverage xml

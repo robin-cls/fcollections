@@ -48,7 +48,7 @@ jobs:
           name: docs
 
   deploy-dev:
-    needs: build
+    needs: build-docs
     runs-on: ubuntu-latest
     if: ${{ !startsWith(github.ref, 'refs/tags/') }}
     environment:
@@ -64,7 +64,7 @@ jobs:
           folder: dev
 
   deploy-stable:
-    needs: build
+    needs: build-docs
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     environment:
