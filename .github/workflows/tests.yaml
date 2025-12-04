@@ -11,17 +11,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Setup micromamba
+        uses: mamba-org/setup-micromamba@v1
         with:
-          python-version: 3.12
-      - name: Install system requirements
-        run: |
-          sudo apt-get install g++ cmake libeigen3-dev libboost-dev
+          micromamba-version: "1.5.0"
+          environment-name: test-env
+          create-args: >-
+            python=3.11
+            pip
+            cmake
+            gxx_linux-64
+            eigen
+            boost
+            docstring_parser
+            fsspec
+            h5netcdf
+            jinja2
+            netCDF4
+            numba
+            numpy
+            requests
+            typer
+            xarray
+            pytest
+            pytest-cov
+            sympy
+            beautifulsoup4
+            shapely
+            geopandas
+            pyinterp
+            dask
       - name: Install python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[testing,geo]"
+          pip install -e "."
       - name: Run unit tests
         run: |
           pytest tests --cov=src --cov-report=xml:coverage-ut.xml --cov-report=term
@@ -38,17 +61,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Setup micromamba
+        uses: mamba-org/setup-micromamba@v1
         with:
-          python-version: 3.11
-      - name: Install system requirements
-        run: |
-          sudo apt-get install g++ cmake libeigen3-dev libboost-dev
-      - name: Install python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[testing,geo]"
+          micromamba-version: "1.5.0"
+          environment-name: test-env
+          create-args: >-
+            python=3.11
+            pip
+            cmake
+            gxx_linux-64
+            eigen
+            boost
+            docstring_parser
+            fsspec
+            h5netcdf
+            jinja2
+            netCDF4
+            numba
+            numpy
+            requests
+            typer
+            xarray
+            pytest
+            pytest-cov
+            sympy
+            beautifulsoup4
+            shapely
+            geopandas
+            pyinterp
+            dask
       - name: Run unit tests without geo
         run: |
           pytest tests/implementations/collections --ignore tests/implementations/collections/test_area_selector.py --without-geo-packages --cov=src --cov-report=xml:coverage-ut-nogeo.xml --cov-report=term
