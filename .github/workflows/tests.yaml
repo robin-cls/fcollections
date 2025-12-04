@@ -12,9 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup micromamba
-        uses: mamba-org/setup-micromamba@v1
+        uses: mamba-org/setup-micromamba@v2
         with:
-          micromamba-version: "1.5.0"
           environment-name: test-env
           create-args: >-
             python=3.11
@@ -62,9 +61,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup micromamba
-        uses: mamba-org/setup-micromamba@v1
+        uses: mamba-org/setup-micromamba@v2
         with:
-          micromamba-version: "1.5.0"
           environment-name: test-env
           create-args: >-
             python=3.11
