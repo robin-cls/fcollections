@@ -20,7 +20,7 @@ dependencies = [
     "numpy",
     "requests",
     "typer",
-    "xarray[h5netcdf]"]
+    "xarray[io]"]
 
 [tool.setuptools.packages.find]
 exclude = ["**/__pycache__", "**/.ipynb_checkpoints"]
