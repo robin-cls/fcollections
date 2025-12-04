@@ -1,0 +1,80 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+    tags: ["*"]
+  pull_request:
+    paths:
+      - "docs/**"
+      - "**.py"
+      - "pyproject.toml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: docs
+          create-args: >
+            python=3.12
+            pip
+            sphinx
+            sphinx-copybutton
+            sphinx-inline-tabs
+            sphinx_rtd_theme
+            sphinx-tabs
+          activate-environment: docs
+          init-shell: bash
+      - name: Install package (for autodoc)
+        shell: bash -l {0}
+        run: |
+          pip install -e ".[docs]"
+      - name: Build Sphinx HTML
+        shell: bash -l {0}
+        run: |
+          sphinx-build -b html docs public -W
+      - name: Upload artifact for Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+          name: docs
+
+  deploy-dev:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Deploy dev docs
+        id: deploy
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: docs
+          target_branch: gh-pages
+          folder: dev
+
+  deploy-stable:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Deploy stable docs
+        id: deploy
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: docs
+          target_branch: gh-pages
+          folder: stable
