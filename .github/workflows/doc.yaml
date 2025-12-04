@@ -31,12 +31,30 @@ jobs:
             sphinx-inline-tabs
             sphinx_rtd_theme
             sphinx-tabs
+            docstring_parser
+            fsspec
+            h5netcdf
+            jinja2
+            netCDF4
+            numba
+            numpy
+            requests
+            typer
+            xarray
+            pytest
+            pytest-cov
+            sympy
+            beautifulsoup4
+            shapely
+            geopandas
+            pyinterp
+            dask
           activate-environment: docs
           init-shell: bash
       - name: Install package (for autodoc)
         shell: bash -l {0}
         run: |
-          pip install -e ".[docs]"
+          pip install -e .
       - name: Build Sphinx HTML
         shell: bash -l {0}
         run: |

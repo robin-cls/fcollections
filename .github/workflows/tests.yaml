@@ -22,10 +22,6 @@ jobs:
           create-args: >-
             python=3.11
             pip
-            cmake
-            gxx_linux-64
-            eigen
-            boost
             docstring_parser
             fsspec
             h5netcdf
@@ -78,10 +74,6 @@ jobs:
           create-args: >-
             python=3.11
             pip
-            cmake
-            gxx_linux-64
-            eigen
-            boost
             docstring_parser
             fsspec
             h5netcdf
