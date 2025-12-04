@@ -15,6 +15,10 @@ jobs:
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: test-env
+          init-shell: >-
+            bash
+          cache-environment: true
+          post-cleanup: 'all'
           create-args: >-
             python=3.11
             pip
@@ -41,10 +45,12 @@ jobs:
             pyinterp
             dask
       - name: Install python dependencies
+        shell: bash -el {0}
         run: |
           python -m pip install --upgrade pip
           pip install -e "."
       - name: Run unit tests
+        shell: bash -el {0}
         run: |
           pytest tests --cov=src --cov-report=xml:coverage-ut.xml --cov-report=term
           mv .coverage .coverage-ut
@@ -64,6 +70,10 @@ jobs:
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: test-env
+          init-shell: >-
+            bash
+          cache-environment: true
+          post-cleanup: 'all'
           create-args: >-
             python=3.11
             pip
@@ -89,7 +99,13 @@ jobs:
             geopandas
             pyinterp
             dask
+      - name: Install python dependencies
+        shell: bash -el {0}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "."
       - name: Run unit tests without geo
+        shell: bash -el {0}
         run: |
           pytest tests/implementations/collections --ignore tests/implementations/collections/test_area_selector.py --without-geo-packages --cov=src --cov-report=xml:coverage-ut-nogeo.xml --cov-report=term
           mv .coverage .coverage-ut-nogeo
