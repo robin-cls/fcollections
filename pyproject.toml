@@ -14,14 +14,13 @@ requires-python = ">= 3.8"
 dependencies = [
     "docstring_parser",
     "fsspec",
-    "h5netcdf",
     "jinja2",
     "netCDF4",
     "numba",
     "numpy",
     "requests",
     "typer",
-    "xarray"]
+    "xarray[h5netcdf]"]
 
 [tool.setuptools.packages.find]
 exclude = ["**/__pycache__", "**/.ipynb_checkpoints"]

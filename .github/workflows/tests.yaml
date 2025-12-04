@@ -15,10 +15,10 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.12
-      - name: Install Pyinterp build requirements
+      - name: Install system requirements
         run: |
-          sudo apt-get install g++ cmake libeigen3-dev libboost-dev libhdf5-serial-dev
-      - name: Install dependencies
+          sudo apt-get install g++ cmake libeigen3-dev libboost-dev
+      - name: Install python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[testing,geo]"
@@ -42,10 +42,10 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
-      - name: Install Pyinterp build requirements
+      - name: Install system requirements
         run: |
-          sudo apt-get install g++ cmake libeigen3-dev libboost-dev libhdf5-serial-dev
-      - name: Install dependencies
+          sudo apt-get install g++ cmake libeigen3-dev libboost-dev
+      - name: Install python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[testing,geo]"
