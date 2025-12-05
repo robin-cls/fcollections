@@ -22,10 +22,7 @@ jobs:
           python -m build
       - name: Setup pypirc credentials
         run: |
-          echo "[pypi]" > ~/.pypirc
-          echo "username = __token__" >> ~/.pypirc
-          echo "password = ${{ secrets.PYPI_TOKEN }}" >> ~/.pypirc
-          echo "[testpypi]" >> ~/.pypirc
+          echo "[testpypi]" > ~/.pypirc
           echo "username = __token__" >> ~/.pypirc
           echo "password = ${{ secrets.TEST_PYPI_TOKEN }}" >> ~/.pypirc
       - name: Upload package
