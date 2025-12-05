@@ -23,6 +23,9 @@ jobs:
       - uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: docs
+          cache-environment: true
+          post-cleanup: 'all'
+          init-shell: bash
           create-args: >
             python=3.12
             pip
@@ -49,8 +52,6 @@ jobs:
             geopandas
             pyinterp
             dask
-          activate-environment: docs
-          init-shell: bash
       - name: Install package (for autodoc)
         shell: bash -l {0}
         run: |
