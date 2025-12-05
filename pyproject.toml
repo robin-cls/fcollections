@@ -1,6 +1,6 @@
 [project]
 name = 'files_collections'
-version = '0.1.0.dev0'
+dynamic = ["version"]
 description = "Read a collection of files using information from their names"
 authors = [
     {name = "Robin Chevrier", email = "rchevrier@groupcls.com"},
@@ -54,7 +54,7 @@ doc = ["sphinx", "sphinx-copybutton", "sphinx-inline-tabs", "sphinx_rtd_theme",
 sad = "fcollections.sad:main"
 
 [build-system]
-requires = ["setuptools >= 77.0.3"]
+requires = ["setuptools >= 77.0.3", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [tool.isort]
