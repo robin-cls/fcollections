@@ -1,7 +1,7 @@
 [project]
-name = 'fcollections'
-version = '0.1.0'
-description = "Read a collection of files using information in their names"
+name = 'files_collections'
+version = '0.1.0.dev0'
+description = "Read a collection of files using information from their names"
 authors = [
     {name = "Robin Chevrier", email = "rchevrier@groupcls.com"},
     {name = "Anne-Sophie Tonneau", email = "atonneau@groupcls.com"}
@@ -21,6 +21,20 @@ dependencies = [
     "requests",
     "typer",
     "xarray[io]"]
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13"
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Oceanography",
+    "Development Status :: 4 - Beta"]
 
 [tool.setuptools.packages.find]
 exclude = ["**/__pycache__", "**/.ipynb_checkpoints"]
