@@ -42,98 +42,100 @@ def _decimate_dimension(group: GroupMetadata):
     try:
         # Don't use the full shapes, smaller datasets are enough for unit
         # testing
-        group.dimensions['n_box'] = 100
+        group.dimensions["n_box"] = 100
     except KeyError:
         # Nothing to do
         pass
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def _light_metadata(resources_directory: Path) -> GroupMetadata:
-    path = resources_directory / 'L3_LR_WIND_WAVE_Light_2.0'
-    with path.open(mode='rb') as f:
+    path = resources_directory / "L3_LR_WIND_WAVE_Light_2.0"
+    with path.open(mode="rb") as f:
         metadata = pickle.load(f)
 
     metadata.apply(_decimate_dimension)
     return metadata
 
 
-@pytest.fixture(scope='session')
-def l3_lr_ww_light_files(tmp_path_factory: pytest.TempPathFactory,
-                         _light_metadata: GroupMetadata) -> Path:
-    tmp_path = tmp_path_factory.mktemp('l3_karin_wind_wave')
+@pytest.fixture(scope="session")
+def l3_lr_ww_light_files(
+    tmp_path_factory: pytest.TempPathFactory, _light_metadata: GroupMetadata
+) -> Path:
+    tmp_path = tmp_path_factory.mktemp("l3_karin_wind_wave")
 
     light_file_names = [
-        'SWOT_L3_LR_WIND_WAVE_002_001_20230811T021853_20230811T031018_v2.0.nc',
-        'SWOT_L3_LR_WIND_WAVE_002_002_20230811T031018_20230811T040607_v2.0.nc'
+        "SWOT_L3_LR_WIND_WAVE_002_001_20230811T021853_20230811T031018_v2.0.nc",
+        "SWOT_L3_LR_WIND_WAVE_002_002_20230811T031018_20230811T040607_v2.0.nc",
     ]
     light_files = [tmp_path / x for x in light_file_names]
 
     generator = LightExtendedSubsetGenerator()
     for light_file in light_files:
-        with nc4.Dataset(light_file, mode='w') as nds:
+        with nc4.Dataset(light_file, mode="w") as nds:
             group_metadata_to_netcdf(nds, _light_metadata, generator)
             next(generator)
     return light_files
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def l3_lr_ww_light_dataset(_light_metadata: GroupMetadata) -> xr.Dataset:
-    ds = group_metadata_to_xarray(_light_metadata,
-                                  LightExtendedSubsetGenerator())
-    return ds.set_coords(['longitude', 'latitude'])
+    ds = group_metadata_to_xarray(_light_metadata, LightExtendedSubsetGenerator())
+    return ds.set_coords(["longitude", "latitude"])
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def _extended_metadata(resources_directory: Path) -> GroupMetadata:
-    path = resources_directory / 'L3_LR_WIND_WAVE_Extended_2.0'
-    with path.open(mode='rb') as f:
+    path = resources_directory / "L3_LR_WIND_WAVE_Extended_2.0"
+    with path.open(mode="rb") as f:
         metadata = pickle.load(f)
     metadata.apply(_decimate_dimension)
     return metadata
 
 
-@pytest.fixture(scope='session')
-def l3_lr_ww_extended_files(tmp_path_factory: pytest.TempPathFactory,
-                            _extended_metadata: GroupMetadata) -> Path:
-    tmp_path = tmp_path_factory.mktemp('l3_karin_wind_wave')
+@pytest.fixture(scope="session")
+def l3_lr_ww_extended_files(
+    tmp_path_factory: pytest.TempPathFactory, _extended_metadata: GroupMetadata
+) -> Path:
+    tmp_path = tmp_path_factory.mktemp("l3_karin_wind_wave")
 
     light_file_names = [
-        'SWOT_L3_LR_WIND_WAVE_Extended_002_001_20230811T021853_20230811T031018_v2.0.nc',
-        'SWOT_L3_LR_WIND_WAVE_Extended_002_002_20230811T031018_20230811T040607_v2.0.nc'
+        "SWOT_L3_LR_WIND_WAVE_Extended_002_001_20230811T021853_20230811T031018_v2.0.nc",
+        "SWOT_L3_LR_WIND_WAVE_Extended_002_002_20230811T031018_20230811T040607_v2.0.nc",
     ]
     files = [tmp_path / x for x in light_file_names]
 
     generator = LightExtendedSubsetGenerator()
     for extended_file in files:
-        with nc4.Dataset(extended_file, mode='w') as nds:
+        with nc4.Dataset(extended_file, mode="w") as nds:
             group_metadata_to_netcdf(nds, _extended_metadata, generator)
             next(generator)
     return files
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def l3_lr_ww_extended_dataset(_extended_metadata: GroupMetadata) -> xr.Dataset:
     ds = group_metadata_to_xarray(
-        pluck(_extended_metadata, '/tile_10km/box_40km'),
-        LightExtendedSubsetGenerator())
-    return ds.set_coords(['longitude', 'latitude'])
+        pluck(_extended_metadata, "/tile_10km/box_40km"), LightExtendedSubsetGenerator()
+    )
+    return ds.set_coords(["longitude", "latitude"])
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def l3_lr_ww_files() -> list[str]:
     # The files that we will use to test the listing
     return [
-        'v2_0/Light/cycle_482/SWOT_L3_LR_WindWave_482_011_20230406T051804_20230406T060909_v2.0.nc',
-        'v2_0/Light/cycle_482/SWOT_L3_LR_WindWave_482_012_20230406T060910_20230406T070014_PIC2_v2.0.nc',
-        'v3_0/Extended/cycle_010/SWOT_L3_LR_WindWave_Extended_010_010_20240125T025352_20240125T034438_v3.0.nc'
+        "v2_0/Light/cycle_482/SWOT_L3_LR_WindWave_482_011_20230406T051804_20230406T060909_v2.0.nc",
+        "v2_0/Light/cycle_482/SWOT_L3_LR_WindWave_482_012_20230406T060910_20230406T070014_PIC2_v2.0.nc",
+        "v3_0/Extended/cycle_010/SWOT_L3_LR_WindWave_Extended_010_010_20240125T025352_20240125T034438_v3.0.nc",
     ]
 
 
-@pytest.fixture(scope='session')
-def l3_lr_ww_dir_layout(tmp_path_factory: pytest.TempPathFactory,
-                        l3_lr_ww_files: list[str]) -> Path:
-    root = tmp_path_factory.mktemp('l2_lr_ssh')
+@pytest.fixture(scope="session")
+def l3_lr_ww_dir_layout(
+    tmp_path_factory: pytest.TempPathFactory, l3_lr_ww_files: list[str]
+) -> Path:
+    root = tmp_path_factory.mktemp("l2_lr_ssh")
 
     # create test folder
     for filepath in l3_lr_ww_files:

@@ -16,9 +16,10 @@ if tp.TYPE_CHECKING:
 
 
 def group_metadata_to_netcdf(
-    nds: nc4.Dataset | nc4.Group, group: GroupMetadata,
-    generators: dict[str, tp.Callable[[tuple[int, ...]],
-                                      np_t.NDArray[np.float64]]]):
+    nds: nc4.Dataset | nc4.Group,
+    group: GroupMetadata,
+    generators: dict[str, tp.Callable[[tuple[int, ...]], np_t.NDArray[np.float64]]],
+):
     for name, value in group.attributes.items():
         nds.setncattr(name, value)
 
@@ -31,20 +32,20 @@ def group_metadata_to_netcdf(
 
     for variable in group.variables:
         attributes = copy(variable.attributes)
-        fill_value = attributes.pop('_FillValue')
-        var = nds.createVariable(variable.name,
-                                 variable.dtype,
-                                 variable.dimensions,
-                                 fill_value=fill_value)
+        fill_value = attributes.pop("_FillValue")
+        var = nds.createVariable(
+            variable.name, variable.dtype, variable.dimensions, fill_value=fill_value
+        )
 
         shape = [dimensions[d].size for d in variable.dimensions]
         values = generators[variable.name](shape)
-        if np.issubdtype(values.dtype, np.dtype('M8')):
+        if np.issubdtype(values.dtype, np.dtype("M8")):
             values = xr.coding.times.encode_cf_datetime(
                 values,
-                variable.attributes['units'],
-                variable.attributes['calendar'],
-                dtype=variable.dtype)[0]
+                variable.attributes["units"],
+                variable.attributes["calendar"],
+                dtype=variable.dtype,
+            )[0]
         var[...] = values
 
         for name, value in attributes.items():
@@ -55,19 +56,21 @@ def group_metadata_to_netcdf(
         group_metadata_to_netcdf(ngrp, subgroup, generators)
 
 
-def variable_metadata_to_xarray(variable_metadata: VariableMetadata,
-                                values: np_t.NDArray[np.float64]):
-    da = xr.DataArray(values,
-                      dims=variable_metadata.dimensions,
-                      attrs=variable_metadata.attributes,
-                      name=variable_metadata.name)
+def variable_metadata_to_xarray(
+    variable_metadata: VariableMetadata, values: np_t.NDArray[np.float64]
+):
+    da = xr.DataArray(
+        values,
+        dims=variable_metadata.dimensions,
+        attrs=variable_metadata.attributes,
+        name=variable_metadata.name,
+    )
     return da
 
 
 def group_metadata_to_xarray(
     group: GroupMetadata,
-    generators: dict[str, tp.Callable[[tuple[int, ...]],
-                                      np_t.NDArray[np.float64]]]
+    generators: dict[str, tp.Callable[[tuple[int, ...]], np_t.NDArray[np.float64]]],
 ) -> xr.Dataset:
     dims = group.dimensions
 
@@ -96,7 +99,7 @@ def pluck(metadata: GroupMetadata, path: str) -> GroupMetadata:
         dimensions |= node.dimensions
 
     node = deepcopy(node)
-    node.name = '/'.join(names).lstrip('/')
+    node.name = "/".join(names).lstrip("/")
     node.variables = variables
     node.subgroups = []
     node.dimensions = dimensions
@@ -105,8 +108,9 @@ def pluck(metadata: GroupMetadata, path: str) -> GroupMetadata:
     return node
 
 
-def _default_half_orbit_number_generator(
-) -> tp.Generator[tuple[int, int, int], None, None]:
+def _default_half_orbit_number_generator() -> (
+    tp.Generator[tuple[int, int, int], None, None]
+):
     cycle_number, pass_number = 1, 1
     while True:
         yield (cycle_number, pass_number)
@@ -118,16 +122,17 @@ class HalfOrbitTrackCoordinatesGenerator:
     # Generate half orbit coordinates with a simple mathematical functions. The
     # epsilon_lon and epsilon_lat are factors of the functions that have been
     # tuned so that the functions are close to a real half orbit ground track
-    lon0: float = 60.
+    lon0: float = 60.0
     dlon: float = 160
-    lat0: float = 78.
-    t0: np.datetime64 = np.datetime64('2024-01-01')
-    dt: np.timedelta64 = np.timedelta64(300, 'ms')
+    lat0: float = 78.0
+    t0: np.datetime64 = np.datetime64("2024-01-01")
+    dt: np.timedelta64 = np.timedelta64(300, "ms")
 
     # Swot cycle is around 21 days
-    dt_cycle: np.datetime64 = np.timedelta64(int(20.8 * 86400), 's')
+    dt_cycle: np.datetime64 = np.timedelta64(int(20.8 * 86400), "s")
     half_orbit_numbers: tp.Iterable[tuple[int, int]] = dc.field(
-        default_factory=_default_half_orbit_number_generator)
+        default_factory=_default_half_orbit_number_generator
+    )
 
     # Factor for the coordinates approximation function
     epsilon_lon: float = 0.18
@@ -172,16 +177,19 @@ class HalfOrbitTrackCoordinatesGenerator:
         return self._cycle_number, self._pass_number
 
     def time(self, shape: tuple[int, ...]) -> np_t.NDArray[np.datetime64]:
-        times = np.arange(self.t0, self.t0 + self.dt * shape[0],
-                          self.dt).astype('M8[ns]')
+        times = np.arange(self.t0, self.t0 + self.dt * shape[0], self.dt).astype(
+            "M8[ns]"
+        )
         self._t1 = times[-1]
         self._dt_pass = self._t1 - self.t0
         return times
 
     def longitude(self, shape: tuple[int, ...]) -> np_t.NDArray[np.float64]:
         longitudes = np.tan(
-            np.linspace(-np.pi / 2 + self.epsilon_lon,
-                        np.pi / 2 - self.epsilon_lon, shape[0]))
+            np.linspace(
+                -np.pi / 2 + self.epsilon_lon, np.pi / 2 - self.epsilon_lon, shape[0]
+            )
+        )
         longitudes *= self.dlon / (longitudes[-1] - longitudes[0])
         longitudes += self.lon0 - longitudes[0]
         longitudes %= 360
@@ -193,8 +201,10 @@ class HalfOrbitTrackCoordinatesGenerator:
 
     def latitude(self, shape: tuple[int, ...]) -> np_t.NDArray[np.float64]:
         latitudes = np.sin(
-            np.linspace(np.pi / 2 + self.epsilon_lat,
-                        3 * np.pi / 2 - self.epsilon_lat, shape[0]))
+            np.linspace(
+                np.pi / 2 + self.epsilon_lat, 3 * np.pi / 2 - self.epsilon_lat, shape[0]
+            )
+        )
         latitudes *= self.lat0 / abs(np.max(latitudes))
         if len(shape) > 1:
             latitudes = np.broadcast_to(latitudes[:, None], shape)
@@ -209,8 +219,7 @@ class HalfOrbitTrackCoordinatesGenerator:
 
     def __getitem__(
         self, key: str
-    ) -> tp.Callable[[tuple[int, ...]], np_t.NDArray[np.datetime64
-                                                     | np.float64]]:
+    ) -> tp.Callable[[tuple[int, ...]], np_t.NDArray[np.datetime64 | np.float64]]:
         try:
             return getattr(self, key)
         except AttributeError:

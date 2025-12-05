@@ -32,23 +32,20 @@ from ._testers import (
     StringTester,
 )
 
-T = tp.TypeVar('T')
-U = tp.TypeVar('U')
+T = tp.TypeVar("T")
+U = tp.TypeVar("U")
 
 
 class FileNameField(ICodec[T], ITester[U, T]):
 
-    def __init__(self,
-                 name: str,
-                 default: T | None = None,
-                 description: str = ''):
+    def __init__(self, name: str, default: T | None = None, description: str = ""):
         self.default = default
         self.name = name
         self.field_description = description
 
     @property
     def description(self) -> str:
-        return self.field_description + ' ' + self.test_description
+        return self.field_description + " " + self.test_description
 
 
 class FileNameFieldString(FileNameField, StringTester, StringCodec):
@@ -66,17 +63,20 @@ class FileNameFieldDatetime(FileNameField, DateTimeTester, DateTimeCodec):
         date format
     """
 
-    def __init__(self,
-                 name: str,
-                 date_fmt: str | list,
-                 default: np.timedelta64 | None = None,
-                 description: str = ''):
+    def __init__(
+        self,
+        name: str,
+        date_fmt: str | list,
+        default: np.timedelta64 | None = None,
+        description: str = "",
+    ):
         super().__init__(name, default, description)
         super(FileNameField, self).__init__(date_fmt)
 
 
-class FileNameFieldDateDelta(FileNameField, PeriodTester, PeriodDeltaCodec,
-                             DateTimeCodec):
+class FileNameFieldDateDelta(
+    FileNameField, PeriodTester, PeriodDeltaCodec, DateTimeCodec
+):
     """Numpy datetime value.
 
     Attributes
@@ -91,20 +91,23 @@ class FileNameFieldDateDelta(FileNameField, PeriodTester, PeriodDeltaCodec,
         Whether the delta is included or not, default to False
     """
 
-    def __init__(self,
-                 name: str,
-                 date_fmt: str | list,
-                 delta: np.timedelta64,
-                 include_stop: bool = False,
-                 default: Period | None = None,
-                 description: str = ''):
+    def __init__(
+        self,
+        name: str,
+        date_fmt: str | list,
+        delta: np.timedelta64,
+        include_stop: bool = False,
+        default: Period | None = None,
+        description: str = "",
+    ):
         super().__init__(name, default, description)
         DateTimeCodec.__init__(self, date_fmt)
         PeriodDeltaCodec.__init__(self, delta, include_stop)
 
 
-class FileNameFieldDateJulianDelta(FileNameField, PeriodTester,
-                                   PeriodDeltaCodec, JulianDayCodec):
+class FileNameFieldDateJulianDelta(
+    FileNameField, PeriodTester, PeriodDeltaCodec, JulianDayCodec
+):
     """Datetime value given as a julian day.
 
     Attributes
@@ -129,8 +132,8 @@ class FileNameFieldDateJulianDelta(FileNameField, PeriodTester,
         reference: np.datetime64,
         include_stop: bool = False,
         default: Period | None = None,
-        description: str = '',
-        julian_day_format: str = 'days',
+        description: str = "",
+        julian_day_format: str = "days",
     ):
         super().__init__(name, default, description)
         JulianDayCodec.__init__(self, julian_day_format, reference)
@@ -139,12 +142,14 @@ class FileNameFieldDateJulianDelta(FileNameField, PeriodTester,
 
 class FileNameFieldDateJulian(FileNameField, DateTimeTester, JulianDayCodec):
 
-    def __init__(self,
-                 name: str,
-                 reference: np.datetime64,
-                 default: Period | None = None,
-                 description: str = '',
-                 julian_day_format: str = 'days_hours'):
+    def __init__(
+        self,
+        name: str,
+        reference: np.datetime64,
+        default: Period | None = None,
+        description: str = "",
+        julian_day_format: str = "days_hours",
+    ):
         super().__init__(name, default, description)
         super(FileNameField, self).__init__(julian_day_format, reference)
 
@@ -180,17 +185,18 @@ class FileNameFieldEnum(FileNameField, EnumTester, EnumCodec):
         enum class
     """
 
-    def __init__(self,
-                 name: str,
-                 enum_cls: type[Enum],
-                 case_type_decoded: CaseType | None = None,
-                 case_type_encoded: CaseType | None = None,
-                 default: type[Enum] | None = None,
-                 description: str = ''):
+    def __init__(
+        self,
+        name: str,
+        enum_cls: type[Enum],
+        case_type_decoded: CaseType | None = None,
+        case_type_encoded: CaseType | None = None,
+        default: type[Enum] | None = None,
+        description: str = "",
+    ):
         super().__init__(name, default, description)
         EnumTester.__init__(self, enum_cls)
-        EnumCodec.__init__(self, enum_cls, case_type_decoded,
-                           case_type_encoded)
+        EnumCodec.__init__(self, enum_cls, case_type_decoded, case_type_encoded)
 
 
 class FileNameFieldPeriod(FileNameField, PeriodTester, PeriodCodec):
@@ -206,12 +212,14 @@ class FileNameFieldPeriod(FileNameField, PeriodTester, PeriodCodec):
         dates separator. Default: '-'
     """
 
-    def __init__(self,
-                 name: str,
-                 date_fmt: str,
-                 separator='_',
-                 default: Period | None = None,
-                 description: str = ''):
+    def __init__(
+        self,
+        name: str,
+        date_fmt: str,
+        separator="_",
+        default: Period | None = None,
+        description: str = "",
+    ):
         super().__init__(name, default, description)
         super(FileNameField, self).__init__(date_fmt, separator)
 
@@ -222,20 +230,17 @@ class FieldFormatter(string.Formatter):
         self._fields = fields
         super().__init__()
 
-    def _vformat(self,
-                 format_string,
-                 args,
-                 kwargs,
-                 used_args,
-                 recursion_depth,
-                 auto_arg_index=0):
+    def _vformat(
+        self, format_string, args, kwargs, used_args, recursion_depth, auto_arg_index=0
+    ):
         # Override of the _vformat method to intercept the object conversion
         # Taken from string.py
         if recursion_depth < 0:
-            raise ValueError('Max string recursion exceeded')
+            raise ValueError("Max string recursion exceeded")
         result = []
-        for literal_text, field_name, format_spec, conversion in \
-                self.parse(format_string):
+        for literal_text, field_name, format_spec, conversion in self.parse(
+            format_string
+        ):
 
             # output the literal text
             if literal_text:
@@ -247,18 +252,22 @@ class FieldFormatter(string.Formatter):
                 #  the formatting
 
                 # handle arg indexing when empty field_names are given.
-                if field_name == '':
+                if field_name == "":
                     if auto_arg_index is False:
-                        raise ValueError('cannot switch from manual field '
-                                         'specification to automatic field '
-                                         'numbering')
+                        raise ValueError(
+                            "cannot switch from manual field "
+                            "specification to automatic field "
+                            "numbering"
+                        )
                     field_name = str(auto_arg_index)
                     auto_arg_index += 1
                 elif field_name.isdigit():
                     if auto_arg_index:
-                        raise ValueError('cannot switch from manual field '
-                                         'specification to automatic field '
-                                         'numbering')
+                        raise ValueError(
+                            "cannot switch from manual field "
+                            "specification to automatic field "
+                            "numbering"
+                        )
                     # disable auto arg incrementing, if it gets
                     # used later on, then an exception will be raised
                     auto_arg_index = False
@@ -269,7 +278,7 @@ class FieldFormatter(string.Formatter):
                 used_args.add(arg_used)
 
                 # PATCH here
-                if conversion == 'f':
+                if conversion == "f":
                     obj = self._fields[field_name].encode(obj)
                 else:
                     obj = self.convert_field(obj, conversion)
@@ -281,12 +290,13 @@ class FieldFormatter(string.Formatter):
                     kwargs,
                     used_args,
                     recursion_depth - 1,
-                    auto_arg_index=auto_arg_index)
+                    auto_arg_index=auto_arg_index,
+                )
 
                 # format the object and append to the result
                 result.append(self.format_field(obj, format_spec))
 
-        return ''.join(result), auto_arg_index
+        return "".join(result), auto_arg_index
 
 
 @dc.dataclass
@@ -312,6 +322,7 @@ class FileNameConvention:
         FileNameFieldInteger and FileNameFieldPeriod defined:
         '{cycle_number:>03d}_{period!f}' -> '003_20230102_20240201
     """
+
     regex: re.Pattern
     fields: list[FileNameField]
     generation_string: str | None = None
@@ -326,11 +337,16 @@ class FileNameConvention:
         return match_object
 
     def parse(self, match_object: re.Match) -> tuple:
-        return tuple([
-            f.decode(match_object.group(f.name))
-            if match_object.group(f.name) is not None else f.default
-            for f in self.fields
-        ])
+        return tuple(
+            [
+                (
+                    f.decode(match_object.group(f.name))
+                    if match_object.group(f.name) is not None
+                    else f.default
+                )
+                for f in self.fields
+            ]
+        )
 
     def generate(self, **kwargs):
         if self.generation_string is None:
@@ -340,8 +356,7 @@ class FileNameConvention:
         try:
             return self._formatter.format(self.generation_string, **kwargs)
         except KeyError as exc:
-            raise ValueError(
-                'Missing arguments to generate the file name') from exc
+            raise ValueError("Missing arguments to generate the file name") from exc
 
     def get_field(self, name: str) -> FileNameField:
         """Retrieve a field from its name.
@@ -368,7 +383,7 @@ class FileNameConvention:
             return next(filter(lambda f: f.name == name, self.fields))
         except StopIteration as exc:
             all_names = [f.name for f in self.fields]
-            msg = f'Field {name} does not exists in convention (fields={all_names})'
+            msg = f"Field {name} does not exists in convention (fields={all_names})"
             raise KeyError(msg) from exc
 
     def _check_consistency(self):
@@ -380,8 +395,9 @@ class FileNameConvention:
         field_names_generation_string = set(
             filter(
                 lambda x: x is not None,
-                map(lambda x: x[1],
-                    self._formatter.parse(self.generation_string))))
+                map(lambda x: x[1], self._formatter.parse(self.generation_string)),
+            )
+        )
         fields_names = {f.name for f in self.fields}
 
         # Check that the pattern has the necessary groups. It will raise an
@@ -389,16 +405,18 @@ class FileNameConvention:
         missing_fields = fields_names - field_names_generation_string
         if len(missing_fields) > 0:
             raise ValueError(
-                f'Generation string {self.generation_string} misses the '
-                f"following fields: '{missing_fields}'")
+                f"Generation string {self.generation_string} misses the "
+                f"following fields: '{missing_fields}'"
+            )
 
         # Check that the parser defines all of the regex groups. It will raise
         # an exception if there is a missing field definition
         missing_fields = field_names_generation_string - fields_names
         if len(missing_fields) > 0:
             raise ValueError(
-                'The following fields are defined in the generation string but '
-                f"not in the FileNameField list: '{missing_fields}'")
+                "The following fields are defined in the generation string but "
+                f"not in the FileNameField list: '{missing_fields}'"
+            )
 
     def _check_consistency_regex(self):
         regex_groups = set(self.regex.groupindex.keys())
@@ -410,11 +428,13 @@ class FileNameConvention:
         if len(missing_regex_groups) > 0:
             raise ValueError(
                 f"Regex misses '{self.regex.pattern}' the following fields: "
-                f"'{missing_regex_groups}'")
+                f"'{missing_regex_groups}'"
+            )
 
         # Check that the parser defines all of the regex groups. It will raise
         # an exception if there is a missing field definition
         missing_fields = regex_groups - fields_names
         if len(missing_fields) > 0:
             raise ValueError(
-                f"Missing fields definition in convention: '{missing_fields}'")
+                f"Missing fields definition in convention: '{missing_fields}'"
+            )

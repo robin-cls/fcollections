@@ -1,4 +1,5 @@
 """This module provides convenient tools for loading netcdf files."""
+
 from __future__ import annotations
 
 import logging
@@ -43,16 +44,16 @@ logging.captureWarnings(True)
 
 # Options that works for most netcdf containing a time series
 _XARRAY_TEMPORAL_NETCDFS: dict[str, str] = {
-    'engine': 'h5netcdf',
-    'combine': 'nested',
-    'concat_dim': 'time'
+    "engine": "h5netcdf",
+    "combine": "nested",
+    "concat_dim": "time",
 }
 
 # Options that works for netcdf containing a time series, but for which we need
 # to relax the backend
 _XARRAY_TEMPORAL_NETCDFS_NO_BACKEND: dict[str, str] = {
-    'combine': 'nested',
-    'concat_dim': 'time'
+    "combine": "nested",
+    "concat_dim": "time",
 }
 
 
@@ -65,9 +66,10 @@ class _NetcdfFilesDatabaseSST(FilesDatabase, PeriodMixin):
     path: str
         path to directory containing NetCDF files
     """
+
     parser = FileNameConventionSST()
     reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS)
-    sort_keys = 'time'
+    sort_keys = "time"
 
 
 class _NetcdfFilesDatabaseGriddedSLA(FilesDatabase, PeriodMixin):
@@ -79,9 +81,10 @@ class _NetcdfFilesDatabaseGriddedSLA(FilesDatabase, PeriodMixin):
     path: str
         path to directory containing NetCDF files
     """
+
     parser = FileNameConventionGriddedSLA()
     reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS)
-    sort_keys = 'time'
+    sort_keys = "time"
 
 
 class _NetcdfFilesDatabaseOHC(FilesDatabase, PeriodMixin):
@@ -93,9 +96,10 @@ class _NetcdfFilesDatabaseOHC(FilesDatabase, PeriodMixin):
     path: str
         path to directory containing NetCDF files
     """
+
     parser = FileNameConventionOHC()
     reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS_NO_BACKEND)
-    sort_keys = 'time'
+    sort_keys = "time"
 
 
 class _NetcdfFilesDatabaseOC(FilesDatabase, PeriodMixin):
@@ -110,7 +114,7 @@ class _NetcdfFilesDatabaseOC(FilesDatabase, PeriodMixin):
 
     parser = FileNameConventionOC()
     reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS)
-    sort_keys = 'time'
+    sort_keys = "time"
 
 
 class _NetcdfFilesDatabaseSWH(FilesDatabase, PeriodMixin):
@@ -122,9 +126,10 @@ class _NetcdfFilesDatabaseSWH(FilesDatabase, PeriodMixin):
     path: str
         path to directory containing NetCDF files
     """
+
     parser = FileNameConventionSWH()
     reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS)
-    sort_keys = 'time'
+    sort_keys = "time"
 
 
 class NetcdfFilesDatabaseS1AOWI(FilesDatabase, PeriodMixin):
@@ -136,9 +141,10 @@ class NetcdfFilesDatabaseS1AOWI(FilesDatabase, PeriodMixin):
     path: str
         path to directory containing NetCDF files
     """
+
     parser = FileNameConventionS1AOWI()
     reader = OpenMfDataset(xarray_options=_XARRAY_TEMPORAL_NETCDFS)
-    sort_keys = 'time'
+    sort_keys = "time"
 
 
 class NetcdfFilesDatabaseERA5(FilesDatabase, PeriodMixin):
@@ -150,9 +156,10 @@ class NetcdfFilesDatabaseERA5(FilesDatabase, PeriodMixin):
     path: str
         path to directory containing NetCDF files
     """
+
     parser = FileNameConventionERA5()
     reader = OpenMfDataset(xarray_options=_XARRAY_TEMPORAL_NETCDFS)
-    sort_keys = 'time'
+    sort_keys = "time"
 
 
 class _NetcdfFilesDatabaseMUR(FilesDatabase, PeriodMixin):
@@ -165,9 +172,10 @@ class _NetcdfFilesDatabaseMUR(FilesDatabase, PeriodMixin):
     path: str
         path to directory containing NetCDF files
     """
+
     parser = FileNameConventionMUR()
     reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS)
-    sort_keys = 'time'
+    sort_keys = "time"
 
 
 class _NetcdfFilesDatabaseDAC(FilesDatabase, DiscreteTimesMixin):
@@ -179,16 +187,17 @@ class _NetcdfFilesDatabaseDAC(FilesDatabase, DiscreteTimesMixin):
     path: str
         path to directory containing NetCDF files
     """
+
     parser = FileNameConventionDAC()
     reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS_NO_BACKEND)
-    metadata_injection = {'time': ('time', )}
-    sort_keys = ['time']
+    metadata_injection = {"time": ("time",)}
+    sort_keys = ["time"]
 
-    def __init__(self,
-                 path: Path,
-                 fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem()):
+    def __init__(
+        self, path: Path, fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem()
+    ):
         super().__init__(path, fs)
-        super(FilesDatabase, self).__init__(np.timedelta64(6, 'h'))
+        super(FilesDatabase, self).__init__(np.timedelta64(6, "h"))
 
 
 class _NetcdfFilesDatabaseSwotLRL2(FilesDatabase, PeriodMixin):
@@ -200,17 +209,19 @@ class _NetcdfFilesDatabaseSwotLRL2(FilesDatabase, PeriodMixin):
     path: str
         path to a directory containing NetCDF files
     """
+
     parser = FileNameConventionSwotL2()
     reader = SwotReaderL2LRSSH()
-    sort_keys = 'time'
+    sort_keys = "time"
 
     # These keys determines an homogeneous subset
-    unmixer = SubsetsUnmixer(partition_keys=['level', 'subset'])
+    unmixer = SubsetsUnmixer(partition_keys=["level", "subset"])
     # We expect multiple versions in an homogeneous subset. Only one half orbit
     # record is tolerated so we deduplicate the multiple version with an
     # autopick
-    deduplicator = Deduplicator(unique=('cycle_number', 'pass_number'),
-                                auto_pick_last=('version', ))
+    deduplicator = Deduplicator(
+        unique=("cycle_number", "pass_number"), auto_pick_last=("version",)
+    )
 
 
 class _NetcdfFilesDatabaseSwotLRL3(FilesDatabase, PeriodMixin):
@@ -222,14 +233,16 @@ class _NetcdfFilesDatabaseSwotLRL3(FilesDatabase, PeriodMixin):
     path: str
         path to a directory containing NetCDF files
     """
+
     parser = FileNameConventionSwotL3()
     reader = SwotReaderL3LRSSH()
-    sort_keys = 'time'
+    sort_keys = "time"
 
     # These keys determines an homogeneous subset. We expect no duplicates in
     # an homogeneous subset
-    unmixer = SubsetsUnmixer(partition_keys=['version', 'subset'],
-                             auto_pick_last=('version', ))
+    unmixer = SubsetsUnmixer(
+        partition_keys=["version", "subset"], auto_pick_last=("version",)
+    )
 
 
 class _NetcdfFilesDatabaseSwotLRWW(FilesDatabase, PeriodMixin):
@@ -254,14 +267,16 @@ class _NetcdfFilesDatabaseSwotLRWW(FilesDatabase, PeriodMixin):
     fcollections.implementations.AVISO_L3_LR_WINDWAVE_LAYOUT
         Recommended layout for the database
     """
+
     parser = FileNameConventionSwotL3WW()
     reader = SwotReaderL3WW()
-    sort_keys = 'time'
+    sort_keys = "time"
 
     # These keys determines an homogeneous subset. We expect no duplicates in
     # an homogeneous subset
-    unmixer = SubsetsUnmixer(partition_keys=['version', 'subset'],
-                             auto_pick_last=('version', ))
+    unmixer = SubsetsUnmixer(
+        partition_keys=["version", "subset"], auto_pick_last=("version",)
+    )
 
 
 class _NetcdfFilesDatabaseL3Nadir(FilesDatabase, PeriodMixin):
@@ -273,12 +288,12 @@ class _NetcdfFilesDatabaseL3Nadir(FilesDatabase, PeriodMixin):
     path: str
         path to a directory containing NetCDF files
     """
+
     parser = FileNameConventionL3Nadir()
-    deduplicator = Deduplicator(unique=('time', ),
-                                auto_pick_last=('production_date', ))
-    unmixer = SubsetsUnmixer(partition_keys=['mission', 'resolution'])
+    deduplicator = Deduplicator(unique=("time",), auto_pick_last=("production_date",))
+    unmixer = SubsetsUnmixer(partition_keys=["mission", "resolution"])
     reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS)
-    sort_keys = 'time'
+    sort_keys = "time"
 
 
 class _NetcdfFilesDatabaseL2Nadir(FilesDatabase, PeriodMixin):
@@ -290,6 +305,7 @@ class _NetcdfFilesDatabaseL2Nadir(FilesDatabase, PeriodMixin):
     path: str
         path to a directory containing NetCDF files
     """
+
     parser = FileNameConventionL2Nadir()
     reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS)
-    sort_keys = 'time'
+    sort_keys = "time"

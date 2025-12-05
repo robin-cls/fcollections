@@ -1,4 +1,5 @@
 """This module provides generic classes for interacting with a file system."""
+
 from __future__ import annotations
 
 import abc
@@ -40,98 +41,126 @@ class FilesDatabaseMeta(ABCMeta):
         # Create the class first. We need the inheritance mecanism to get the
         # 'reader' and 'parser' class attributes that may have been defined in
         # super-classes but not in the 'clsname' class being constructed
-        _create_method(attrs, 'query', '_query')
-        _create_method(attrs, 'list_files', '_files')
-        _create_method(attrs, 'variables_info', '_variables_info')
-        _create_method(attrs, 'map', '_map')
+        _create_method(attrs, "query", "_query")
+        _create_method(attrs, "list_files", "_files")
+        _create_method(attrs, "variables_info", "_variables_info")
+        _create_method(attrs, "map", "_map")
         new_class = super().__new__(cls, clsname, bases, attrs)
 
-        if clsname == 'FilesDatabase':
+        if clsname == "FilesDatabase":
             # Do not try and update the signature and docstring of our methods
             # if the BaseClass FilesDatabase has not been created already. We
             # need this BaseClass to access the default listing parameters
             return new_class
 
         parameters = _extract_parameters(new_class)
-        setattr(new_class, 'reading_parameters', parameters['reader'][1])
-        setattr(new_class, 'listing_parameters',
-                parameters['convention'][1] | parameters['predicates'][1])
+        setattr(new_class, "reading_parameters", parameters["reader"][1])
+        setattr(
+            new_class,
+            "listing_parameters",
+            parameters["convention"][1] | parameters["predicates"][1],
+        )
 
         method_parameters = _combine_parameters(new_class, parameters)
 
-        _patch_method(new_class, 'query', '_query', new_class._query.__doc__,
-                      *method_parameters['query'])
-        _patch_method(new_class, 'map', '_map', new_class._map.__doc__,
-                      *method_parameters['map'])
-        _patch_method(new_class, 'list_files', '_files',
-                      new_class._files.__doc__,
-                      *method_parameters['list_files'])
-        _patch_method(new_class, 'variables_info', '_variables_info',
-                      new_class._variables_info.__doc__,
-                      *method_parameters['variables_info'])
+        _patch_method(
+            new_class,
+            "query",
+            "_query",
+            new_class._query.__doc__,
+            *method_parameters["query"],
+        )
+        _patch_method(
+            new_class, "map", "_map", new_class._map.__doc__, *method_parameters["map"]
+        )
+        _patch_method(
+            new_class,
+            "list_files",
+            "_files",
+            new_class._files.__doc__,
+            *method_parameters["list_files"],
+        )
+        _patch_method(
+            new_class,
+            "variables_info",
+            "_variables_info",
+            new_class._variables_info.__doc__,
+            *method_parameters["variables_info"],
+        )
 
         return new_class
 
 
 def _extract_parameters(
-    new_class: tp.Type[FilesDatabase]
-) -> dict[str, tuple[dict[str, dcs.DocstringParam], dict[str,
-                                                         inspect.Parameter]]]:
+    new_class: tp.Type[FilesDatabase],
+) -> dict[str, tuple[dict[str, dcs.DocstringParam], dict[str, inspect.Parameter]]]:
     parameters = {}
-    parameters['reader'] = _reading_parameters(new_class.reader)
-    parameters['convention'] = _convention_parameters(new_class.parser)
-    parameters['predicates'] = _predicates_parameters(
-        new_class.predicate_classes)
+    parameters["reader"] = _reading_parameters(new_class.reader)
+    parameters["convention"] = _convention_parameters(new_class.parser)
+    parameters["predicates"] = _predicates_parameters(new_class.predicate_classes)
     return parameters
 
 
 def _combine_parameters(
     new_class: tp.Type[FilesDatabase],
-    parameters: dict[str, tuple[dict[str, dcs.DocstringParam],
-                                dict[str, inspect.Parameter]]]
-) -> dict[str, tuple[dict[str, dcs.DocstringParam], dict[str,
-                                                         inspect.Parameter]]]:
+    parameters: dict[
+        str, tuple[dict[str, dcs.DocstringParam], dict[str, inspect.Parameter]]
+    ],
+) -> dict[str, tuple[dict[str, dcs.DocstringParam], dict[str, inspect.Parameter]]]:
     out = {}
 
     # Mix file name convention parameters, reading parameters and predicates
     # parameters
-    query_docstring = list((parameters['reader'][0]
-                            | parameters['convention'][0]
-                            | parameters['predicates'][0]).values())
-    query_signature = list((parameters['reader'][1]
-                            | parameters['convention'][1]
-                            | parameters['predicates'][1]).values())
-    out['query'] = (query_docstring, query_signature)
-    out['map'] = (query_docstring, query_signature)
+    query_docstring = list(
+        (
+            parameters["reader"][0]
+            | parameters["convention"][0]
+            | parameters["predicates"][0]
+        ).values()
+    )
+    query_signature = list(
+        (
+            parameters["reader"][1]
+            | parameters["convention"][1]
+            | parameters["predicates"][1]
+        ).values()
+    )
+    out["query"] = (query_docstring, query_signature)
+    out["map"] = (query_docstring, query_signature)
 
     # Mix (base class) listing files parameters, file name convention
     # parameters and predicates parameters
     # self is included in the listing_signature_parameters
-    files_docstring = list((parameters['convention'][0]
-                            | parameters['predicates'][0]).values())
-    files_signature = list((parameters['convention'][1]
-                            | parameters['predicates'][1]).values())
-    out['list_files'] = (files_docstring, files_signature)
+    files_docstring = list(
+        (parameters["convention"][0] | parameters["predicates"][0]).values()
+    )
+    files_signature = list(
+        (parameters["convention"][1] | parameters["predicates"][1]).values()
+    )
+    out["list_files"] = (files_docstring, files_signature)
 
     # Filter convention parameters. Only the fields matching the unmixer
     # subsetting keys will be accepted
     def _is_subset_key(
-            item: tuple[str, dcs.DocstringParam | inspect.Parameter]) -> bool:
-        return new_class.unmixer is not None and item[
-            0] in new_class.unmixer.partition_keys
+        item: tuple[str, dcs.DocstringParam | inspect.Parameter],
+    ) -> bool:
+        return (
+            new_class.unmixer is not None
+            and item[0] in new_class.unmixer.partition_keys
+        )
 
     info_docstring = list(
-        map(lambda x: x[1],
-            filter(_is_subset_key, parameters['convention'][0].items())))
+        map(lambda x: x[1], filter(_is_subset_key, parameters["convention"][0].items()))
+    )
     info_signature = list(
-        map(lambda x: x[1],
-            filter(_is_subset_key, parameters['convention'][1].items())))
-    out['variables_info'] = (info_docstring, info_signature)
+        map(lambda x: x[1], filter(_is_subset_key, parameters["convention"][1].items()))
+    )
+    out["variables_info"] = (info_docstring, info_signature)
     return out
 
 
 def _reading_parameters(
-    reader: IFilesReader
+    reader: IFilesReader,
 ) -> tuple[dict[str, dcs.DocstringParam], dict[str, inspect.Parameter]]:
     if reader is None:
         return {}, {}
@@ -139,20 +168,21 @@ def _reading_parameters(
     reading_docstring_parameters = {
         p.arg_name: p
         for p in dcs.parse(reader.read.__doc__).params
-        if p.arg_name not in ['files', 'fs', 'preprocess']
+        if p.arg_name not in ["files", "fs", "preprocess"]
     }
 
     reading_signature_parameters = {
         k: p.replace(kind=inspect.Parameter.KEYWORD_ONLY)
         for k, p in inspect.signature(reader.read).parameters.items()
-        if k not in [
-            'files',
-            'fs',
+        if k
+        not in [
+            "files",
+            "fs",
             # Xarray readers usually declares a preprocess arguments for their
             # subclasses. This is not interesting for the high level user and
             # is removed from the interface. Ex. OpenMfDataset and
             # GeoOpenMfDataset
-            'preprocess',
+            "preprocess",
         ]
     }
 
@@ -160,26 +190,31 @@ def _reading_parameters(
 
 
 def _convention_parameters(
-    parser: FileNameConvention
+    parser: FileNameConvention,
 ) -> tuple[dict[str, dcs.DocstringParam], dict[str, inspect.Parameter]]:
     if parser is None:
         return {}, {}
 
     fields = parser.fields
     convention_docstring_parameters = {
-        field.name:
-        dcs.DocstringParam(['param', field.name],
-                           textwrap.fill(field.description), field.name,
-                           field.type.__name__, False, None)
+        field.name: dcs.DocstringParam(
+            ["param", field.name],
+            textwrap.fill(field.description),
+            field.name,
+            field.type.__name__,
+            False,
+            None,
+        )
         for field in fields
     }
 
     convention_signature_parameters = {
-        f.name:
-        inspect.Parameter(f.name,
-                          default=inspect.Parameter.empty,
-                          annotation=f.type,
-                          kind=inspect.Parameter.KEYWORD_ONLY)
+        f.name: inspect.Parameter(
+            f.name,
+            default=inspect.Parameter.empty,
+            annotation=f.type,
+            kind=inspect.Parameter.KEYWORD_ONLY,
+        )
         for f in fields
     }
 
@@ -187,7 +222,7 @@ def _convention_parameters(
 
 
 def _predicates_parameters(
-    predicate_classes: list[IPredicate] | None
+    predicate_classes: list[IPredicate] | None,
 ) -> tuple[dict[str, dcs.DocstringParam], dict[str, inspect.Parameter]]:
     if predicate_classes is None:
         return {}, {}
@@ -197,14 +232,13 @@ def _predicates_parameters(
         docstring_parameters |= {
             p.arg_name: p
             for p in dcs.parse(predicate_builder.__init__.__doc__).params
-            if p not in ['self', 'indexes']
+            if p not in ["self", "indexes"]
         }
 
         signature_parameters |= {
             k: p.replace(kind=inspect.Parameter.KEYWORD_ONLY)
-            for k, p in inspect.signature(
-                predicate_builder.__init__).parameters.items()
-            if k not in ['self', 'indexes']
+            for k, p in inspect.signature(predicate_builder.__init__).parameters.items()
+            if k not in ["self", "indexes"]
         }
 
     return docstring_parameters, signature_parameters
@@ -225,10 +259,14 @@ def _create_method(attrs: dict[str, tp.Any], name: str, internal_name: str):
     attrs[name].__name__ = name
 
 
-def _patch_method(cls: tp.Type[FilesDatabase], name: str, internal_name: str,
-                  docstring_template: str,
-                  docstring_parameters: list[dcs.DocstringParam],
-                  signature_parameters: list[inspect.Parameter]):
+def _patch_method(
+    cls: tp.Type[FilesDatabase],
+    name: str,
+    internal_name: str,
+    docstring_template: str,
+    docstring_parameters: list[dcs.DocstringParam],
+    signature_parameters: list[inspect.Parameter],
+):
 
     docstring_query = dcs.parse(docstring_template)
     docstring_query.meta.extend(docstring_parameters)
@@ -238,8 +276,9 @@ def _patch_method(cls: tp.Type[FilesDatabase], name: str, internal_name: str,
     doc = dcs.compose(docstring_query)
 
     method_parameters = [
-        p for name, p in inspect.signature(getattr(
-            cls, internal_name)).parameters.items() if name != 'kwargs'
+        p
+        for name, p in inspect.signature(getattr(cls, internal_name)).parameters.items()
+        if name != "kwargs"
     ]
     method_parameters += signature_parameters
     signature = inspect.Signature(method_parameters)
@@ -276,6 +315,7 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         Usually, it is a complex test involving auxiliary data, such as ground
         track footprints or half_orbit/periods tables
     """
+
     parser: FileNameConvention | None = None
     reader: IFilesReader | None = None
     unmixer: SubsetsUnmixer | None = None
@@ -285,19 +325,21 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
     predicate_classes: list[type[IPredicate]] | None = None
 
     def __init__(
-            self,
-            path: str,
-            fs: AbstractFileSystem = LocalFileSystem(follow_symlinks=True),
-            layout: Layout | None = None):
+        self,
+        path: str,
+        fs: AbstractFileSystem = LocalFileSystem(follow_symlinks=True),
+        layout: Layout | None = None,
+    ):
         self.path = path
         self.fs = fs
-        self.discoverer = FileDiscoverer(parser=self.parser,
-                                         iterable=FileSystemIterable(
-                                             fs, layout=layout))
+        self.discoverer = FileDiscoverer(
+            parser=self.parser, iterable=FileSystemIterable(fs, layout=layout)
+        )
 
-        def raise_if_unknown_keys(obj: Deduplicator | SubsetsUnmixer
-                                  | dict[str, tuple[str, ...]] | None,
-                                  name: str):
+        def raise_if_unknown_keys(
+            obj: Deduplicator | SubsetsUnmixer | dict[str, tuple[str, ...]] | None,
+            name: str,
+        ):
             if obj is None:
                 return
 
@@ -308,23 +350,26 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
                 unknown = obj.keys - fields_names
 
             if len(unknown) > 0:
-                raise ValueError(f'{name} contains unknown fields: {unknown}')
+                raise ValueError(f"{name} contains unknown fields: {unknown}")
 
-        raise_if_unknown_keys(self.deduplicator, 'Deduplicator')
-        raise_if_unknown_keys(self.unmixer, 'Subsets Unmixer')
-        raise_if_unknown_keys(self.metadata_injection, 'Metadata Injection')
+        raise_if_unknown_keys(self.deduplicator, "Deduplicator")
+        raise_if_unknown_keys(self.unmixer, "Subsets Unmixer")
+        raise_if_unknown_keys(self.metadata_injection, "Metadata Injection")
 
         if not self.fs.exists(path):
             raise NotExistingPathError(
-                f"The path {path} doesn't exist in the file system.")
+                f"The path {path} doesn't exist in the file system."
+            )
 
-    def _files(self,
-               sort: bool = False,
-               deduplicate: bool = False,
-               unmix: bool = False,
-               predicates=(),
-               stat_fields=(),
-               **kwargs) -> pda.DataFrame:
+    def _files(
+        self,
+        sort: bool = False,
+        deduplicate: bool = False,
+        unmix: bool = False,
+        predicates=(),
+        stat_fields=(),
+        **kwargs,
+    ) -> pda.DataFrame:
         """List the files matching the given criteria.
 
         Parameters
@@ -369,7 +414,7 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         bad_kwargs = [k for k in kwargs if k not in self.listing_parameters]
         if bad_kwargs != []:
             raise ValueError(
-                f'list_files() got unexpected keyword argument(s): {bad_kwargs}'
+                f"list_files() got unexpected keyword argument(s): {bad_kwargs}"
             )
 
         # Auto-build declared predicates. Parameters used by the predicates are
@@ -388,33 +433,40 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
                     predicate = predicate_builder(
                         record_indexes,
                         # Extract args from the parameters
-                        *[
-                            kwargs.pop(p)
-                            for p in predicate_builder.parameters()
-                        ])
+                        *[kwargs.pop(p) for p in predicate_builder.parameters()],
+                    )
                     predicates.append(predicate)
-                    logger.debug('Added predicate over parameters %s',
-                                 predicate_builder.parameters())
+                    logger.debug(
+                        "Added predicate over parameters %s",
+                        predicate_builder.parameters(),
+                    )
                 except KeyError:
                     logger.debug(
-                        'Predicate build skipped, missing one of the following parameters %s',
-                        predicate_builder.parameters())
+                        "Predicate build skipped, missing one of the following parameters %s",
+                        predicate_builder.parameters(),
+                    )
 
         df = self.discoverer.list(
             self.path,
             predicates=predicates,
             stat_fields=stat_fields,
-            **{k: kwargs[k]
-               for k in kwargs if k in self.listing_parameters})
+            **{k: kwargs[k] for k in kwargs if k in self.listing_parameters},
+        )
 
         postprocesses = map(
             lambda item: item[1],
-            filter(lambda item: item[0],
-                   [(unmix and self.unmixer is not None, self.unmixer),
-                    (deduplicate
-                     and self.deduplicator is not None, self.deduplicator),
-                    (sort and self.sort_keys is not None,
-                     lambda df: df.sort_values(self.sort_keys))]))
+            filter(
+                lambda item: item[0],
+                [
+                    (unmix and self.unmixer is not None, self.unmixer),
+                    (deduplicate and self.deduplicator is not None, self.deduplicator),
+                    (
+                        sort and self.sort_keys is not None,
+                        lambda df: df.sort_values(self.sort_keys),
+                    ),
+                ],
+            ),
+        )
 
         for postprocess in postprocesses:
             df = postprocess(df)
@@ -431,37 +483,36 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         """
         # This docstring will be superseded by the metaclass
         bad_kwargs = [
-            k for k in kwargs if k not in self.listing_parameters
-            and k not in self.reading_parameters
+            k
+            for k in kwargs
+            if k not in self.listing_parameters and k not in self.reading_parameters
         ]
         if bad_kwargs != []:
             raise ValueError(
-                f'query() got unexpected keyword argument(s): {bad_kwargs}')
+                f"query() got unexpected keyword argument(s): {bad_kwargs}"
+            )
 
-        df = self._files(**{
-            k: kwargs[k]
-            for k in kwargs if k in self.listing_parameters
-        },
-                         unmix=True,
-                         deduplicate=True,
-                         sort=True)
+        df = self._files(
+            **{k: kwargs[k] for k in kwargs if k in self.listing_parameters},
+            unmix=True,
+            deduplicate=True,
+            sort=True,
+        )
 
         if len(df) == 0:
             return None
 
         # Reading parameters from the files metadata table
         reading_parameters = {
-            k: df[k].values[0]
-            for k in df if k in self.reading_parameters
+            k: df[k].values[0] for k in df if k in self.reading_parameters
         }
         # Reading parameters given by the user. These are given with a
         # lesser priority because user input may not be sanitized
         reading_parameters |= {
-            k: kwargs[k]
-            for k in kwargs if k in self.reading_parameters and k not in df
+            k: kwargs[k] for k in kwargs if k in self.reading_parameters and k not in df
         }
 
-        files = df['filename'].tolist()
+        files = df["filename"].tolist()
         ds = self.reader.read(files=files, fs=self.fs, **reading_parameters)
 
         # Add another field in the dataset from the files metadata table
@@ -494,10 +545,11 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
             from the files metadata table
         """
         # This docstring will be superseded by the metaclass
-        unknown = kwargs.keys() - (self.unmixer.partition_keys
-                                   if self.unmixer is not None else set())
+        unknown = kwargs.keys() - (
+            self.unmixer.partition_keys if self.unmixer is not None else set()
+        )
         if len(unknown) > 0:
-            msg = f'{inspect.stack()[0][3]} got unexpected keyword arguments {unknown}'
+            msg = f"{inspect.stack()[0][3]} got unexpected keyword arguments {unknown}"
             raise TypeError(msg)
 
         df = self._files(**kwargs, unmix=True)
@@ -507,8 +559,9 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         file = df.filename[0]
         return self.reader.metadata(file, fs=self.fs)
 
-    def _map(self, func: tp.Callable[[xr_t.Dataset, dict[str, tp.Any]],
-                                     tp.Any], **kwargs) -> dask.bag.core.Bag:
+    def _map(
+        self, func: tp.Callable[[xr_t.Dataset, dict[str, tp.Any]], tp.Any], **kwargs
+    ) -> dask.bag.core.Bag:
         """Map a function over dataset extracted from the files.
 
         Parameters
@@ -524,33 +577,27 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         try:
             import dask.bag.core
         except ImportError as exc:
-            msg = ('Install dask package to map a function over a files '
-                   'collection')
+            msg = "Install dask package to map a function over a files " "collection"
             raise NotImplementedError(msg) from exc
 
-        df = self._files(**{
-            k: kwargs[k]
-            for k in kwargs if k in self.listing_parameters
-        },
-                         unmix=True,
-                         deduplicate=True,
-                         sort=True)
+        df = self._files(
+            **{k: kwargs[k] for k in kwargs if k in self.listing_parameters},
+            unmix=True,
+            deduplicate=True,
+            sort=True,
+        )
 
         # Reading parameters from the files metadata table and from the user.
-        reading_parameters = (
-            {
-                k: df[k].values[0]
-                for k in df if k in self.reading_parameters
-            }
-            | {
-                k: kwargs[k]
-                for k in kwargs if k in self.reading_parameters and k not in df
-            })
+        reading_parameters = {
+            k: df[k].values[0] for k in df if k in self.reading_parameters
+        } | {
+            k: kwargs[k] for k in kwargs if k in self.reading_parameters and k not in df
+        }
 
         def wrapped(record: dict[str, tp.Any]):
-            ds = self.reader.read(files=[record.filename],
-                                  fs=self.fs,
-                                  **reading_parameters)
+            ds = self.reader.read(
+                files=[record.filename], fs=self.fs, **reading_parameters
+            )
             return func(ds, record)
 
         bag = dask.bag.core.from_sequence(df.to_records())
@@ -567,20 +614,28 @@ class SubsetsUnmixer:
             return df
 
         try:
-            subsets = df.groupby([
-                df[partition_key].apply(transform)
-                if transform is not None else df[partition_key]
-                for partition_key, transform in self.partition_keys.items()
-            ])
+            subsets = df.groupby(
+                [
+                    (
+                        df[partition_key].apply(transform)
+                        if transform is not None
+                        else df[partition_key]
+                    )
+                    for partition_key, transform in self.partition_keys.items()
+                ]
+            )
         except AttributeError:
             # We have a tuple
             subsets = df.groupby(list(self.partition_keys))
 
         # Pick one subset using panda duplicate handling
-        subset_names = [(group, ) if len(self.partition_keys) == 1 else group
-                        for group in subsets.groups.keys()]
-        df_subsets = pda.DataFrame.from_records(subset_names,
-                                                columns=self.partition_keys)
+        subset_names = [
+            (group,) if len(self.partition_keys) == 1 else group
+            for group in subsets.groups.keys()
+        ]
+        df_subsets = pda.DataFrame.from_records(
+            subset_names, columns=self.partition_keys
+        )
 
         # Sort the dataframe containing the subset using the auto_pick_last keys
         # Unique records of manual_pick keys will be chosen relying on this sort
@@ -593,18 +648,19 @@ class SubsetsUnmixer:
         # for the auto_pick_last keys
         manual_pick = list(set(self.partition_keys) - set(self.auto_pick_last))
         if len(manual_pick) > 0:
-            df_subsets = df_subsets.drop_duplicates(manual_pick, keep='last')
+            df_subsets = df_subsets.drop_duplicates(manual_pick, keep="last")
             if len(df_subsets) > 1:
                 ambiguity = {
                     key: df_subsets[key].unique().tolist()
-                    for key in manual_pick if len(df_subsets[key].unique()) > 1
+                    for key in manual_pick
+                    if len(df_subsets[key].unique()) > 1
                 }
                 raise ValueError(
-                    f'Subsets could not be unmixed, the following keys are duplicated and should be fixed manually: {ambiguity}'
+                    f"Subsets could not be unmixed, the following keys are duplicated and should be fixed manually: {ambiguity}"
                 )
 
         group_name = tuple(df_subsets.to_records(index=False)[-1])
-        logger.debug('Subset selected %s', group_name)
+        logger.debug("Subset selected %s", group_name)
         return subsets.get_group(group_name)
 
     @property
@@ -620,7 +676,7 @@ class Deduplicator:
     def __call__(self, df: pda.DataFrame) -> pda.DataFrame:
         # Auto-deduplication using sort
         df.sort_values([*self.unique, *self.auto_pick_last], inplace=True)
-        df = df.drop_duplicates(list(self.unique), keep='last')
+        df = df.drop_duplicates(list(self.unique), keep="last")
         df.reset_index(inplace=True, drop=True)
         return df
 

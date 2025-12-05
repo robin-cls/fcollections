@@ -3,12 +3,14 @@ from enum import Enum, auto
 
 class Sensor(Enum):
     """Sensor enum."""
+
     OLCI = auto()
     MULTI = auto()
 
 
 class ProductLevel(Enum):
     """Product level enum."""
+
     L1A = auto()
     L1B = auto()
     L2 = auto()
@@ -42,6 +44,7 @@ class Temporality(Enum):
     fcollections.implementations.Timeliness
         L2_LR_SSH product temporality definition
     """
+
     #: Reprocessed data calibrated on the MY nadir dataset
     REPROC = auto()
     #: Forward data calibrated on the NRT nadir dataset

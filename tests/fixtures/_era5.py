@@ -8,19 +8,18 @@ if tp.TYPE_CHECKING:
     from pathlib import Path
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def era5_files() -> list[str]:
     return [
-        'reanalysis-era5-single-levels_20250302.nc',
-        'reanalysis-era5-single-levels_20250303.nc',
+        "reanalysis-era5-single-levels_20250302.nc",
+        "reanalysis-era5-single-levels_20250303.nc",
     ]
 
 
-@pytest.fixture(scope='session')
-def era5_dir(tmp_path_factory: pytest.TempPathFactory,
-             era5_files: list[str]) -> Path:
+@pytest.fixture(scope="session")
+def era5_dir(tmp_path_factory: pytest.TempPathFactory, era5_files: list[str]) -> Path:
     # create test folder
-    test_dir = tmp_path_factory.mktemp('test_dir')
+    test_dir = tmp_path_factory.mktemp("test_dir")
 
     # create test files
     for file in era5_files:

@@ -1,0 +1,80 @@
+name: Documentation
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["*"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: docs
+          cache-environment: true
+          post-cleanup: 'all'
+          init-shell: bash
+          create-args: >
+            python=3.12
+            pip
+            sphinx
+            sphinx-copybutton
+            sphinx-inline-tabs
+            sphinx_rtd_theme
+            sphinx-tabs
+            docstring_parser
+            fsspec
+            h5netcdf
+            jinja2
+            netCDF4
+            numba
+            numpy
+            requests
+            typer
+            xarray
+            pytest
+            pytest-cov
+            sympy
+            beautifulsoup4
+            shapely
+            geopandas
+            pyinterp
+            dask
+      - name: Install package (for autodoc)
+        shell: bash -l {0}
+        run: |
+          pip install -e .
+      - name: Build Sphinx HTML
+        shell: bash -l {0}
+        run: |
+          sphinx-build -b html docs build -W
+      - name: Upload artifact for Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+          name: docs
+
+  deploy:
+    needs: build-docs
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Deploy stable docs
+        id: deploy
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: docs
+          target_branch: gh-pages
+          folder: stable

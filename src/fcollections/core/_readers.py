@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 def compose(
-    func1: tp.Callable[[xr.Dataset], xr.Dataset], *func2:
-    tp.Callable[[xr.Dataset], xr.Dataset] | None
+    func1: tp.Callable[[xr.Dataset], xr.Dataset],
+    *func2: tp.Callable[[xr.Dataset], xr.Dataset] | None,
 ) -> tp.Callable[[xr.Dataset], xr.Dataset]:
     """Compose multiple functions that preprocess an xarray Dataset.
 
@@ -64,11 +64,13 @@ class IFilesReader(ABC):
     """
 
     @abstractmethod
-    def read(self,
-             files: list[str] | list[list[str]],
-             selected_variables: list[str] | None = None,
-             fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem(),
-             **kwargs: tp.Any) -> xr.Dataset:
+    def read(
+        self,
+        files: list[str] | list[list[str]],
+        selected_variables: list[str] | None = None,
+        fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem(),
+        **kwargs: tp.Any,
+    ) -> xr.Dataset:
         """Read a list of files.
 
         Parameters
@@ -88,9 +90,7 @@ class IFilesReader(ABC):
 
     @abstractmethod
     def metadata(
-        self,
-        file: str,
-        fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem()
+        self, file: str, fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem()
     ) -> GroupMetadata:
         """Load the metadata of the given file.
 
@@ -139,15 +139,18 @@ class OpenMfDataset(IFilesReader):
     """
 
     def __init__(self, xarray_options: dict[str, str] | None = None):
-        self.xarray_options: dict[
-            str, str] = {} if xarray_options is None else xarray_options
+        self.xarray_options: dict[str, str] = (
+            {} if xarray_options is None else xarray_options
+        )
 
-    def read(self,
-             files: list[str] | list[list[str]],
-             selected_variables: list[str] | None = None,
-             fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem(),
-             preprocess: tp.Callable[[xr.Dataset], xr.Dataset] | None = None,
-             **kwargs: tp.Any) -> xr.Dataset:
+    def read(
+        self,
+        files: list[str] | list[list[str]],
+        selected_variables: list[str] | None = None,
+        fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem(),
+        preprocess: tp.Callable[[xr.Dataset], xr.Dataset] | None = None,
+        **kwargs: tp.Any,
+    ) -> xr.Dataset:
         """Read a list of files.
 
         Parameters
@@ -177,58 +180,65 @@ class OpenMfDataset(IFilesReader):
 
         counter = Counter()
         _map_nested(counter.increment, files)
-        logger.info('Files to read: %d', counter.count)
+        logger.info("Files to read: %d", counter.count)
 
         with warnings.catch_warnings():
-            if fs.protocol == ('file', 'local'):
+            if fs.protocol == ("file", "local"):
                 files_opened = files
             else:
                 files_opened = _map_nested(fs.open, files)
             drop_variables = self._selected_to_dropped(
-                files_opened, selected_variables,
-                self.xarray_options.get('group', None))
+                files_opened, selected_variables, self.xarray_options.get("group", None)
+            )
 
             # time and time_tai can contain NaT and this triggers a Runtime
             # warning from xarray. We ignore this for the moment but we might
             # interpolate the times later
-            warnings.filterwarnings('ignore',
-                                    category=RuntimeWarning,
-                                    module='xarray.coding.times')
+            warnings.filterwarnings(
+                "ignore", category=RuntimeWarning, module="xarray.coding.times"
+            )
 
-            warnings.filterwarnings('ignore',
-                                    category=FutureWarning,
-                                    module='xarray.core')
+            warnings.filterwarnings(
+                "ignore", category=FutureWarning, module="xarray.core"
+            )
 
-            return xr.open_mfdataset(files_opened,
-                                     drop_variables=drop_variables,
-                                     **self.xarray_options,
-                                     preprocess=preprocess)
+            return xr.open_mfdataset(
+                files_opened,
+                drop_variables=drop_variables,
+                **self.xarray_options,
+                preprocess=preprocess,
+            )
 
-    def _selected_to_dropped(self, files: list[str],
-                             selected_variables: list[str] | None,
-                             group: str | None) -> None | list[str]:
+    def _selected_to_dropped(
+        self, files: list[str], selected_variables: list[str] | None, group: str | None
+    ) -> None | list[str]:
         if len(files) == 0:
             return []
 
         # Handle one level of nested files
-        first_file = files[len(files) - 1][0] if isinstance(
-            files[len(files) - 1], list) else files[len(files) - 1]
+        first_file = (
+            files[len(files) - 1][0]
+            if isinstance(files[len(files) - 1], list)
+            else files[len(files) - 1]
+        )
 
         # Convert selected variables to drop variables
-        drop_variables = [
-            k for k in xr.open_dataset(first_file, group=group).variables
-            if k not in selected_variables
-        ] if selected_variables is not None else []
+        drop_variables = (
+            [
+                k
+                for k in xr.open_dataset(first_file, group=group).variables
+                if k not in selected_variables
+            ]
+            if selected_variables is not None
+            else []
+        )
 
         return drop_variables
 
     def metadata(
-        self,
-        file: str,
-        fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem()
+        self, file: str, fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem()
     ) -> GroupMetadata:
-        with fs.open(file, 'rb') as f:
-            with nc4.Dataset('placeholder.nc', mode='r',
-                             memory=f.read()) as nds:
+        with fs.open(file, "rb") as f:
+            with nc4.Dataset("placeholder.nc", mode="r", memory=f.read()) as nds:
                 group = group_metadata_from_netcdf(nds)
         return group

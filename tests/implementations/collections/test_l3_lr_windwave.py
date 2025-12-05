@@ -27,30 +27,30 @@ class TestReader:
         try:
             # Reader for test configuration with geo packages available
             from fcollections.implementations.optional import GeoSwotReaderL3WW
+
             self.reader = GeoSwotReaderL3WW()
         except ImportError:
             # Fall back reader
             self.reader = SwotReaderL3WW()
 
     def test_read_bad_subset(self):
-        with pytest.raises(ValueError, match='Light or Extended'):
-            self.reader.read(ProductSubset.Unsmoothed, ['dummy'])
+        with pytest.raises(ValueError, match="Light or Extended"):
+            self.reader.read(ProductSubset.Unsmoothed, ["dummy"])
 
     def test_read_light_no_files(self):
         # no files -> ValueError
-        with pytest.raises(ValueError, match='least one'):
+        with pytest.raises(ValueError, match="least one"):
             self.reader.read(ProductSubset.Light, [])
 
-    @pytest.mark.parametrize('tile, box', [(20, None), (None, 20), (10, 20)])
+    @pytest.mark.parametrize("tile, box", [(20, None), (None, 20), (10, 20)])
     def test_read_light_bad_arguments(self, tile: int, box: int):
         # tile and box should be None for Light subset
         with pytest.raises(ValueError, match="'tile' and 'box'"):
-            self.reader.read(ProductSubset.Light, ['dummy'],
-                             tile=tile,
-                             box=box)
+            self.reader.read(ProductSubset.Light, ["dummy"], tile=tile, box=box)
 
-    def test_read_light_nominal(self, l3_lr_ww_light_files: list[Path],
-                                l3_lr_ww_light_dataset: xr.Dataset):
+    def test_read_light_nominal(
+        self, l3_lr_ww_light_files: list[Path], l3_lr_ww_light_dataset: xr.Dataset
+    ):
         # Nominal case
         ds = self.reader.read(ProductSubset.Light, l3_lr_ww_light_files[:1])
         ds = ds.compute()
@@ -62,25 +62,22 @@ class TestReader:
         ds_0 = self.reader.read(ProductSubset.Light, l3_lr_ww_light_files[:1])
         ds_1 = self.reader.read(ProductSubset.Light, l3_lr_ww_light_files[1:2])
 
+        xr.testing.assert_identical(ds_0, ds.isel(n_box=slice(0, ds_0.sizes["n_box"])))
         xr.testing.assert_identical(
-            ds_0, ds.isel(n_box=slice(0, ds_0.sizes['n_box'])))
-        xr.testing.assert_identical(
-            ds_1, ds.isel(n_box=slice(ds_0.sizes['n_box'], None)))
+            ds_1, ds.isel(n_box=slice(ds_0.sizes["n_box"], None))
+        )
 
     @pytest.mark.with_geo_packages
     def test_read_light_geographical_selection(
-            self, l3_lr_ww_light_files: list[Path],
-            l3_lr_ww_light_dataset: xr.Dataset):
+        self, l3_lr_ww_light_files: list[Path], l3_lr_ww_light_dataset: xr.Dataset
+    ):
         # Cropped data
         bbox = (80, 70, 90, 90)
-        reference = brute_force_geographical_selection(l3_lr_ww_light_dataset,
-                                                       *bbox)
-        assert reference.sizes['n_box'] < l3_lr_ww_light_dataset.sizes['n_box']
-        assert reference.sizes['n_box'] > 0
+        reference = brute_force_geographical_selection(l3_lr_ww_light_dataset, *bbox)
+        assert reference.sizes["n_box"] < l3_lr_ww_light_dataset.sizes["n_box"]
+        assert reference.sizes["n_box"] > 0
 
-        ds = self.reader.read(ProductSubset.Light,
-                              l3_lr_ww_light_files[:1],
-                              bbox=bbox)
+        ds = self.reader.read(ProductSubset.Light, l3_lr_ww_light_files[:1], bbox=bbox)
         ds = ds.compute()
 
         xr.testing.assert_equal(reference, ds)
@@ -92,161 +89,188 @@ class TestReader:
     ):
         bbox = (80, 70, 90, 90)
         with pytest.raises(TypeError):
-            self.reader.read(ProductSubset.Light,
-                             l3_lr_ww_light_files[:1],
-                             bbox=bbox)
+            self.reader.read(ProductSubset.Light, l3_lr_ww_light_files[:1], bbox=bbox)
 
-    def test_read_light_variables_selection(self,
-                                            l3_lr_ww_light_files: list[Path]):
+    def test_read_light_variables_selection(self, l3_lr_ww_light_files: list[Path]):
         # Select variables
-        requested_variables = {'longitude', 'H18_model'}
-        ds = self.reader.read(ProductSubset.Light,
-                              l3_lr_ww_light_files[:1],
-                              selected_variables=requested_variables)
+        requested_variables = {"longitude", "H18_model"}
+        ds = self.reader.read(
+            ProductSubset.Light,
+            l3_lr_ww_light_files[:1],
+            selected_variables=requested_variables,
+        )
         assert set(ds.variables) == requested_variables
 
     def test_read_light_variables_selection_empty(
-            self, l3_lr_ww_light_files: list[Path]):
+        self, l3_lr_ww_light_files: list[Path]
+    ):
         # no valid variables -> empty dataset but with attributes
-        ds = self.reader.read(ProductSubset.Light,
-                              l3_lr_ww_light_files[:1],
-                              selected_variables=['H19'])
+        ds = self.reader.read(
+            ProductSubset.Light, l3_lr_ww_light_files[:1], selected_variables=["H19"]
+        )
         assert len(ds) == 0
         assert ds.attrs != {}
 
-    @pytest.mark.parametrize('tile, box, selected_variables',
-                             [(None, None, None), (10, None, None),
-                              (None, 10, None), (-5, None, None),
-                              (10, -5, None), (None, 10, ['nfx']),
-                              (-5, 10, ['nfx']), (None, None, ['L18']),
-                              (None, 5, ['L18']), (10, None, ['L18']),
-                              (-5, 10, ['L18']), (10, -5, ['L18'])],
-                             ids=[
-                                 'all_variables_missing_tile_box',
-                                 'all_variables_missing_box',
-                                 'all_variables_missing_tile',
-                                 'all_variables_invalid_tile',
-                                 'all_variables_invalid_box',
-                                 'tile_variable_missing_tile',
-                                 'tile_variable_invalid_tile',
-                                 'box_variable_missing_tile_box',
-                                 'box_variable_missing_tile',
-                                 'box_variable_missing_box',
-                                 'box_variable_invalid_box',
-                                 'box_variable_invalid_tile',
-                             ])
-    def test_read_extended_bad_arguments(self,
-                                         l3_lr_ww_extended_files: list[Path],
-                                         tile: int | None, box: int | None,
-                                         selected_variables: list[str] | None):
+    @pytest.mark.parametrize(
+        "tile, box, selected_variables",
+        [
+            (None, None, None),
+            (10, None, None),
+            (None, 10, None),
+            (-5, None, None),
+            (10, -5, None),
+            (None, 10, ["nfx"]),
+            (-5, 10, ["nfx"]),
+            (None, None, ["L18"]),
+            (None, 5, ["L18"]),
+            (10, None, ["L18"]),
+            (-5, 10, ["L18"]),
+            (10, -5, ["L18"]),
+        ],
+        ids=[
+            "all_variables_missing_tile_box",
+            "all_variables_missing_box",
+            "all_variables_missing_tile",
+            "all_variables_invalid_tile",
+            "all_variables_invalid_box",
+            "tile_variable_missing_tile",
+            "tile_variable_invalid_tile",
+            "box_variable_missing_tile_box",
+            "box_variable_missing_tile",
+            "box_variable_missing_box",
+            "box_variable_invalid_box",
+            "box_variable_invalid_tile",
+        ],
+    )
+    def test_read_extended_bad_arguments(
+        self,
+        l3_lr_ww_extended_files: list[Path],
+        tile: int | None,
+        box: int | None,
+        selected_variables: list[str] | None,
+    ):
         # tile and box should be None for Light subset
 
         with pytest.raises(ValueError):
-            self.reader.read(ProductSubset.Extended,
-                             l3_lr_ww_extended_files[:1],
-                             tile=tile,
-                             box=box,
-                             selected_variables=selected_variables)
+            self.reader.read(
+                ProductSubset.Extended,
+                l3_lr_ww_extended_files[:1],
+                tile=tile,
+                box=box,
+                selected_variables=selected_variables,
+            )
 
-    def test_read_extended_nominal(self, l3_lr_ww_extended_files: list[Path],
-                                   l3_lr_ww_extended_dataset: xr.Dataset):
+    def test_read_extended_nominal(
+        self, l3_lr_ww_extended_files: list[Path], l3_lr_ww_extended_dataset: xr.Dataset
+    ):
         # Open all variables
-        ds = self.reader.read(ProductSubset.Extended,
-                              l3_lr_ww_extended_files[:1],
-                              tile=10,
-                              box=40)
+        ds = self.reader.read(
+            ProductSubset.Extended, l3_lr_ww_extended_files[:1], tile=10, box=40
+        )
         ds = ds.compute()
         xr.testing.assert_equal(l3_lr_ww_extended_dataset, ds)
 
     @pytest.mark.parametrize(
-        'tile, box, requested_variables', [
+        "tile, box, requested_variables",
+        [
             (None, None, set()),
-            (10, None, {'filter_PTR'}),
-            (10, 40, {'L18'}),
-            (10, 40, {'filter_PTR', 'L18'}),
+            (10, None, {"filter_PTR"}),
+            (10, 40, {"L18"}),
+            (10, 40, {"filter_PTR", "L18"}),
         ],
-        ids=['nothing', 'tile_group', 'box_group', 'tile_box_groups'])
+        ids=["nothing", "tile_group", "box_group", "tile_box_groups"],
+    )
     def test_read_extended_selected_variable_tile(
-            self, tile: int, box: int | None, requested_variables: set[str],
-            l3_lr_ww_extended_files: list[Path]):
+        self,
+        tile: int,
+        box: int | None,
+        requested_variables: set[str],
+        l3_lr_ww_extended_files: list[Path],
+    ):
         # Open variable in tile group
-        ds = self.reader.read(ProductSubset.Extended,
-                              l3_lr_ww_extended_files[:1],
-                              selected_variables=requested_variables,
-                              tile=tile,
-                              box=box)
+        ds = self.reader.read(
+            ProductSubset.Extended,
+            l3_lr_ww_extended_files[:1],
+            selected_variables=requested_variables,
+            tile=tile,
+            box=box,
+        )
         assert set(ds.variables) == requested_variables
 
-    def test_read_extended_concatenated(self,
-                                        l3_lr_ww_extended_files: list[Path]):
+    def test_read_extended_concatenated(self, l3_lr_ww_extended_files: list[Path]):
         # Open multiple files
-        ds = self.reader.read(ProductSubset.Extended,
-                              l3_lr_ww_extended_files[:2],
-                              tile=10,
-                              box=40)
-        ds_0 = self.reader.read(ProductSubset.Extended,
-                                l3_lr_ww_extended_files[:1],
-                                tile=10,
-                                box=40)
-        ds_1 = self.reader.read(ProductSubset.Extended,
-                                l3_lr_ww_extended_files[1:2],
-                                tile=10,
-                                box=40)
+        ds = self.reader.read(
+            ProductSubset.Extended, l3_lr_ww_extended_files[:2], tile=10, box=40
+        )
+        ds_0 = self.reader.read(
+            ProductSubset.Extended, l3_lr_ww_extended_files[:1], tile=10, box=40
+        )
+        ds_1 = self.reader.read(
+            ProductSubset.Extended, l3_lr_ww_extended_files[1:2], tile=10, box=40
+        )
 
+        xr.testing.assert_identical(ds_0, ds.isel(n_box=slice(0, ds_0.sizes["n_box"])))
         xr.testing.assert_identical(
-            ds_0, ds.isel(n_box=slice(0, ds_0.sizes['n_box'])))
-        xr.testing.assert_identical(
-            ds_1, ds.isel(n_box=slice(ds_0.sizes['n_box'], None)))
+            ds_1, ds.isel(n_box=slice(ds_0.sizes["n_box"], None))
+        )
 
-    def test_read_extended_concatenated_tile(
-            self, l3_lr_ww_extended_files: list[Path]):
+    def test_read_extended_concatenated_tile(self, l3_lr_ww_extended_files: list[Path]):
         # Open multiple files, tile group is constant
-        ds = self.reader.read(ProductSubset.Extended,
-                              l3_lr_ww_extended_files[:2],
-                              selected_variables={'filter_PTR'},
-                              tile=10)
-        ds_0 = self.reader.read(ProductSubset.Extended,
-                                l3_lr_ww_extended_files[:1],
-                                selected_variables={'filter_PTR'},
-                                tile=10)
-        ds_1 = self.reader.read(ProductSubset.Extended,
-                                l3_lr_ww_extended_files[1:2],
-                                selected_variables={'filter_PTR'},
-                                tile=10)
+        ds = self.reader.read(
+            ProductSubset.Extended,
+            l3_lr_ww_extended_files[:2],
+            selected_variables={"filter_PTR"},
+            tile=10,
+        )
+        ds_0 = self.reader.read(
+            ProductSubset.Extended,
+            l3_lr_ww_extended_files[:1],
+            selected_variables={"filter_PTR"},
+            tile=10,
+        )
+        ds_1 = self.reader.read(
+            ProductSubset.Extended,
+            l3_lr_ww_extended_files[1:2],
+            selected_variables={"filter_PTR"},
+            tile=10,
+        )
 
         xr.testing.assert_identical(ds_0, ds)
         xr.testing.assert_identical(ds_1, ds)
 
     @pytest.mark.with_geo_packages
     def test_read_extended_geographical_selection(
-            self, l3_lr_ww_extended_files: list[Path],
-            l3_lr_ww_extended_dataset: xr.Dataset):
+        self, l3_lr_ww_extended_files: list[Path], l3_lr_ww_extended_dataset: xr.Dataset
+    ):
         bbox = (80, 70, 90, 90)
-        reference = brute_force_geographical_selection(
-            l3_lr_ww_extended_dataset, *bbox)
-        assert reference.sizes['n_box'] < l3_lr_ww_extended_dataset.sizes[
-            'n_box']
-        assert reference.sizes['n_box'] > 0
+        reference = brute_force_geographical_selection(l3_lr_ww_extended_dataset, *bbox)
+        assert reference.sizes["n_box"] < l3_lr_ww_extended_dataset.sizes["n_box"]
+        assert reference.sizes["n_box"] > 0
 
-        ds = self.reader.read(ProductSubset.Extended,
-                              l3_lr_ww_extended_files[:1],
-                              bbox=bbox,
-                              tile=10,
-                              box=40)
+        ds = self.reader.read(
+            ProductSubset.Extended,
+            l3_lr_ww_extended_files[:1],
+            bbox=bbox,
+            tile=10,
+            box=40,
+        )
         ds = ds.compute()
 
         xr.testing.assert_equal(reference, ds)
 
     @pytest.mark.without_geo_packages
     def test_read_extended_geographical_selection_disabled(
-            self, l3_lr_ww_extended_files: list[Path]):
+        self, l3_lr_ww_extended_files: list[Path]
+    ):
         bbox = (80, 70, 90, 90)
         with pytest.raises(TypeError):
-            self.reader.read(ProductSubset.Extended,
-                             l3_lr_ww_extended_files[:1],
-                             bbox=bbox,
-                             tile=10,
-                             box=40)
+            self.reader.read(
+                ProductSubset.Extended,
+                l3_lr_ww_extended_files[:1],
+                bbox=bbox,
+                tile=10,
+                box=40,
+            )
 
 
 class TestQuery:
@@ -256,57 +280,60 @@ class TestQuery:
         db = NetcdfFilesDatabaseSwotLRWW(l3_lr_ww_dir_layout)
         with pytest.raises(ValueError):
             bbox = (260, 10, 300, 40)
-            ds = db.query(subset='Light', bbox=bbox)
+            ds = db.query(subset="Light", bbox=bbox)
 
 
 class TestLayout:
 
     def test_generate_layout(self):
         path = AVISO_L3_LR_WINDWAVE_LAYOUT.generate(
-            '/swot_products/l3_karin/l3_lr_wind_wave',
-            subset='Light',
-            version='2.0',
-            cycle_number=1)
+            "/swot_products/l3_karin/l3_lr_wind_wave",
+            subset="Light",
+            version="2.0",
+            cycle_number=1,
+        )
 
-        assert path == '/swot_products/l3_karin/l3_lr_wind_wave/v2_0/Light/cycle_001'
+        assert path == "/swot_products/l3_karin/l3_lr_wind_wave/v2_0/Light/cycle_001"
 
     def test_generate_layout_missing_field(self):
         with pytest.raises(ValueError):
             AVISO_L3_LR_WINDWAVE_LAYOUT.generate(
-                '/swot_products/l3_karin/l3_lr_wind_wave',
-                subset='Light',
-                cycle_number=1)
+                "/swot_products/l3_karin/l3_lr_wind_wave",
+                subset="Light",
+                cycle_number=1,
+            )
 
     def test_generate_layout_bad_field(self):
         with pytest.raises(ValueError):
             AVISO_L3_LR_WINDWAVE_LAYOUT.generate(
-                '/swot_products/l3_karin/l3_lr_wind_wave',
-                subset='Light',
-                version='2.0',
-                cycle_number='x')
+                "/swot_products/l3_karin/l3_lr_wind_wave",
+                subset="Light",
+                version="2.0",
+                cycle_number="x",
+            )
 
-    @pytest.mark.parametrize('filters, expected', [
-        ({}, [0, 1, 2]),
-        ({
-            'version': '2.0'
-        }, [0, 1]),
-        ({
-            'subset': 'Extended'
-        }, [2]),
-        ({
-            'cycle_number': slice(480, 490)
-        }, [0, 1]),
-        ({
-            'pass_number': [10, 11]
-        }, [0, 1, 2]),
-    ])
-    def test_list_layout(self, l3_lr_ww_dir_layout: Path,
-                         l3_lr_ww_files: list[str], expected: list[int],
-                         filters: dict[str, tp.Any]):
+    @pytest.mark.parametrize(
+        "filters, expected",
+        [
+            ({}, [0, 1, 2]),
+            ({"version": "2.0"}, [0, 1]),
+            ({"subset": "Extended"}, [2]),
+            ({"cycle_number": slice(480, 490)}, [0, 1]),
+            ({"pass_number": [10, 11]}, [0, 1, 2]),
+        ],
+    )
+    def test_list_layout(
+        self,
+        l3_lr_ww_dir_layout: Path,
+        l3_lr_ww_files: list[str],
+        expected: list[int],
+        filters: dict[str, tp.Any],
+    ):
 
         fd = FileDiscoverer(
-            FileNameConvention(re.compile(r'.*'), []),
-            FileSystemIterable(layout=AVISO_L3_LR_WINDWAVE_LAYOUT))
+            FileNameConvention(re.compile(r".*"), []),
+            FileSystemIterable(layout=AVISO_L3_LR_WINDWAVE_LAYOUT),
+        )
 
         actual = {
             os.path.basename(f)

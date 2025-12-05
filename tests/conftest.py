@@ -81,9 +81,9 @@ from fixtures._ww import (
 )
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def resources_directory():
-    return Path(__file__).parent / 'resources'
+    return Path(__file__).parent / "resources"
 
 
 def pytest_sessionstart(session: pytest.Session):
@@ -94,36 +94,35 @@ def pytest_sessionstart(session: pytest.Session):
     but these packages are required in the fixtures generation, so we
     must simulate the error at a higher level.
     """
-    if session.config.getoption('--without-geo-packages'):
-        sys.modules['fcollections.implementations.optional'] = None
+    if session.config.getoption("--without-geo-packages"):
+        sys.modules["fcollections.implementations.optional"] = None
 
 
 def pytest_addoption(parser: pytest.Parser):
     """Add an option to run the tests without the geo packages."""
     parser.addoption(
-        '--without-geo-packages',
-        action='store_true',
+        "--without-geo-packages",
+        action="store_true",
         default=False,
-        help=
-        "Simulate missing geo packages like 'pyinterp', 'shapely' and 'geopandas'"
+        help="Simulate missing geo packages like 'pyinterp', 'shapely' and 'geopandas'",
     )
 
 
 def pytest_configure(config: pytest.Config):
     config.addinivalue_line(
-        'markers', 'with_geo_packages: tests that need geo packages to run')
+        "markers", "with_geo_packages: tests that need geo packages to run"
+    )
     config.addinivalue_line(
-        'markers',
-        'without_geo_packages: tests that should be run with missing geo packages'
+        "markers",
+        "without_geo_packages: tests that should be run with missing geo packages",
     )
 
 
-def pytest_collection_modifyitems(config: pytest.Config,
-                                  items: list[pytest.Item]):
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]):
     """Filter out tests that needs missing/present geo packages."""
-    simulate_missing = config.getoption('--without-geo-packages')
+    simulate_missing = config.getoption("--without-geo-packages")
 
-    keyword = 'with_geo_packages' if simulate_missing else 'without_geo_packages'
+    keyword = "with_geo_packages" if simulate_missing else "without_geo_packages"
 
     # Filter to only tests marked with @pytest.mark.optional
     kept = []

@@ -33,6 +33,7 @@ class GroupMetadata:
     dimensions
         Name and size of the dimensions contained in the group
     """
+
     name: str
     variables: list[VariableMetadata]
     subgroups: list[GroupMetadata]
@@ -83,7 +84,7 @@ class GroupMetadata:
         current = self
 
         yield current
-        for group_name in path.lstrip('/').split('/'):
+        for group_name in path.lstrip("/").split("/"):
             group_names = [g.name for g in current.subgroups]
             ii = group_names.index(group_name)
             current = current.subgroups[ii]
@@ -104,21 +105,19 @@ class GroupMetadata:
             subgroup.apply(callable)
 
 
-def _collect(visitor: list[dict(str, tp.Any)],
-             node: dict(str, tp.Any),
-             path: str = ''):
+def _collect(visitor: list[dict(str, tp.Any)], node: dict(str, tp.Any), path: str = ""):
     # visitor is modified in place
-    path = path + node['name']
-    node['name'] = path
+    path = path + node["name"]
+    node["name"] = path
 
-    children = node.pop('subgroups')
+    children = node.pop("subgroups")
 
     # Flatten attributes dictionnary in variables
     # This will allow for a simpler table display
-    for variable in node['variables']:
-        for k, v in variable['attributes'].items():
+    for variable in node["variables"]:
+        for k, v in variable["attributes"].items():
             variable[k] = v
-        del variable['attributes']
+        del variable["attributes"]
 
     visitor.append(node)
     for child in children:
@@ -128,10 +127,10 @@ def _collect(visitor: list[dict(str, tp.Any)],
 def _render_html(groups: dict[str, tp.Any]) -> str:
     # Render a groups metadata. The group hierarchy is flattened to allow easier
     # reading from the user
-    assets = importlib.resources.files('fcollections.core').joinpath('assets')
+    assets = importlib.resources.files("fcollections.core").joinpath("assets")
     env = Environment(loader=FileSystemLoader(assets))
-    template = env.get_template('template.jinja')
-    css = assets.joinpath('style.css').read_text()
+    template = env.get_template("template.jinja")
+    css = assets.joinpath("style.css").read_text()
 
     return template.render(groups=groups, css=css)
 
@@ -151,6 +150,7 @@ class VariableMetadata:
     attributes
         Dictionary of attributes specific to the variable
     """
+
     name: str
     dtype: np.dtype
     dimensions: tuple[str, ...]
@@ -176,17 +176,13 @@ def group_metadata_from_netcdf(nds: nc4.Dataset) -> GroupMetadata:
     """
     return GroupMetadata(
         name=nds.name,
-        attributes={x: nds.getncattr(x)
-                    for x in nds.ncattrs()},
-        dimensions={d.name: d.size
-                    for d in nds.dimensions.values()},
+        attributes={x: nds.getncattr(x) for x in nds.ncattrs()},
+        dimensions={d.name: d.size for d in nds.dimensions.values()},
         variables=[
-            VariableMetadata(v.name, v.dtype, v.dimensions,
-                             {x: v.getncattr(x)
-                              for x in v.ncattrs()})
+            VariableMetadata(
+                v.name, v.dtype, v.dimensions, {x: v.getncattr(x) for x in v.ncattrs()}
+            )
             for v in nds.variables.values()
         ],
-        subgroups=[
-            group_metadata_from_netcdf(group) for group in nds.groups.values()
-        ],
+        subgroups=[group_metadata_from_netcdf(group) for group in nds.groups.values()],
     )

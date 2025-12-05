@@ -27,17 +27,19 @@ from ._reader import (
 
 
 class GeoNetcdfFilesDatabaseSST(_NetcdfFilesDatabaseSST):
-    reader = GeoOpenMfDataset(area_selector=AreaSelector2D(longitude='lon',
-                                                           latitude='lat'),
-                              xarray_options=_XARRAY_TEMPORAL_NETCDFS)
+    reader = GeoOpenMfDataset(
+        area_selector=AreaSelector2D(longitude="lon", latitude="lat"),
+        xarray_options=_XARRAY_TEMPORAL_NETCDFS,
+    )
 
 
 GeoNetcdfFilesDatabaseSST.__doc__ = _NetcdfFilesDatabaseSST.__doc__
 
 
 class GeoNetcdfFilesDatabaseGriddedSLA(_NetcdfFilesDatabaseGriddedSLA):
-    reader = GeoOpenMfDataset(area_selector=AreaSelector2D(),
-                              xarray_options=_XARRAY_TEMPORAL_NETCDFS)
+    reader = GeoOpenMfDataset(
+        area_selector=AreaSelector2D(), xarray_options=_XARRAY_TEMPORAL_NETCDFS
+    )
 
 
 GeoNetcdfFilesDatabaseGriddedSLA.__doc__ = _NetcdfFilesDatabaseGriddedSLA.__doc__
@@ -46,33 +48,38 @@ GeoNetcdfFilesDatabaseGriddedSLA.__doc__ = _NetcdfFilesDatabaseGriddedSLA.__doc_
 class GeoNetcdfFilesDatabaseOHC(_NetcdfFilesDatabaseOHC):
     reader = GeoOpenMfDataset(
         area_selector=AreaSelector2D(),
-        xarray_options=_XARRAY_TEMPORAL_NETCDFS_NO_BACKEND)
+        xarray_options=_XARRAY_TEMPORAL_NETCDFS_NO_BACKEND,
+    )
 
 
 GeoNetcdfFilesDatabaseOHC.__doc__ = _NetcdfFilesDatabaseOHC.__doc__
 
 
 class GeoNetcdfFilesDatabaseOC(_NetcdfFilesDatabaseOC):
-    reader = GeoOpenMfDataset(area_selector=AreaSelector2D(longitude='lon',
-                                                           latitude='lat'),
-                              xarray_options=_XARRAY_TEMPORAL_NETCDFS)
+    reader = GeoOpenMfDataset(
+        area_selector=AreaSelector2D(longitude="lon", latitude="lat"),
+        xarray_options=_XARRAY_TEMPORAL_NETCDFS,
+    )
 
 
 GeoNetcdfFilesDatabaseOC.__doc__ = _NetcdfFilesDatabaseOC.__doc__
 
 
 class GeoNetcdfFilesDatabaseSWH(_NetcdfFilesDatabaseSWH):
-    reader = GeoOpenMfDataset(area_selector=TemporalSerieAreaSelector(),
-                              xarray_options=_XARRAY_TEMPORAL_NETCDFS)
+    reader = GeoOpenMfDataset(
+        area_selector=TemporalSerieAreaSelector(),
+        xarray_options=_XARRAY_TEMPORAL_NETCDFS,
+    )
 
 
 GeoNetcdfFilesDatabaseSWH.__doc__ = _NetcdfFilesDatabaseSWH.__doc__
 
 
 class GeoNetcdfFilesDatabaseMUR(_NetcdfFilesDatabaseMUR):
-    reader = GeoOpenMfDataset(area_selector=AreaSelector2D(longitude='lon',
-                                                           latitude='lat'),
-                              xarray_options=_XARRAY_TEMPORAL_NETCDFS)
+    reader = GeoOpenMfDataset(
+        area_selector=AreaSelector2D(longitude="lon", latitude="lat"),
+        xarray_options=_XARRAY_TEMPORAL_NETCDFS,
+    )
 
 
 GeoNetcdfFilesDatabaseMUR.__doc__ = _NetcdfFilesDatabaseMUR.__doc__
@@ -81,7 +88,8 @@ GeoNetcdfFilesDatabaseMUR.__doc__ = _NetcdfFilesDatabaseMUR.__doc__
 class GeoNetcdfFilesDatabaseDAC(_NetcdfFilesDatabaseDAC):
     reader = GeoOpenMfDataset(
         area_selector=AreaSelector2D(),
-        xarray_options=_XARRAY_TEMPORAL_NETCDFS_NO_BACKEND)
+        xarray_options=_XARRAY_TEMPORAL_NETCDFS_NO_BACKEND,
+    )
 
 
 GeoNetcdfFilesDatabaseDAC.__doc__ = _NetcdfFilesDatabaseDAC.__doc__
@@ -112,16 +120,20 @@ GeoNetcdfFilesDatabaseSwotLRWW.__doc__ = _NetcdfFilesDatabaseSwotLRWW.__doc__
 
 
 class GeoNetcdfFilesDatabaseL3Nadir(_NetcdfFilesDatabaseL3Nadir):
-    reader = GeoOpenMfDataset(area_selector=TemporalSerieAreaSelector(),
-                              xarray_options=_XARRAY_TEMPORAL_NETCDFS)
+    reader = GeoOpenMfDataset(
+        area_selector=TemporalSerieAreaSelector(),
+        xarray_options=_XARRAY_TEMPORAL_NETCDFS,
+    )
 
 
 GeoNetcdfFilesDatabaseL3Nadir.__doc__ = _NetcdfFilesDatabaseL3Nadir.__doc__
 
 
 class GeoNetcdfFilesDatabaseL2Nadir(_NetcdfFilesDatabaseL2Nadir):
-    reader = GeoOpenMfDataset(area_selector=TemporalSerieAreaSelector(),
-                              xarray_options=_XARRAY_TEMPORAL_NETCDFS)
+    reader = GeoOpenMfDataset(
+        area_selector=TemporalSerieAreaSelector(),
+        xarray_options=_XARRAY_TEMPORAL_NETCDFS,
+    )
 
 
 GeoNetcdfFilesDatabaseL2Nadir.__doc__ = _NetcdfFilesDatabaseL2Nadir.__doc__

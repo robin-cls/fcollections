@@ -18,16 +18,16 @@ class LongitudeConvention:
     lon_max: float
         maximal longitude
     """
+
     lon_min: float
     lon_max: float
 
     def __post_init__(self):
         if self.lon_max - self.lon_min != 360:
-            raise ValueError(
-                'Longitude convention must define a 360° interval')
+            raise ValueError("Longitude convention must define a 360° interval")
 
     def __str__(self):
-        return f'[{self.lon_min},{self.lon_max}['
+        return f"[{self.lon_min},{self.lon_max}["
 
     __repr__ = __str__
 
@@ -61,9 +61,9 @@ class LongitudeConvention:
 
         return lon
 
-    def normalize_and_split(self,
-                            lon: np.array,
-                            inplace: bool = False) -> list[np.array]:
+    def normalize_and_split(
+        self, lon: np.array, inplace: bool = False
+    ) -> list[np.array]:
         """Normalize a longitude array and split it in two parts if its not
         monotonous.
 
@@ -82,8 +82,7 @@ class LongitudeConvention:
         return _split_arr(lon, self.lon_min, self.lon_max)
 
 
-def _split_arr(arr: np.ndarray, val_min: float,
-               val_max: float) -> list[np.array]:
+def _split_arr(arr: np.ndarray, val_min: float, val_max: float) -> list[np.array]:
     """Split an array of longitude coordinates if its not monotonous.
 
     Add min and max bounds to each split.
@@ -94,7 +93,8 @@ def _split_arr(arr: np.ndarray, val_min: float,
         return [arr]
 
     sl0 = arr[slice(0, indice)]
-    if sl0[-1] != val_max: sl0 = np.append(arr[slice(0, indice)], val_max)
+    if sl0[-1] != val_max:
+        sl0 = np.append(arr[slice(0, indice)], val_max)
 
     sl1 = arr[slice(indice, arr.size)]
     if sl1[0] != val_min:
@@ -136,11 +136,13 @@ def guess_longitude_convention(lon: np.array) -> StandardLongitudeConvention:
 
 class Distances:
 
-    def __init__(self,
-                 longitudes: np.ndarray,
-                 latitudes: np.ndarray,
-                 return_full: bool = True,
-                 spherical_approximation: bool = True):
+    def __init__(
+        self,
+        longitudes: np.ndarray,
+        latitudes: np.ndarray,
+        return_full: bool = True,
+        spherical_approximation: bool = True,
+    ):
         # Use a standard class to prevent hashing. longitude and latitude are
         # tables and should not be set as a dataclass attribute else it will
         # conflict with the functools cache
@@ -151,6 +153,10 @@ class Distances:
 
     @functools.cache
     def compute(self, axis):
-        return distances_along_axis(self.longitudes, self.latitudes, axis,
-                                    self.return_full,
-                                    self.spherical_approximation)
+        return distances_along_axis(
+            self.longitudes,
+            self.latitudes,
+            axis,
+            self.return_full,
+            self.spherical_approximation,
+        )

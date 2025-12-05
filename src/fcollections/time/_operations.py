@@ -3,6 +3,7 @@
 These methods may be replaced by more generic operation over intervals
 (unions, intersections and complements.
 """
+
 from functools import reduce
 from typing import Generator, Iterable, List
 
@@ -28,9 +29,12 @@ def fuse_successive_periods(periods: List[Period]) -> Iterable[Period]:
     reduced = periods[:1]
     for period in periods[1:]:
         if reduced[-1].stop == period.start:
-            reduced[-1] = Period(reduced[-1].start, period.stop,
-                                 reduced[-1].include_start,
-                                 period.include_stop)
+            reduced[-1] = Period(
+                reduced[-1].start,
+                period.stop,
+                reduced[-1].include_start,
+                period.include_stop,
+            )
         else:
             reduced.append(period)
 
@@ -73,7 +77,9 @@ def periods_holes(periods: List[Period]) -> Generator[Period, None, None]:
         A period Generator representing the holes in the periods list
     """
     for ii in range(len(periods) - 1):
-        yield Period(start=periods[ii].stop,
-                     stop=periods[ii + 1].start,
-                     include_start=not periods[ii].include_stop,
-                     include_stop=not periods[ii + 1].include_start)
+        yield Period(
+            start=periods[ii].stop,
+            stop=periods[ii + 1].start,
+            include_start=not periods[ii].include_stop,
+            include_stop=not periods[ii + 1].include_start,
+        )

@@ -13,6 +13,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class ProductSubset(Enum):
     """Swot product subset enum."""
+
     Basic = auto()
     Expert = auto()
     WindWave = auto()
@@ -46,13 +47,15 @@ class L2Version:
         if not isinstance(other, L2Version):
             return False
 
-        eq_res: bool = (self.baseline == other.baseline
-                        and self.temporality == other.temporality
-                        and self.minor_version == other.minor_version)
+        eq_res: bool = (
+            self.baseline == other.baseline
+            and self.temporality == other.temporality
+            and self.minor_version == other.minor_version
+        )
 
         if not self.ignore_product_counter_in_eq_check:
             # product counter check is intended (default behavior)
-            eq_res &= (self.product_counter == other.product_counter)
+            eq_res &= self.product_counter == other.product_counter
 
         return eq_res
 
@@ -60,10 +63,17 @@ class L2Version:
     def is_null(self):
         """True if all attrs but 'ignore_product_counter_in_eq_check' are
         None."""
-        return all([
-            getattr(self, attr) is None for attr in
-            ['temporality', 'baseline', 'minor_version', 'product_counter']
-        ])
+        return all(
+            [
+                getattr(self, attr) is None
+                for attr in [
+                    "temporality",
+                    "baseline",
+                    "minor_version",
+                    "product_counter",
+                ]
+            ]
+        )
 
     @staticmethod
     def _are_orderable_members(left: L2Version, right: L2Version) -> bool:
@@ -94,9 +104,13 @@ class L2Version:
 
         This prevents errors like: `TypeError: '<' not supported between instances of 'NoneType' and 'str'`
         """
-        if (not isinstance(right, L2Version) or left.baseline is None
-                or left.temporality is None or right.baseline is None
-                or right.temporality is None):
+        if (
+            not isinstance(right, L2Version)
+            or left.baseline is None
+            or left.temporality is None
+            or right.baseline is None
+            or right.temporality is None
+        ):
             return False
         return True
 
@@ -115,16 +129,24 @@ class L2Version:
         default their logic from __lt__ operator, because we have to handle the case where
         self.baseline is None or self.temporality is None each time.
         """
-        lt_res: bool = (self.baseline < other.baseline
-                        or (self.baseline == other.baseline
-                            and self.temporality.name > other.temporality.name)
-                        or (self.baseline == other.baseline
-                            and self.temporality == other.temporality
-                            and self.minor_version < other.minor_version)
-                        or (self.baseline == other.baseline
-                            and self.temporality == other.temporality
-                            and self.minor_version == other.minor_version
-                            and self.product_counter < other.product_counter))
+        lt_res: bool = (
+            self.baseline < other.baseline
+            or (
+                self.baseline == other.baseline
+                and self.temporality.name > other.temporality.name
+            )
+            or (
+                self.baseline == other.baseline
+                and self.temporality == other.temporality
+                and self.minor_version < other.minor_version
+            )
+            or (
+                self.baseline == other.baseline
+                and self.temporality == other.temporality
+                and self.minor_version == other.minor_version
+                and self.product_counter < other.product_counter
+            )
+        )
 
         return lt_res
 
@@ -204,14 +226,16 @@ class L2Version:
         return False
 
     def __repr__(self) -> str:
-        temporality = self.temporality.name if self.temporality is not None else '?'
-        baseline = self.baseline if self.baseline is not None else '?'
-        minor_version = self.minor_version if self.minor_version is not None else '?'
+        temporality = self.temporality.name if self.temporality is not None else "?"
+        baseline = self.baseline if self.baseline is not None else "?"
+        minor_version = self.minor_version if self.minor_version is not None else "?"
 
         if self.product_counter is not None:
-            return f'P{temporality}{baseline}{minor_version}_{self.product_counter:0>2d}'
+            return (
+                f"P{temporality}{baseline}{minor_version}_{self.product_counter:0>2d}"
+            )
         else:
-            return f'P{temporality}{baseline}{minor_version}'
+            return f"P{temporality}{baseline}{minor_version}"
 
     def __hash__(self) -> int:
         # We need the hashing functionality to work nicely with pandas unique
@@ -219,8 +243,7 @@ class L2Version:
 
     @staticmethod
     def from_bytes(
-            version: bytes,
-            ignore_product_counter_in_eq_check: bool = False
+        version: bytes, ignore_product_counter_in_eq_check: bool = False
     ) -> L2Version | None:
         """Build a L2Version from bytes.
 
@@ -244,13 +267,16 @@ class L2Version:
         `TypeError: '>' not supported between instances of 'NoneType' and 'NoneType'`.
         """
         parser = build_version_parser()
-        if version in [None, 'None']:
+        if version in [None, "None"]:
             return L2Version(None, None, None, None)
 
         try:
             upstream_version = L2Version(
-                *parser.parse(parser.match(bytes.decode(version))))
-            upstream_version.ignore_product_counter_in_eq_check = ignore_product_counter_in_eq_check
+                *parser.parse(parser.match(bytes.decode(version)))
+            )
+            upstream_version.ignore_product_counter_in_eq_check = (
+                ignore_product_counter_in_eq_check
+            )
             return upstream_version
         except AttributeError:
             # version is invalid, still build a L2Version
@@ -258,8 +284,7 @@ class L2Version:
 
     @staticmethod
     def from_string(
-            version: str,
-            ignore_product_counter_in_eq_check: bool = False
+        version: str, ignore_product_counter_in_eq_check: bool = False
     ) -> L2Version | None:
         """Build a L2Version from str.
 
@@ -283,11 +308,13 @@ class L2Version:
         `TypeError: '>' not supported between instances of 'NoneType' and 'NoneType'`.
         """
         parser = build_version_parser()
-        if version in [None, 'None']:
+        if version in [None, "None"]:
             return L2Version(None, None, None, None)
         try:
             upstream_version = L2Version(*parser.parse(parser.match(version)))
-            upstream_version.ignore_product_counter_in_eq_check = ignore_product_counter_in_eq_check
+            upstream_version.ignore_product_counter_in_eq_check = (
+                ignore_product_counter_in_eq_check
+            )
             return upstream_version
         except AttributeError:
             # version is invalid, still build a L2Version
@@ -317,10 +344,12 @@ class L2Version:
         import numpy as np
 
         shape = versions.shape
-        return np.array([
-            L2Version.from_bytes(v, ignore_product_counter_in_eq_check)
-            for v in versions.ravel()
-        ]).reshape(shape)
+        return np.array(
+            [
+                L2Version.from_bytes(v, ignore_product_counter_in_eq_check)
+                for v in versions.ravel()
+            ]
+        ).reshape(shape)
 
     @staticmethod
     def from_string_array(
@@ -345,10 +374,12 @@ class L2Version:
         import numpy as np
 
         shape = versions.shape
-        return np.array([
-            L2Version.from_string(v, ignore_product_counter_in_eq_check)
-            for v in versions.ravel()
-        ]).reshape(shape)
+        return np.array(
+            [
+                L2Version.from_string(v, ignore_product_counter_in_eq_check)
+                for v in versions.ravel()
+            ]
+        ).reshape(shape)
 
 
 def build_version_parser() -> oct_io.FileNameConvention:
@@ -361,34 +392,30 @@ def build_version_parser() -> oct_io.FileNameConvention:
     class _ExclamationMarkDecoder(oct_io.ICodec):
 
         def decode(self, input_string):
-            if input_string == '?':
+            if input_string == "?":
                 return None
             return super().decode(input_string)
 
-    class _FileNameFieldEnum(_ExclamationMarkDecoder,
-                             oct_io.FileNameFieldEnum):
+    class _FileNameFieldEnum(_ExclamationMarkDecoder, oct_io.FileNameFieldEnum):
         pass
 
-    class _FileNameFieldInteger(_ExclamationMarkDecoder,
-                                oct_io.FileNameFieldInteger):
+    class _FileNameFieldInteger(_ExclamationMarkDecoder, oct_io.FileNameFieldInteger):
         pass
 
-    class _FileNameFieldString(_ExclamationMarkDecoder,
-                               oct_io.FileNameFieldString):
+    class _FileNameFieldString(_ExclamationMarkDecoder, oct_io.FileNameFieldString):
         pass
 
-    return oct_io.FileNameConvention(regex=re.compile(
-        r'P(?P<forward>I|G|\?)(?P<baseline>[A-Z]|\?)(?P<minor_version>[0-9]|\?)(_){0,1}(?P<product_counter>[0-9]{2}){0,1}$'
-    ),
-                                     fields=[
-                                         _FileNameFieldEnum(
-                                             'forward', Timeliness),
-                                         _FileNameFieldString('baseline'),
-                                         _FileNameFieldInteger(
-                                             'minor_version'),
-                                         oct_io.FileNameFieldInteger(
-                                             'product_counter', default=None)
-                                     ])
+    return oct_io.FileNameConvention(
+        regex=re.compile(
+            r"P(?P<forward>I|G|\?)(?P<baseline>[A-Z]|\?)(?P<minor_version>[0-9]|\?)(_){0,1}(?P<product_counter>[0-9]{2}){0,1}$"
+        ),
+        fields=[
+            _FileNameFieldEnum("forward", Timeliness),
+            _FileNameFieldString("baseline"),
+            _FileNameFieldInteger("minor_version"),
+            oct_io.FileNameFieldInteger("product_counter", default=None),
+        ],
+    )
 
 
 class L2VersionField(oct_io.FileNameField):
@@ -397,28 +424,32 @@ class L2VersionField(oct_io.FileNameField):
         super().__init__(
             name,
             L2Version(),
-            description=
-            ('Version of the L2_LR_SSH product, composed of a CRID and a '
-             'product counter. The CRID can be further decomposed with the '
-             'timeliness (I/G), the baseline (A/B/C...) and the minor '
-             'version (a number) (ex. PIC0). The product counter is a number'
-             'that increased when a half orbit has been regenerated for the '
-             'same crid. This can happens if an anomaly is detected or if '
-             'there is a change in the upstream data.'))
+            description=(
+                "Version of the L2_LR_SSH product, composed of a CRID and a "
+                "product counter. The CRID can be further decomposed with the "
+                "timeliness (I/G), the baseline (A/B/C...) and the minor "
+                "version (a number) (ex. PIC0). The product counter is a number"
+                "that increased when a half orbit has been regenerated for the "
+                "same crid. This can happens if an anomaly is detected or if "
+                "there is a change in the upstream data."
+            ),
+        )
         self.ignore_product_counter = ignore_product_counter
 
     def decode(self, input_string: str) -> L2Version:
         try:
-            crid, product_counter = input_string.split('_')
+            crid, product_counter = input_string.split("_")
             product_counter = int(product_counter)
         except ValueError:
             # Only the crid is present
             crid = input_string
             product_counter = None
-        return L2Version(temporality=Timeliness[crid[1]],
-                         baseline=crid[2],
-                         minor_version=int(crid[3]),
-                         product_counter=product_counter)
+        return L2Version(
+            temporality=Timeliness[crid[1]],
+            baseline=crid[2],
+            minor_version=int(crid[3]),
+            product_counter=product_counter,
+        )
 
     def encode(self, data: L2Version) -> str:
         return str(data)
@@ -427,22 +458,25 @@ class L2VersionField(oct_io.FileNameField):
     def test_description(self) -> str:
         # This is enforced in the equality of the L2Version object
         return (
-            'As a L2Version field, this field can be tested by providing '
-            'another L2Version instance. This instance can be partially set, with '
-            'some missing attributes set to None. In this case, the check will be '
-            'performed on these attributes only.')
+            "As a L2Version field, this field can be tested by providing "
+            "another L2Version instance. This instance can be partially set, with "
+            "some missing attributes set to None. In this case, the check will be "
+            "performed on these attributes only."
+        )
 
     def test(self, reference: L2Version, tested: L2Version) -> bool:
-        return all([
-            reference.temporality is None
-            or reference.temporality == tested.temporality,
-            reference.baseline is None
-            or reference.baseline == tested.baseline,
-            reference.minor_version is None
-            or reference.minor_version == tested.minor_version,
-            self.ignore_product_counter or reference.product_counter is None
-            or reference.product_counter == tested.product_counter,
-        ])
+        return all(
+            [
+                reference.temporality is None
+                or reference.temporality == tested.temporality,
+                reference.baseline is None or reference.baseline == tested.baseline,
+                reference.minor_version is None
+                or reference.minor_version == tested.minor_version,
+                self.ignore_product_counter
+                or reference.product_counter is None
+                or reference.product_counter == tested.product_counter,
+            ]
+        )
 
     def sanitize(self, reference: str | L2Version) -> L2Version:
         if isinstance(reference, str):

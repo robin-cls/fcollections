@@ -9,8 +9,8 @@ from fcollections.sad import GSHHG, KarinFootprints
 @pytest.fixture
 def clean_user_config():
     try:
-        original = (Path('~') / '.config' / 'sad').expanduser()
-        backup = (Path('~') / '.config' / 'sad.backup').expanduser()
+        original = (Path("~") / ".config" / "sad").expanduser()
+        backup = (Path("~") / ".config" / "sad.backup").expanduser()
         shutil.move(original, backup)
         yield
         shutil.rmtree(original)
@@ -29,7 +29,7 @@ def gshhg(tmp_path):
     return GSHHG(tmp_path)
 
 
-@pytest.mark.parametrize('source_name', ['karin_footprints', 'gshhg'])
+@pytest.mark.parametrize("source_name", ["karin_footprints", "gshhg"])
 def test_real_download(tmpdir, source_name, clean_user_config, request):
     source = request.getfixturevalue(source_name)
 
@@ -38,5 +38,4 @@ def test_real_download(tmpdir, source_name, clean_user_config, request):
         source[key]
     # There can be uncompressed files in addition the ones specified by a given
     # key
-    assert len(list(source.preferred_target_folder.iterdir())) >= len(
-        source.keys)
+    assert len(list(source.preferred_target_folder.iterdir())) >= len(source.keys)

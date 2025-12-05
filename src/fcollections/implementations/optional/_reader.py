@@ -43,19 +43,21 @@ class GeoOpenMfDataset(OpenMfDataset):
         The wrapped reading function
     """
 
-    def __init__(self,
-                 area_selector: IAreaSelector,
-                 xarray_options: dict[str, str] | None = None):
+    def __init__(
+        self, area_selector: IAreaSelector, xarray_options: dict[str, str] | None = None
+    ):
         self.area_selector = area_selector
         super().__init__(xarray_options)
 
-    def read(self,
-             files: list[str] | list[list[str]],
-             selected_variables: list[str] | None = None,
-             fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem(),
-             bbox: tuple[float, float, float, float] | None = None,
-             preprocess: tp.Callable[[xr.Dataset], xr.Dataset] | None = None,
-             **kwargs: tp.Any) -> xr.Dataset:
+    def read(
+        self,
+        files: list[str] | list[list[str]],
+        selected_variables: list[str] | None = None,
+        fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem(),
+        bbox: tuple[float, float, float, float] | None = None,
+        preprocess: tp.Callable[[xr.Dataset], xr.Dataset] | None = None,
+        **kwargs: tp.Any,
+    ) -> xr.Dataset:
         """Read a list of files.
 
         Parameters
@@ -83,10 +85,12 @@ class GeoOpenMfDataset(OpenMfDataset):
             apply_bounds = partial(self.area_selector.apply, bbox=bbox)
             preprocess = compose(apply_bounds, preprocess)
 
-        return super().read(files=files,
-                            selected_variables=selected_variables,
-                            fs=fs,
-                            preprocess=preprocess)
+        return super().read(
+            files=files,
+            selected_variables=selected_variables,
+            fs=fs,
+            preprocess=preprocess,
+        )
 
 
 class GeoSwotReaderL2LRSSH(SwotReaderL2LRSSH):
@@ -159,17 +163,22 @@ class GeoSwotReaderL2LRSSH(SwotReaderL2LRSSH):
         -------
             An xarray dataset containing the dataset from the input files
         """
-        _crop_area = functools.partial(SwathAreaSelector().apply,
-                                       bbox=bbox) if bbox is not None else None
+        _crop_area = (
+            functools.partial(SwathAreaSelector().apply, bbox=bbox)
+            if bbox is not None
+            else None
+        )
 
-        return super().read(subset,
-                            files,
-                            selected_variables,
-                            fs,
-                            stack,
-                            left_swath,
-                            right_swath,
-                            preprocessor=_crop_area)
+        return super().read(
+            subset,
+            files,
+            selected_variables,
+            fs,
+            stack,
+            left_swath,
+            right_swath,
+            preprocessor=_crop_area,
+        )
 
 
 class GeoSwotReaderL3LRSSH(SwotReaderL3LRSSH):
@@ -185,15 +194,15 @@ class GeoSwotReaderL3LRSSH(SwotReaderL3LRSSH):
     """
 
     def read(
-            self,
-            subset: ProductSubset,
-            files: list[str] | list[list[str]],
-            selected_variables: list[str] | None = None,
-            fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem(),
-            stack: str | StackLevel = StackLevel.NOSTACK,
-            swath: bool = True,
-            nadir: bool = False,
-            bbox: tuple[float, float, float, float] | None = None
+        self,
+        subset: ProductSubset,
+        files: list[str] | list[list[str]],
+        selected_variables: list[str] | None = None,
+        fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem(),
+        stack: str | StackLevel = StackLevel.NOSTACK,
+        swath: bool = True,
+        nadir: bool = False,
+        bbox: tuple[float, float, float, float] | None = None,
     ) -> xr.Dataset:
         """Read a dataset from L2_LR_SSH products.
 
@@ -252,26 +261,27 @@ class GeoSwotReaderL3LRSSH(SwotReaderL3LRSSH):
             An xarray dataset containing the dataset from the input files
         """
         _crop_area = self._build_additionnal_preprocessor(swath, nadir, bbox)
-        return super().read(subset,
-                            files,
-                            selected_variables,
-                            fs,
-                            stack,
-                            swath,
-                            nadir,
-                            preprocessor=_crop_area)
+        return super().read(
+            subset,
+            files,
+            selected_variables,
+            fs,
+            stack,
+            swath,
+            nadir,
+            preprocessor=_crop_area,
+        )
 
     def _build_additionnal_preprocessor(
-        self, swath: bool, nadir: bool,
-        bbox: tuple[float, float, float, float] | None
+        self, swath: bool, nadir: bool, bbox: tuple[float, float, float, float] | None
     ) -> tp.Callable[[xr.Dataset], xr.Dataset] | None:
         if bbox is None:
             return None
 
         if not swath and nadir:
             _crop_area = partial(
-                TemporalSerieAreaSelector(dimension='num_nadir').apply,
-                bbox=bbox)
+                TemporalSerieAreaSelector(dimension="num_nadir").apply, bbox=bbox
+            )
         else:
             _crop_area = partial(SwathAreaSelector().apply, bbox=bbox)
 
@@ -348,14 +358,14 @@ class GeoSwotReaderL3WW(SwotReaderL3WW):
         -------
             An xarray dataset containing the dataset from the input files
         """
-        _crop_area = functools.partial(TemporalSerieAreaSelector(
-            dimension='n_box').apply,
-                                       bbox=bbox) if bbox is not None else None
+        _crop_area = (
+            functools.partial(
+                TemporalSerieAreaSelector(dimension="n_box").apply, bbox=bbox
+            )
+            if bbox is not None
+            else None
+        )
 
-        return super().read(subset,
-                            files,
-                            selected_variables,
-                            fs,
-                            tile,
-                            box,
-                            preprocessor=_crop_area)
+        return super().read(
+            subset, files, selected_variables, fs, tile, box, preprocessor=_crop_area
+        )

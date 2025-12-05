@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 @dc.dataclass
 class SwathGeometriesBuilder:
 
-    longitude_variable: str = 'longitude'
-    latitude_variable: str = 'latitude'
+    longitude_variable: str = "longitude"
+    latitude_variable: str = "latitude"
 
     def build(
         self,
@@ -30,16 +30,25 @@ class SwathGeometriesBuilder:
         nb_points: int = 500,
     ) -> gpd.GeoDataFrame:
 
-        return self._extract_geometry(ds[self.longitude_variable].values,
-                                      ds[self.latitude_variable].values,
-                                      pass_number, convention, nb_points)
+        return self._extract_geometry(
+            ds[self.longitude_variable].values,
+            ds[self.latitude_variable].values,
+            pass_number,
+            convention,
+            nb_points,
+        )
 
     def _monotonic(self, lon: np.ndarray):
         return np.all(np.diff(lon[:, 0]) > 0)
 
-    def _extract_geometry(self, lon: np.ndarray, lat: np.ndarray,
-                          pass_number: int, convention: LongitudeConvention,
-                          nb_points: int) -> gpd.GeoDataFrame:
+    def _extract_geometry(
+        self,
+        lon: np.ndarray,
+        lat: np.ndarray,
+        pass_number: int,
+        convention: LongitudeConvention,
+        nb_points: int,
+    ) -> gpd.GeoDataFrame:
 
         # TODO convention is useless for now:
         # TODO normalize polygon(s) to convention before return it(them)
@@ -49,7 +58,7 @@ class SwathGeometriesBuilder:
             lon = new_convention.normalize(lon)
 
         if not self._monotonic(lon):
-            raise KeyError('Lon should be monotonic now!')
+            raise KeyError("Lon should be monotonic now!")
 
         arr_lon = np.concatenate((lon[:, 0], lon[:, -1][::-1]))
         arr_lat = np.concatenate((lat[:, 0], lat[:, -1][::-1]))
@@ -58,12 +67,15 @@ class SwathGeometriesBuilder:
         geom = Polygon(np.stack(reduction).T)
 
         data_geom = gpd.GeoDataFrame(
-            pda.DataFrame({
-                'pass_number': [pass_number],
-                'geometry': [geom],
-            }))
+            pda.DataFrame(
+                {
+                    "pass_number": [pass_number],
+                    "geometry": [geom],
+                }
+            )
+        )
 
-        data_geom.sort_values('pass_number', inplace=True)
+        data_geom.sort_values("pass_number", inplace=True)
         data_geom.reset_index(drop=True, inplace=True)
 
         return data_geom
@@ -153,8 +165,9 @@ def visvalingam(x, y, fixed_size=18):  # pragma: no cover
         if i3 == -1:
             i3 = (i2 + 1) % nb_ori
         heapq.heappush(h, (_tri_area2(x, y, i0, i2, i3), (i0, i2, i3)))
-    x_new, y_new = np.empty(fixed_size, dtype=x.dtype), np.empty(fixed_size,
-                                                                 dtype=y.dtype)
+    x_new, y_new = np.empty(fixed_size, dtype=x.dtype), np.empty(
+        fixed_size, dtype=y.dtype
+    )
     j = 0
     for i, flag in enumerate(removed):
         if not flag:

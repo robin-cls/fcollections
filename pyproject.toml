@@ -1,36 +1,63 @@
-[tool.poetry]
-name = 'fcollections'
-version = '0.1.0'
-description = "Read a collection of files using information in their names"
-authors = ["Robin Chevrier <rchevrier@groupcls.com>", "Anne-Sophie Tonneau <atonneau@groupcls.com>"]
-repository='https://github.com/robin-cls/fcollections'
+[project]
+name = 'files_collections'
+dynamic = ["version"]
+description = "Read a collection of files using information from their names"
+authors = [
+    {name = "Robin Chevrier", email = "rchevrier@groupcls.com"},
+    {name = "Anne-Sophie Tonneau", email = "atonneau@groupcls.com"}
+]
+maintainers = [
+    {name = "Robin Chevrier", email = "rchevrier@groupcls.com"},
+    {name = "Anne-Sophie Tonneau", email = "atonneau@groupcls.com"}
+]
+requires-python = ">= 3.8"
+dependencies = [
+    "docstring_parser",
+    "fsspec",
+    "jinja2",
+    "netCDF4",
+    "numba",
+    "numpy",
+    "requests",
+    "typer",
+    "xarray[io]"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Oceanography",
+    "Development Status :: 4 - Beta"]
+
+[tool.setuptools.packages.find]
 exclude = ["**/__pycache__", "**/.ipynb_checkpoints"]
+where = ["src"]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-numpy = "*"
-xarray = "*"
-docstring_parser = "*"
-netCDF4 = "*"
-numba = "*"
-typer = "*"
-jinja2 = "*"
+[tool.setuptools_scm]
+local_scheme = "no-local-version"
 
-[tool.poetry.group.geo.dependencies]
-shapely = "*"
-dask = "*"
-pyinterp = "*"
-geopandas = "*"
+[project.urls]
+Repository='https://github.com/robin-cls/fcollections'
 
-[tool.poetry.group.test.dependencies]
-pytest = "*"
 
-[tool.poetry.group.dev.dependencies]
-setuptools_scm = "*"
+[project.optional-dependencies]
+testing = ["pytest", "pytest-cov", "sympy", "beautifulsoup4"]
+geo = ["shapely", "geopandas", "pyinterp", "dask"]
+doc = ["sphinx", "sphinx-copybutton", "sphinx-inline-tabs", "sphinx_rtd_theme",
+        "sphinx-tabs"]
 
-[tool.poetry.scripts]
+[project.scripts]
 sad = "fcollections.sad:main"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools >= 77.0.3", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[tool.isort]
+profile = "black"

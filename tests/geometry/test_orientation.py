@@ -7,15 +7,20 @@ import sympy as sp
 from fcollections.geometry import rotate_derivatives, rotate_vector
 
 
-@pytest.mark.parametrize('x, y, theta, X_expected, Y_expected',
-                         [(1, 0, np.pi / 4, 1 / np.sqrt(2), -1 / np.sqrt(2)),
-                          (0, 1, np.pi / 4, 1 / np.sqrt(2), 1 / np.sqrt(2)),
-                          (1 / np.sqrt(2), 1 / np.sqrt(2), -np.pi / 4, 0, 1),
-                          (1, 0, np.pi / 2, 0, -1),
-                          (1, 0, 3 * np.pi / 2, 0, 1),
-                          (1 / np.sqrt(2), np.sqrt(2), np.pi / 4, 1.5, 0.5)])
-def test_rotate_vector(x: float, y: float, theta: float, X_expected: float,
-                       Y_expected: float):
+@pytest.mark.parametrize(
+    "x, y, theta, X_expected, Y_expected",
+    [
+        (1, 0, np.pi / 4, 1 / np.sqrt(2), -1 / np.sqrt(2)),
+        (0, 1, np.pi / 4, 1 / np.sqrt(2), 1 / np.sqrt(2)),
+        (1 / np.sqrt(2), 1 / np.sqrt(2), -np.pi / 4, 0, 1),
+        (1, 0, np.pi / 2, 0, -1),
+        (1, 0, 3 * np.pi / 2, 0, 1),
+        (1 / np.sqrt(2), np.sqrt(2), np.pi / 4, 1.5, 0.5),
+    ],
+)
+def test_rotate_vector(
+    x: float, y: float, theta: float, X_expected: float, Y_expected: float
+):
     X, Y = rotate_vector(x, y, theta)
     assert np.isclose(X, X_expected)
     assert np.isclose(Y, Y_expected)
@@ -24,7 +29,7 @@ def test_rotate_vector(x: float, y: float, theta: float, X_expected: float,
 
 def test_rotate_derivatives():
 
-    xx, yy = sp.symbols('x, y')
+    xx, yy = sp.symbols("x, y")
     vx = xx**2 + 2 * xx + 2 * yy**2 - 2 * xx * yy - 7 * yy + 4
     vy = 2 * xx**2 - 3 * xx - yy**2 + 1.5 * xx * yy + yy + 10
 
@@ -58,7 +63,8 @@ def test_rotate_derivatives():
     dvY_dX /= step
 
     dvx_dx, dvy_dy, dvx_dy, dvy_dx = rotate_derivatives(
-        dvX_dX, dvY_dY, dvX_dY, dvY_dX, np.pi / 4)
+        dvX_dX, dvY_dY, dvX_dY, dvY_dX, np.pi / 4
+    )
 
     assert np.allclose(dvx_dx_ref[1:-1, 1:-1], dvx_dx[1:-1, 1:-1])
     assert np.allclose(dvx_dy_ref[1:-1, 1:-1], dvx_dy[1:-1, 1:-1])
