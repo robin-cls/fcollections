@@ -29,4 +29,5 @@ jobs:
           echo "username = __token__" >> ~/.pypirc
           echo "password = ${{ secrets.TEST_PYPI_TOKEN }}" >> ~/.pypirc
       - name: Upload package
+        run: |
           twine upload --repository testpypi dist/*
