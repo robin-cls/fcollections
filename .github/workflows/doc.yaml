@@ -2,13 +2,10 @@ name: Documentation
 
 on:
   push:
-    branches: "*"
+    branches: ["main"]
     tags: ["*"]
   pull_request:
-    paths:
-      - "docs/**"
-      - "**.py"
-      - "pyproject.toml"
+    branches: ["main"]
 
 permissions:
   contents: read
