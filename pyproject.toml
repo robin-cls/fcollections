@@ -40,6 +40,8 @@ classifiers = [
 exclude = ["**/__pycache__", "**/.ipynb_checkpoints"]
 where = ["src"]
 
+[tool.setuptools_scm]
+
 [project.urls]
 Repository='https://github.com/robin-cls/fcollections'
 
