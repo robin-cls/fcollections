@@ -42,8 +42,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       # https://github.com/actions/checkout/issues/1471
+      # Clobber local unannotated tag
       - name: Fetch tags
-        run: git fetch --prune --unshallow --tags
+        run: git fetch --prune --unshallow --tags --force
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
