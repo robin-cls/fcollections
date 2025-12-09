@@ -16,7 +16,6 @@ dependencies = [
     "fsspec",
     "jinja2",
     "netCDF4",
-    "numba",
     "numpy",
     "requests",
     "typer",
@@ -48,7 +47,7 @@ Repository='https://github.com/robin-cls/fcollections'
 
 [project.optional-dependencies]
 testing = ["pytest", "pytest-cov", "sympy", "beautifulsoup4"]
-geo = ["shapely", "geopandas", "pyinterp", "dask"]
+geo = ["shapely", "geopandas", "pyinterp", "dask", "numba"]
 doc = ["sphinx", "sphinx-copybutton", "sphinx-inline-tabs", "sphinx_rtd_theme",
         "sphinx-tabs"]
 
