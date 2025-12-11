@@ -4,6 +4,7 @@ FCollections
 .. toctree::
     :caption: Files Collection
 
+    install
     getting_started
     custom
     implementations/index
