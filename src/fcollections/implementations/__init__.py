@@ -29,46 +29,25 @@ except ImportError:
     )
     warnings.warn(msg, ImportWarning)
 
-    from ._collections import (
-        _NetcdfFilesDatabaseOC as NetcdfFilesDatabaseOC,
-        _NetcdfFilesDatabaseDAC as NetcdfFilesDatabaseDAC,
+    from ._ocean_color import _NetcdfFilesDatabaseOC as NetcdfFilesDatabaseOC
+    from ._dac import _NetcdfFilesDatabaseDAC as NetcdfFilesDatabaseDAC
+    from ._gridded_sla import (
         _NetcdfFilesDatabaseGriddedSLA as NetcdfFilesDatabaseGriddedSLA,
-        _NetcdfFilesDatabaseL2Nadir as NetcdfFilesDatabaseL2Nadir,
-        _NetcdfFilesDatabaseL3Nadir as NetcdfFilesDatabaseL3Nadir,
-        _NetcdfFilesDatabaseMUR as NetcdfFilesDatabaseMUR,
-        _NetcdfFilesDatabaseOHC as NetcdfFilesDatabaseOHC,
-        _NetcdfFilesDatabaseSWH as NetcdfFilesDatabaseSWH,
-        _NetcdfFilesDatabaseSwotLRL2 as NetcdfFilesDatabaseSwotLRL2,
-        _NetcdfFilesDatabaseSwotLRL3 as NetcdfFilesDatabaseSwotLRL3,
-        _NetcdfFilesDatabaseSwotLRWW as NetcdfFilesDatabaseSwotLRWW,
-        _NetcdfFilesDatabaseSWH as NetcdfFilesDatabaseSWH,
-        _NetcdfFilesDatabaseSwotLRL2 as NetcdfFilesDatabaseSwotLRL2,
-        _NetcdfFilesDatabaseSwotLRL3 as NetcdfFilesDatabaseSwotLRL3,
-        _NetcdfFilesDatabaseSwotLRWW as NetcdfFilesDatabaseSwotLRWW,
     )
+    from ._l2_nadir import _NetcdfFilesDatabaseL2Nadir as NetcdfFilesDatabaseL2Nadir
+    from ._l3_nadir import _NetcdfFilesDatabaseL3Nadir as NetcdfFilesDatabaseL3Nadir
+    from ._mur import _NetcdfFilesDatabaseMUR as NetcdfFilesDatabaseMUR
+    from ._ohc import _NetcdfFilesDatabaseOHC as NetcdfFilesDatabaseOHC
+    from ._swh import _NetcdfFilesDatabaseSWH as NetcdfFilesDatabaseSWH
+    from ._l2_lr_ssh import _NetcdfFilesDatabaseSwotLRL2 as NetcdfFilesDatabaseSwotLRL2
+    from ._l3_lr_ssh import _NetcdfFilesDatabaseSwotLRL3 as NetcdfFilesDatabaseSwotLRL3
+    from ._l3_lr_ww import _NetcdfFilesDatabaseSwotLRWW as NetcdfFilesDatabaseSwotLRWW
+    from ._swh import _NetcdfFilesDatabaseSWH as NetcdfFilesDatabaseSWH
     from ._sst import _NetcdfFilesDatabaseSST as NetcdfFilesDatabaseSST
 
-from ._collections import NetcdfFilesDatabaseERA5, NetcdfFilesDatabaseS1AOWI
-from ._conventions import AVISO_L2_LR_SSH_LAYOUT as _AVISO_L2_LR_SSH_LAYOUT
-from ._conventions import AVISO_L3_LR_SSH_LAYOUT as _AVISO_L3_LR_SSH_LAYOUT
 from ._conventions import AVISO_L4_SWOT_LAYOUT as _AVISO_L4_SWOT_LAYOUT
-from ._conventions import CMEMS_NADIR_SSHA_LAYOUT as _CMEMS_NADIR_SSHA_LAYOUT
-from ._conventions import (
-    FileNameConventionDAC,
-    FileNameConventionERA5,
-    FileNameConventionGriddedSLA,
-    FileNameConventionGriddedSLAInternal,
-    FileNameConventionL2Nadir,
-    FileNameConventionL3Nadir,
-    FileNameConventionMUR,
-    FileNameConventionOC,
-    FileNameConventionOHC,
-    FileNameConventionS1AOWI,
-    FileNameConventionSWH,
-    FileNameConventionSwotL2,
-    FileNameConventionSwotL3,
-    FileNameConventionSwotL3WW,
-)
+from ._conventions import FileNameConventionGriddedSLAInternal
+from ._dac import FileNameConventionDAC
 from ._definitions import (
     AcquisitionMode,
     Delay,
@@ -79,6 +58,19 @@ from ._definitions import (
     Sensor,
     Temporality,
 )
+from ._era5 import FileNameConventionERA5, NetcdfFilesDatabaseERA5
+from ._gridded_sla import CMEMS_NADIR_SSHA_LAYOUT as _CMEMS_NADIR_SSHA_LAYOUT
+from ._gridded_sla import FileNameConventionGriddedSLA
+from ._l2_lr_ssh import AVISO_L2_LR_SSH_LAYOUT as _AVISO_L2_LR_SSH_LAYOUT
+from ._l2_lr_ssh import FileNameConventionSwotL2
+from ._l2_nadir import FileNameConventionL2Nadir
+from ._l3_lr_ssh import AVISO_L3_LR_SSH_LAYOUT as _AVISO_L3_LR_SSH_LAYOUT
+from ._l3_lr_ssh import FileNameConventionSwotL3
+from ._l3_lr_ww import FileNameConventionSwotL3WW
+from ._l3_nadir import FileNameConventionL3Nadir
+from ._mur import FileNameConventionMUR
+from ._ocean_color import FileNameConventionOC
+from ._ohc import FileNameConventionOHC
 from ._products import (
     L2Version,
     L2VersionField,
@@ -92,7 +84,9 @@ from ._readers import (
     SwotReaderL3LRSSH,
     SwotReaderL3WW,
 )
+from ._s1aowi import FileNameConventionS1AOWI, NetcdfFilesDatabaseS1AOWI
 from ._sst import FileNameConventionSST
+from ._swh import FileNameConventionSWH
 
 # Realiased constant to be picked up by Sphinx to work around autodoc limitation
 #: Layout on Aviso FTP, Aviso TDS for the L2_LR_SSH product

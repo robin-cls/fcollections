@@ -3,19 +3,19 @@ from __future__ import annotations
 from .._collections import (
     _XARRAY_TEMPORAL_NETCDFS,
     _XARRAY_TEMPORAL_NETCDFS_NO_BACKEND,
-    _NetcdfFilesDatabaseDAC,
-    _NetcdfFilesDatabaseGriddedSLA,
-    _NetcdfFilesDatabaseL2Nadir,
-    _NetcdfFilesDatabaseL3Nadir,
-    _NetcdfFilesDatabaseMUR,
-    _NetcdfFilesDatabaseOC,
-    _NetcdfFilesDatabaseOHC,
-    _NetcdfFilesDatabaseSWH,
-    _NetcdfFilesDatabaseSwotLRL2,
-    _NetcdfFilesDatabaseSwotLRL3,
-    _NetcdfFilesDatabaseSwotLRWW,
 )
+from .._dac import _NetcdfFilesDatabaseDAC
+from .._gridded_sla import _NetcdfFilesDatabaseGriddedSLA
+from .._l2_lr_ssh import _NetcdfFilesDatabaseSwotLRL2
+from .._l2_nadir import _NetcdfFilesDatabaseL2Nadir
+from .._l3_lr_ssh import _NetcdfFilesDatabaseSwotLRL3
+from .._l3_lr_ww import _NetcdfFilesDatabaseSwotLRWW
+from .._l3_nadir import _NetcdfFilesDatabaseL3Nadir
+from .._mur import _NetcdfFilesDatabaseMUR
+from .._ocean_color import _NetcdfFilesDatabaseOC
+from .._ohc import _NetcdfFilesDatabaseOHC
 from .._sst import _NetcdfFilesDatabaseSST
+from .._swh import _NetcdfFilesDatabaseSWH
 from ._area_selectors import AreaSelector2D, TemporalSerieAreaSelector
 from ._predicates import SwotGeometryPredicate
 from ._reader import (
