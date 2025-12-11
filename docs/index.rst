@@ -4,9 +4,10 @@ FCollections
 .. toctree::
     :caption: Files Collection
 
-    fcollections/getting_started
-    fcollections/custom
-    fcollections/implementations/index
+    install
+    getting_started
+    custom
+    implementations/index
 
 .. toctree::
     :caption: Utilities
@@ -18,3 +19,4 @@ FCollections
     :maxdepth: 1
 
     api
+    changelog
