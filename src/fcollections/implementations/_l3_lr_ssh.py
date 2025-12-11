@@ -16,8 +16,7 @@ from fcollections.core import (
     SubsetsUnmixer,
 )
 
-from ._definitions import DESCRIPTIONS, ProductLevel, Temporality
-from ._products import ProductSubset
+from ._definitions import DESCRIPTIONS, ProductLevel, ProductSubset, Temporality
 from ._readers import SwotReaderL3LRSSH
 
 SWOT_L3_PATTERN = re.compile(

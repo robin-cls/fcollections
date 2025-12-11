@@ -51,6 +51,7 @@ from ._definitions import (
     Delay,
     OCVariable,
     ProductLevel,
+    ProductSubset,
     S1AOWIProductType,
     S1AOWISlicePostProcessing,
     Sensor,
@@ -64,7 +65,13 @@ from ._gridded_sla import (
     FileNameConventionGriddedSLAInternal,
 )
 from ._l2_lr_ssh import AVISO_L2_LR_SSH_LAYOUT as _AVISO_L2_LR_SSH_LAYOUT
-from ._l2_lr_ssh import FileNameConventionSwotL2
+from ._l2_lr_ssh import (
+    FileNameConventionSwotL2,
+    L2Version,
+    L2VersionField,
+    Timeliness,
+    build_version_parser,
+)
 from ._l2_nadir import FileNameConventionL2Nadir
 from ._l3_lr_ssh import AVISO_L3_LR_SSH_LAYOUT as _AVISO_L3_LR_SSH_LAYOUT
 from ._l3_lr_ssh import FileNameConventionSwotL3
@@ -73,13 +80,6 @@ from ._l3_nadir import FileNameConventionL3Nadir
 from ._mur import FileNameConventionMUR
 from ._ocean_color import FileNameConventionOC
 from ._ohc import FileNameConventionOHC
-from ._products import (
-    L2Version,
-    L2VersionField,
-    ProductSubset,
-    Timeliness,
-    build_version_parser,
-)
 from ._readers import (
     StackLevel,
     SwotReaderL2LRSSH,

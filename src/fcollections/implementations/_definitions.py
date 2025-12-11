@@ -131,3 +131,15 @@ class OCVariable(Enum):
     REFLECTANCE = auto()
     TRANSP = auto()
     OPTICS = auto()
+
+
+class ProductSubset(Enum):
+    """Swot product subset enum."""
+
+    Basic = auto()
+    Expert = auto()
+    WindWave = auto()
+    Unsmoothed = auto()
+    Technical = auto()
+    Light = auto()
+    Extended = auto()

@@ -9,7 +9,7 @@ import fsspec.implementations.local as fs_loc
 import xarray as xr
 
 from fcollections.core import OpenMfDataset, compose
-from fcollections.implementations._products import ProductSubset
+from fcollections.implementations._definitions import ProductSubset
 from fcollections.implementations._readers import (
     StackLevel,
     SwotReaderL2LRSSH,

@@ -13,8 +13,7 @@ from fcollections.core import (
     SubsetsUnmixer,
 )
 
-from ._definitions import DESCRIPTIONS
-from ._products import ProductSubset
+from ._definitions import DESCRIPTIONS, ProductSubset
 from ._readers import SwotReaderL3WW
 
 SWOT_L3_LR_WINDWAVE_PATTERN = re.compile(
