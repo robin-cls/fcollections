@@ -262,7 +262,11 @@ def _select_2d_indices_intersect_bounds(
 
     # No circularity in y axis
     if y0 > y1:
-        y0, y1 = y1, y0
+        msg = (
+            "Check bbox validity: y_bounds[0]={y0} > y_bounds[1]={y1} ("
+            "invalid condition for latitudes)"
+        )
+        raise ValueError(msg)
 
     # Handle circularity in x axis
     if x0 > x1:

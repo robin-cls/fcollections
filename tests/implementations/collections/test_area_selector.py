@@ -32,7 +32,6 @@ from fcollections.implementations.optional._area_selectors import (
         ((0, 2), (1, 6), (0,)),
         ((3, 4), (3, 4), ()),
         ((2, 3), (3, 5), (0, 1)),
-        ((4, 5), (4, 3), (1,)),
         # tests circularity in x axis
         ((5, 1), (1, 6), (1,)),
         ((6, 1), (1, 6), ()),
@@ -50,6 +49,14 @@ def test_select_2d_indices_intersect_bounds(x_bounds, y_bounds, result):
     y_arr = np.array([[3, 2.5, 2], [5, 4.5, 4]])
     (ind_x, _) = _select_2d_indices_intersect_bounds(x_arr, y_arr, x_bounds, y_bounds)
     assert tuple(np.unique(ind_x)) == result
+
+
+def test_select_2d_indices_intersect_bounds_error():
+    x_bounds, y_bounds = (4, 5), (4, 3)
+    x_arr = np.array([[2, 3, 4], [3, 4, 5]])
+    y_arr = np.array([[3, 2.5, 2], [5, 4.5, 4]])
+    with pytest.raises(ValueError):
+        _select_2d_indices_intersect_bounds(x_arr, y_arr, x_bounds, y_bounds)
 
 
 class Test_select_slice_intersect_bounds:
