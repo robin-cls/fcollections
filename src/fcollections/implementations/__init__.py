@@ -37,7 +37,6 @@ except ImportError:
         _NetcdfFilesDatabaseL3Nadir as NetcdfFilesDatabaseL3Nadir,
         _NetcdfFilesDatabaseMUR as NetcdfFilesDatabaseMUR,
         _NetcdfFilesDatabaseOHC as NetcdfFilesDatabaseOHC,
-        _NetcdfFilesDatabaseSST as NetcdfFilesDatabaseSST,
         _NetcdfFilesDatabaseSWH as NetcdfFilesDatabaseSWH,
         _NetcdfFilesDatabaseSwotLRL2 as NetcdfFilesDatabaseSwotLRL2,
         _NetcdfFilesDatabaseSwotLRL3 as NetcdfFilesDatabaseSwotLRL3,
@@ -47,6 +46,7 @@ except ImportError:
         _NetcdfFilesDatabaseSwotLRL3 as NetcdfFilesDatabaseSwotLRL3,
         _NetcdfFilesDatabaseSwotLRWW as NetcdfFilesDatabaseSwotLRWW,
     )
+    from ._sst import _NetcdfFilesDatabaseSST as NetcdfFilesDatabaseSST
 
 from ._collections import NetcdfFilesDatabaseERA5, NetcdfFilesDatabaseS1AOWI
 from ._conventions import AVISO_L2_LR_SSH_LAYOUT as _AVISO_L2_LR_SSH_LAYOUT
@@ -64,7 +64,6 @@ from ._conventions import (
     FileNameConventionOC,
     FileNameConventionOHC,
     FileNameConventionS1AOWI,
-    FileNameConventionSST,
     FileNameConventionSWH,
     FileNameConventionSwotL2,
     FileNameConventionSwotL3,
@@ -93,6 +92,7 @@ from ._readers import (
     SwotReaderL3LRSSH,
     SwotReaderL3WW,
 )
+from ._sst import FileNameConventionSST
 
 # Realiased constant to be picked up by Sphinx to work around autodoc limitation
 #: Layout on Aviso FTP, Aviso TDS for the L2_LR_SSH product

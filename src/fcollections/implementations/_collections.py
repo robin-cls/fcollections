@@ -28,7 +28,6 @@ from ._conventions import (
     FileNameConventionOC,
     FileNameConventionOHC,
     FileNameConventionS1AOWI,
-    FileNameConventionSST,
     FileNameConventionSWH,
     FileNameConventionSwotL2,
     FileNameConventionSwotL3,
@@ -55,21 +54,6 @@ _XARRAY_TEMPORAL_NETCDFS_NO_BACKEND: dict[str, str] = {
     "combine": "nested",
     "concat_dim": "time",
 }
-
-
-class _NetcdfFilesDatabaseSST(FilesDatabase, PeriodMixin):
-    """Database mapping to select and read sea surface temperature Netcdf files
-    in a local file system.
-
-    Attributes
-    ----------
-    path: str
-        path to directory containing NetCDF files
-    """
-
-    parser = FileNameConventionSST()
-    reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS)
-    sort_keys = "time"
 
 
 class _NetcdfFilesDatabaseGriddedSLA(FilesDatabase, PeriodMixin):

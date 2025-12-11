@@ -52,10 +52,6 @@ SWOT_L3_LR_WINDWAVE_PATTERN = re.compile(
     r"(?P<time>\d{8}T\d{6}_\d{8}T\d{6})_v(?P<version>.*).nc"
 )
 
-SST_PATTERN = re.compile(
-    r"(?P<time>\d{8}\d{6})-IFR-L3S_GHRSST-SSTfnd-ODYSSEA-GLOB_010-v02.1-fv01.0.nc"
-)
-
 OC_PATTERN = re.compile(
     r"(?P<time>\d{8})_cmems_obs-oc_glo_bgc-(?P<oc_variable>.*)_(?P<delay>.*)_(?P<level>l3|l4)(-gapfree){0,1}-(?P<sensor>.*)-(?P<spatial_resolution>4km|1km|300m)_(?P<temporal_resolution>P1D|P1M).nc"
 )
@@ -212,21 +208,6 @@ class FileNameConventionSwotL3WW(FileNameConvention):
                 FileNameFieldString("version", description=DESCRIPTIONS["version"]),
             ],
             generation_string="SWOT_L3_LR_WIND_WAVE_{subset!f}_{cycle_number:>03d}_{pass_number:>03d}_{time!f}_v{version}.nc",
-        )
-
-
-class FileNameConventionSST(FileNameConvention):
-    """Sea Surface Temperature datafiles parser."""
-
-    def __init__(self):
-        super().__init__(
-            regex=SST_PATTERN,
-            fields=[
-                FileNameFieldDatetime(
-                    "time", "%Y%m%d%H%M%S", description=DESCRIPTIONS["time"]
-                )
-            ],
-            generation_string="{time!f}-IFR-L3S_GHRSST-SSTfnd-ODYSSEA-GLOB_010-v02.1-fv01.0.nc",
         )
 
 

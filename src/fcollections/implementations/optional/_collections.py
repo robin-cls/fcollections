@@ -10,12 +10,12 @@ from .._collections import (
     _NetcdfFilesDatabaseMUR,
     _NetcdfFilesDatabaseOC,
     _NetcdfFilesDatabaseOHC,
-    _NetcdfFilesDatabaseSST,
     _NetcdfFilesDatabaseSWH,
     _NetcdfFilesDatabaseSwotLRL2,
     _NetcdfFilesDatabaseSwotLRL3,
     _NetcdfFilesDatabaseSwotLRWW,
 )
+from .._sst import _NetcdfFilesDatabaseSST
 from ._area_selectors import AreaSelector2D, TemporalSerieAreaSelector
 from ._predicates import SwotGeometryPredicate
 from ._reader import (
