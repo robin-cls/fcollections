@@ -5,17 +5,15 @@ import numpy as np
 import shapely as shp
 
 from fcollections.missions import MissionsPhases, Phase
+from fcollections.sad import KarinFootprints
 
 from ._model import StandardLongitudeConvention, guess_longitude_convention
 
 logger = logging.getLogger(__name__)
 
-GEOMETRIES_PATH = "KaRIn_2kms_[phase]_geometries.geojson"
-
 
 def _read_geometries_file(phase: Phase) -> gpd.GeoDataFrame:
-    karin_2kms_geometries_file = GEOMETRIES_PATH.replace("[phase]", phase.short_name)
-
+    karin_2kms_geometries_file = KarinFootprints()[phase.short_name]
     return gpd.read_file(karin_2kms_geometries_file)
 
 

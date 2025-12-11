@@ -55,10 +55,10 @@ def test_details(clean_user_config, clean_env):
 
     expected_lines = [
         ["Keys", "File Name", "Folder", "Present"],
-        ["calval", "sph_calval_swath.zip", ".config/sad", "False"],
+        ["calval", "KaRIn_2kms_calval_geometries.geojson.zip", ".config/sad", "False"],
         [
             "science",
-            "swot_science_orbit_sept2015-v2_10s_swath.zip",
+            "KaRIn_2kms_science_geometries.geojson.zip",
             ".config/sad",
             "False",
         ],

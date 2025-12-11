@@ -26,7 +26,7 @@ class KarinFootprints(IAuxiliaryDataFetcher):
         the user home (~/.config/sad)
     """
 
-    HTTP_URL = "https://www.aviso.altimetry.fr/fileadmin/documents/missions/Swot"
+    HTTP_URL = "https://data.aviso.altimetry.fr/aviso-gateway/data/.geometries_karin"
 
     @property
     def keys(self) -> set[str]:
@@ -37,12 +37,7 @@ class KarinFootprints(IAuxiliaryDataFetcher):
         return target_folder / remote_file
 
     def _file_name(self, key: str) -> str:
-        # TODO: placeholder for the real thing
-        if key == "calval":
-            return "sph_calval_swath.zip"
-        else:
-            return "swot_science_orbit_sept2015-v2_10s_swath.zip"
-        # return f'KaRIn_2kms_{key}_geometries.nc'
+        return f"KaRIn_2kms_{key}_geometries.geojson.zip"
 
 
 def fetch_http_file(url: str, filename: str, target_folder: Path):
