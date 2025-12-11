@@ -16,20 +16,6 @@ class Phase:
     These include the start and end if available. Both half orbit number and
     time are given to allow a search using these two useful information.
 
-    Parameters
-    ----------
-    short_name
-        Acronym for describing the mission phase. It is usually built so that
-        both mission and phase can be recognized from this short name: ex.
-        Jason-1 New orbit -> 'j1n'
-    half_orbits
-        First and last half orbit numbers of the phase
-    period
-        First and last dates of the phase. For an ongoing phase, the last date
-        is set to dt.datetime.max
-    half_orbits_per_cycle
-        Number of half orbits in a cycle if the phase is repetitive. Set to none
-
     Notes
     -----
     For an going phase, make sure to use a constant bound for the period even
@@ -41,9 +27,24 @@ class Phase:
     """
 
     short_name: str
+    """Acronym for describing the mission phase.
+
+    It is usually built so that
+    both mission and phase can be recognized from this short name: ex. Jason-1
+    New orbit -> 'j1n'.
+    """
     half_orbits: tuple[tuple[int, int], tuple[int, int] | None]
+    """First and last half orbit numbers of the phase."""
     period: Period
+    """First and last dates of the phase.
+
+    For an ongoing phase, the last date is set to dt.datetime.max.
+    """
     half_orbits_per_cycle: int | None = None
+    """Number of half orbits in a cycle if the phase is repetitive.
+
+    Set to none.
+    """
 
     @property
     def cycles(self) -> tuple[int, int | None]:

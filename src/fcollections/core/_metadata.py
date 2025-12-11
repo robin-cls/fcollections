@@ -15,30 +15,23 @@ if tp.TYPE_CHECKING:  # pragma: no cover
 class GroupMetadata:
     """Metadata for a group of variables.
 
-    A dataset may be organized as a simple set of variables, or adopt a more
-    complex tree-like structure. This dataclass reflects the most complex case
-    where we can have an indefinite number of nesting levels. The simplest case
-    (no concept of groups) is naturally well-contained within this model.
-
-    Parameters
-    ----------
-    name
-        Name of the group (can be set to '/' when no nesting is needed)
-    variables
-        list of variables contained in the group
-    subgroups
-        Nested groups
-    attributes
-        Dictionary of attributes specific to the group
-    dimensions
-        Name and size of the dimensions contained in the group
+    A dataset may be organized as a simple set of variables, or adopt a
+    more complex tree-like structure. This dataclass reflects the most
+    complex case where we can have an indefinite number of nesting
+    levels. The simplest case (no concept of groups) is naturally well-
+    contained within this model.
     """
 
     name: str
+    """Name of the group (can be set to '/' when no nesting is needed)."""
     variables: list[VariableMetadata]
+    """List of variables contained in the group."""
     subgroups: list[GroupMetadata]
+    """Nested groups."""
     attributes: dict[str, str]
+    """Dictionary of attributes specific to the group."""
     dimensions: dict[str, int]
+    """Name and size of the dimensions contained in the group."""
 
     def _repr_html_(self):
         return _render_html(self.flatten())
@@ -137,24 +130,16 @@ def _render_html(groups: dict[str, tp.Any]) -> str:
 
 @dc.dataclass
 class VariableMetadata:
-    """Metadata of a variable.
-
-    Parameters
-    ----------
-    name
-        Name of the variable
-    dtype
-        Type of the variable as a numpy dtype
-    dimension
-        Dimensions' names
-    attributes
-        Dictionary of attributes specific to the variable
-    """
+    """Metadata of a variable."""
 
     name: str
+    """Name of the variable."""
     dtype: np.dtype
+    """Type of the variable as a numpy dtype."""
     dimensions: tuple[str, ...]
+    """Dimensions' names."""
     attributes: dict[str, str]
+    """Dictionary of attributes specific to the variable."""
 
     def __post_init__(self):
         if not isinstance(self.dtype, np.dtype):
