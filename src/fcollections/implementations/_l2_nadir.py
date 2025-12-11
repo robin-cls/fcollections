@@ -11,8 +11,7 @@ from fcollections.core import (
     PeriodMixin,
 )
 
-from ._collections import _XARRAY_TEMPORAL_NETCDFS
-from ._conventions import DESCRIPTIONS
+from ._definitions import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS
 
 L2_NADIR_PATTERN = re.compile(
     r"SWOT_(GPN|IPN)_2PfP(?P<cycle_number>\d{3})_(?P<pass_number>\d{3})_(?P<time>\d{8}_\d{6}_\d{8}_\d{6}).nc"
@@ -50,5 +49,5 @@ class _NetcdfFilesDatabaseL2Nadir(FilesDatabase, PeriodMixin):
     """
 
     parser = FileNameConventionL2Nadir()
-    reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS)
+    reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"

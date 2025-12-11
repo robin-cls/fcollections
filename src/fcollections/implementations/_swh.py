@@ -13,8 +13,7 @@ from fcollections.core import (
 )
 from fcollections.missions import MissionsPhases
 
-from ._collections import _XARRAY_TEMPORAL_NETCDFS
-from ._conventions import DESCRIPTIONS
+from ._definitions import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS
 
 SWH_PATTERN = re.compile(
     r"global_vavh_l3_rt_(?P<mission>.*)_(?P<time>\d{8}T\d{6}_\d{8}T\d{6})_(?P<production_date>\d{8}T\d{6}).nc"
@@ -56,5 +55,5 @@ class _NetcdfFilesDatabaseSWH(FilesDatabase, PeriodMixin):
     """
 
     parser = FileNameConventionSWH()
-    reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS)
+    reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"

@@ -45,8 +45,6 @@ except ImportError:
     from ._swh import _NetcdfFilesDatabaseSWH as NetcdfFilesDatabaseSWH
     from ._sst import _NetcdfFilesDatabaseSST as NetcdfFilesDatabaseSST
 
-from ._conventions import AVISO_L4_SWOT_LAYOUT as _AVISO_L4_SWOT_LAYOUT
-from ._conventions import FileNameConventionGriddedSLAInternal
 from ._dac import FileNameConventionDAC
 from ._definitions import (
     AcquisitionMode,
@@ -59,8 +57,12 @@ from ._definitions import (
     Temporality,
 )
 from ._era5 import FileNameConventionERA5, NetcdfFilesDatabaseERA5
+from ._gridded_sla import AVISO_L4_SWOT_LAYOUT as _AVISO_L4_SWOT_LAYOUT
 from ._gridded_sla import CMEMS_NADIR_SSHA_LAYOUT as _CMEMS_NADIR_SSHA_LAYOUT
-from ._gridded_sla import FileNameConventionGriddedSLA
+from ._gridded_sla import (
+    FileNameConventionGriddedSLA,
+    FileNameConventionGriddedSLAInternal,
+)
 from ._l2_lr_ssh import AVISO_L2_LR_SSH_LAYOUT as _AVISO_L2_LR_SSH_LAYOUT
 from ._l2_lr_ssh import FileNameConventionSwotL2
 from ._l2_nadir import FileNameConventionL2Nadir

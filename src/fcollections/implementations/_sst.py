@@ -8,8 +8,7 @@ from fcollections.core import (
     PeriodMixin,
 )
 
-from ._collections import _XARRAY_TEMPORAL_NETCDFS
-from ._conventions import DESCRIPTIONS
+from ._definitions import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS
 
 SST_PATTERN = re.compile(
     r"(?P<time>\d{8}\d{6})-IFR-L3S_GHRSST-SSTfnd-ODYSSEA-GLOB_010-v02.1-fv01.0.nc"
@@ -42,5 +41,5 @@ class _NetcdfFilesDatabaseSST(FilesDatabase, PeriodMixin):
     """
 
     parser = FileNameConventionSST()
-    reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS)
+    reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"

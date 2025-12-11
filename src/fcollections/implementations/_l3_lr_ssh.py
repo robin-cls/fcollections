@@ -16,11 +16,7 @@ from fcollections.core import (
     SubsetsUnmixer,
 )
 
-from ._conventions import DESCRIPTIONS
-from ._definitions import (
-    ProductLevel,
-    Temporality,
-)
+from ._definitions import DESCRIPTIONS, ProductLevel, Temporality
 from ._products import ProductSubset
 from ._readers import SwotReaderL3LRSSH
 

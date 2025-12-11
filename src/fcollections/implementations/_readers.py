@@ -15,7 +15,7 @@ import xarray as xr
 
 from fcollections.core import OpenMfDataset, compose
 
-from ._conventions import SWOT_PATTERN
+from ._definitions import SWOT_PATTERN
 from ._products import ProductSubset
 
 logger = logging.getLogger(__name__)

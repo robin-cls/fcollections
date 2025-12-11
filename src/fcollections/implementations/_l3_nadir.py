@@ -20,12 +20,7 @@ from fcollections.core import (
 )
 from fcollections.missions import MissionsPhases
 
-from ._collections import _XARRAY_TEMPORAL_NETCDFS
-from ._conventions import DESCRIPTIONS
-from ._definitions import (
-    Delay,
-    ProductLevel,
-)
+from ._definitions import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS, Delay, ProductLevel
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -102,5 +97,5 @@ class _NetcdfFilesDatabaseL3Nadir(FilesDatabase, PeriodMixin):
     parser = FileNameConventionL3Nadir()
     deduplicator = Deduplicator(unique=("time",), auto_pick_last=("production_date",))
     unmixer = SubsetsUnmixer(partition_keys=["mission", "resolution"])
-    reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS)
+    reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"

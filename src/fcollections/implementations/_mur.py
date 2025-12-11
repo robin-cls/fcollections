@@ -10,8 +10,7 @@ from fcollections.core import (
     PeriodMixin,
 )
 
-from ._collections import _XARRAY_TEMPORAL_NETCDFS
-from ._conventions import DESCRIPTIONS
+from ._definitions import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS
 
 MUR_PATTERN = re.compile(
     r"(?P<time>\d{8}\d{6})-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v(.*)-fv(.*).nc"
@@ -44,5 +43,5 @@ class _NetcdfFilesDatabaseMUR(FilesDatabase, PeriodMixin):
     """
 
     parser = FileNameConventionMUR()
-    reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS)
+    reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"

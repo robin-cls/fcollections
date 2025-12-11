@@ -8,6 +8,7 @@ from fcollections.core import (
     CaseType,
     FileNameConvention,
     FileNameFieldDateDelta,
+    FileNameFieldDateJulianDelta,
     FileNameFieldDatetime,
     FileNameFieldEnum,
     FileNameFieldFloat,
@@ -20,15 +21,13 @@ from fcollections.core import (
 )
 from fcollections.missions import MissionsPhases
 
-from ._collections import _XARRAY_TEMPORAL_NETCDFS
-from ._conventions import DESCRIPTIONS
-from ._definitions import (
-    Delay,
-)
+from ._definitions import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS, Delay
 
 GRIDDED_SLA_PATTERN = re.compile(
     r"(?P<delay>.*)_(.*)_allsat_phy_l4_(?P<time>(\d{8})|(\d{8}T\d{2}))_(?P<production_date>\d{8}).nc"
 )
+
+INTERNAL_SLA_PATTERN = re.compile(r"msla_oer_merged_h_(?P<date>\d{5}).nc")
 
 
 class FileNameConventionGriddedSLA(FileNameConvention):
@@ -71,7 +70,7 @@ class _NetcdfFilesDatabaseGriddedSLA(FilesDatabase, PeriodMixin):
     """
 
     parser = FileNameConventionGriddedSLA()
-    reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS)
+    reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"
 
 
@@ -141,6 +140,44 @@ CMEMS_NADIR_SSHA_LAYOUT = Layout(
             re.compile(r"(?P<month>\d{2})"),
             [FileNameFieldInteger("month")],
             "{month:0>2d}",
+        ),
+    ]
+)
+
+
+class FileNameConventionGriddedSLAInternal(FileNameConvention):
+
+    def __init__(self):
+        super().__init__(
+            regex=INTERNAL_SLA_PATTERN,
+            fields=[
+                FileNameFieldDateJulianDelta(
+                    "date",
+                    reference=np.datetime64("1950-01-01T00"),
+                    delta=np.timedelta64(1, "D"),
+                    description=DESCRIPTIONS["time"],
+                )
+            ],
+            generation_string="msla_oer_merged_h_{date!f}.nc",
+        )
+
+
+AVISO_L4_SWOT_LAYOUT = Layout(
+    [
+        FileNameConvention(
+            re.compile(r"v(?P<version>.*)"),
+            [FileNameFieldString("version")],
+            "v{version!f}",
+        ),
+        FileNameConvention(
+            re.compile(r"(?P<method>4dvarnet|4dvarqg|miost)"),
+            [FileNameFieldString("method")],
+            "{method}",
+        ),
+        FileNameConvention(
+            re.compile(r"(?P<phase>.*)"),
+            [FileNameFieldEnum("phase", MissionsPhases)],
+            "{phase!f}",
         ),
     ]
 )

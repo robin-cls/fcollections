@@ -15,10 +15,7 @@ from fcollections.core import (
     SubsetsUnmixer,
 )
 
-from ._conventions import DESCRIPTIONS
-from ._definitions import (
-    ProductLevel,
-)
+from ._definitions import DESCRIPTIONS, ProductLevel
 from ._products import L2VersionField, ProductSubset
 from ._readers import SwotReaderL2LRSSH
 

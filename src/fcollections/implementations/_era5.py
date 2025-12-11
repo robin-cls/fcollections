@@ -10,8 +10,7 @@ from fcollections.core import (
     PeriodMixin,
 )
 
-from ._collections import _XARRAY_TEMPORAL_NETCDFS
-from ._conventions import DESCRIPTIONS
+from ._definitions import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS
 
 ERA5_PATTERN = re.compile(r"reanalysis-era5-single-levels_(?P<time>\d{8}).nc")
 
@@ -41,5 +40,5 @@ class NetcdfFilesDatabaseERA5(FilesDatabase, PeriodMixin):
     """
 
     parser = FileNameConventionERA5()
-    reader = OpenMfDataset(xarray_options=_XARRAY_TEMPORAL_NETCDFS)
+    reader = OpenMfDataset(xarray_options=XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"

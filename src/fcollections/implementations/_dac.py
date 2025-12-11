@@ -15,7 +15,7 @@ from fcollections.core import (
     OpenMfDataset,
 )
 
-from ._collections import _XARRAY_TEMPORAL_NETCDFS_NO_BACKEND
+from ._definitions import XARRAY_TEMPORAL_NETCDFS_NO_BACKEND
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -51,7 +51,7 @@ class _NetcdfFilesDatabaseDAC(FilesDatabase, DiscreteTimesMixin):
     """
 
     parser = FileNameConventionDAC()
-    reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS_NO_BACKEND)
+    reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS_NO_BACKEND)
     metadata_injection = {"time": ("time",)}
     sort_keys = ["time"]
 

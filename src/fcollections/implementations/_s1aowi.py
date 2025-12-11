@@ -13,9 +13,9 @@ from fcollections.core import (
     PeriodMixin,
 )
 
-from ._collections import _XARRAY_TEMPORAL_NETCDFS
-from ._conventions import DESCRIPTIONS
 from ._definitions import (
+    DESCRIPTIONS,
+    XARRAY_TEMPORAL_NETCDFS,
     AcquisitionMode,
     S1AOWIProductType,
     S1AOWISlicePostProcessing,
@@ -77,5 +77,5 @@ class NetcdfFilesDatabaseS1AOWI(FilesDatabase, PeriodMixin):
     """
 
     parser = FileNameConventionS1AOWI()
-    reader = OpenMfDataset(xarray_options=_XARRAY_TEMPORAL_NETCDFS)
+    reader = OpenMfDataset(xarray_options=XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"

@@ -13,7 +13,7 @@ from fcollections.core import (
     SubsetsUnmixer,
 )
 
-from ._conventions import DESCRIPTIONS
+from ._definitions import DESCRIPTIONS
 from ._products import ProductSubset
 from ._readers import SwotReaderL3WW
 

@@ -15,9 +15,9 @@ from fcollections.core import (
     PeriodMixin,
 )
 
-from ._collections import _XARRAY_TEMPORAL_NETCDFS
-from ._conventions import DESCRIPTIONS
 from ._definitions import (
+    DESCRIPTIONS,
+    XARRAY_TEMPORAL_NETCDFS,
     Delay,
     OCVariable,
     ProductLevel,
@@ -92,5 +92,5 @@ class _NetcdfFilesDatabaseOC(FilesDatabase, PeriodMixin):
     """
 
     parser = FileNameConventionOC()
-    reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS)
+    reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"

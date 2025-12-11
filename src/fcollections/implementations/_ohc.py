@@ -10,8 +10,7 @@ from fcollections.core import (
     PeriodMixin,
 )
 
-from ._collections import _XARRAY_TEMPORAL_NETCDFS_NO_BACKEND
-from ._conventions import DESCRIPTIONS
+from ._definitions import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS_NO_BACKEND
 
 OHC_PATTERN = re.compile(
     r"OHC-NAQG3_v(.*)r(.*)_blend_s(.*)_e(.*)_c(?P<time>\d{8})(.*).nc"
@@ -42,5 +41,5 @@ class _NetcdfFilesDatabaseOHC(FilesDatabase, PeriodMixin):
     """
 
     parser = FileNameConventionOHC()
-    reader = OpenMfDataset(_XARRAY_TEMPORAL_NETCDFS_NO_BACKEND)
+    reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS_NO_BACKEND)
     sort_keys = "time"
