@@ -4,9 +4,9 @@ FCollections
 .. toctree::
     :caption: Files Collection
 
-    fcollections/getting_started
-    fcollections/custom
-    fcollections/implementations/index
+    getting_started
+    custom
+    implementations/index
 
 .. toctree::
     :caption: Utilities
