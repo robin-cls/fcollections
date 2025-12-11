@@ -7,24 +7,16 @@ import numpy as np
 
 @dc.dataclass(frozen=True)
 class Period:
-    """Period representation.
-
-    Parameters
-    ----------
-    start: np.datetime64
-        date representing the start of the period
-    stop: np.datetime64
-        date representing the end of the period
-    include_start: boolean
-         inclusive (True) or strict (False) start selection
-    include_stop: boolean
-         inclusive (True) or strict (False) end selection
-    """
+    """Period representation."""
 
     start: np.datetime64
+    """Date representing the start of the period."""
     stop: np.datetime64
+    """Date representing the end of the period."""
     include_start: bool = True
+    """Inclusive (True) or strict (False) start selection."""
     include_stop: bool = True
+    """Inclusive (True) or strict (False) end selection."""
 
     @property
     def center(self) -> np.datetime64:

@@ -303,29 +303,28 @@ class FieldFormatter(string.Formatter):
 class FileNameConvention:
     """Parse or generate filenames with a convention definition.
 
-    The convention is expressed as both a regex and a simple string to handle
-    both parsing and generation. The generation string can be omitted and set to
-    None if the convention is only used to parse files.
-
-    Parameters
-    ----------
-    regex: re.Pattern
-        pattern for filename matching
-    fields: List<FileNameField>
-        list of fields, each field name must correspond to a group in the regex pattern
-    generation_string: str | None
-        string that will be formatted with the input objects to generate a
-        string. The string can use the formatting language described in
-        help('FORMATTING'). In addition, the formatting can be delegated to each
-        field.encode methods by specifying the field name `fn` spec. This allows
-        handling more complex objects such as Period. For example with an
-        FileNameFieldInteger and FileNameFieldPeriod defined:
-        '{cycle_number:>03d}_{period!f}' -> '003_20230102_20240201
+    The convention is expressed as both a regex and a simple string to
+    handle both parsing and generation. The generation string can be
+    omitted and set to None if the convention is only used to parse
+    files.
     """
 
     regex: re.Pattern
+    """Pattern for filename matching."""
     fields: list[FileNameField]
+    """List of fields, each field name must correspond to a group in the regex
+    pattern."""
     generation_string: str | None = None
+    """String that will be formatted with the input objects to generate a
+    string.
+
+    The string can use the formatting language described in
+    help('FORMATTING'). In addition, the formatting can be delegated to each
+    field.encode methods by specifying the field name `fn` spec. This allows
+    handling more complex objects such as Period. For example with an
+    FileNameFieldInteger and FileNameFieldPeriod defined:
+    '{cycle_number:>03d}_{period!f}' -> '003_20230102_20240201
+    """
 
     def __post_init__(self):
         self._formatter = FieldFormatter({f.name: f for f in self.fields})

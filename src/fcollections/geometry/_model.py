@@ -9,18 +9,12 @@ from ._distances import distances_along_axis
 
 @dc.dataclass
 class LongitudeConvention:
-    """Longitude convention.
-
-    Parameters
-    ----------
-    lon_min: float
-        minimal longitude
-    lon_max: float
-        maximal longitude
-    """
+    """Longitude convention."""
 
     lon_min: float
+    """Minimal longitude in degrees."""
     lon_max: float
+    """Maximal longitude in degrees."""
 
     def __post_init__(self):
         if self.lon_max - self.lon_min != 360:
