@@ -19,3 +19,4 @@ FCollections
     :maxdepth: 1
 
     api
+    changelog
