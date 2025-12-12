@@ -9,13 +9,13 @@ import fsspec.implementations.local as fs_loc
 import xarray as xr
 
 from fcollections.core import OpenMfDataset, compose
-from fcollections.implementations._collections import (
+from fcollections.implementations._definitions import ProductSubset
+from fcollections.implementations._readers import (
+    StackLevel,
     SwotReaderL2LRSSH,
     SwotReaderL3LRSSH,
     SwotReaderL3WW,
 )
-from fcollections.implementations._products import ProductSubset
-from fcollections.implementations._readers import StackLevel
 
 from ._area_selectors import SwathAreaSelector, TemporalSerieAreaSelector
 from ._model import IAreaSelector
