@@ -60,3 +60,24 @@ class _NetcdfFilesDatabaseDAC(FilesDatabase, DiscreteTimesMixin):
     ):
         super().__init__(path, fs)
         super(FilesDatabase, self).__init__(np.timedelta64(6, "h"))
+
+
+try:
+    from fcollections.implementations.optional import AreaSelector2D, GeoOpenMfDataset
+
+    class NetcdfFilesDatabaseDAC(_NetcdfFilesDatabaseDAC):
+        reader = GeoOpenMfDataset(
+            area_selector=AreaSelector2D(),
+            xarray_options=XARRAY_TEMPORAL_NETCDFS_NO_BACKEND,
+        )
+
+    NetcdfFilesDatabaseDAC.__doc__ = _NetcdfFilesDatabaseDAC.__doc__
+
+
+except ImportError:
+    import warnings
+
+    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+
+    warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
+    NetcdfFilesDatabaseDAC = _NetcdfFilesDatabaseDAC

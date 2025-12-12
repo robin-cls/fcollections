@@ -57,3 +57,27 @@ class _NetcdfFilesDatabaseSWH(FilesDatabase, PeriodMixin):
     parser = FileNameConventionSWH()
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"
+
+
+try:
+    from fcollections.implementations.optional import (
+        GeoOpenMfDataset,
+        TemporalSerieAreaSelector,
+    )
+
+    class NetcdfFilesDatabaseSWH(_NetcdfFilesDatabaseSWH):
+        reader = GeoOpenMfDataset(
+            area_selector=TemporalSerieAreaSelector(),
+            xarray_options=XARRAY_TEMPORAL_NETCDFS,
+        )
+
+    NetcdfFilesDatabaseSWH.__doc__ = _NetcdfFilesDatabaseSWH.__doc__
+
+
+except ImportError:
+    import warnings
+
+    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+
+    warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
+    NetcdfFilesDatabaseSWH = _NetcdfFilesDatabaseSWH

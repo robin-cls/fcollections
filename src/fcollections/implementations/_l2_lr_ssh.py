@@ -579,3 +579,25 @@ AVISO_L2_LR_SSH_LAYOUT = Layout(
         ),
     ]
 )
+
+
+try:
+    from fcollections.implementations.optional import (
+        GeoSwotReaderL2LRSSH,
+        SwotGeometryPredicate,
+    )
+
+    class NetcdfFilesDatabaseSwotLRL2(_NetcdfFilesDatabaseSwotLRL2):
+        reader = GeoSwotReaderL2LRSSH()
+        predicate_classes = [SwotGeometryPredicate]
+
+    NetcdfFilesDatabaseSwotLRL2.__doc__ = _NetcdfFilesDatabaseSwotLRL2.__doc__
+
+
+except ImportError:
+    import warnings
+
+    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+
+    warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
+    NetcdfFilesDatabaseSwotLRL2 = _NetcdfFilesDatabaseSwotLRL2

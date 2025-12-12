@@ -82,3 +82,24 @@ class _NetcdfFilesDatabaseSwotLRWW(FilesDatabase, PeriodMixin):
     unmixer = SubsetsUnmixer(
         partition_keys=["version", "subset"], auto_pick_last=("version",)
     )
+
+
+try:
+    from fcollections.implementations.optional import (
+        GeoSwotReaderL3WW,
+        SwotGeometryPredicate,
+    )
+
+    class NetcdfFilesDatabaseSwotLRWW(_NetcdfFilesDatabaseSwotLRWW):
+        reader = GeoSwotReaderL3WW()
+        predicate_classes = [SwotGeometryPredicate]
+
+    NetcdfFilesDatabaseSwotLRWW.__doc__ = _NetcdfFilesDatabaseSwotLRWW.__doc__
+
+except ImportError:
+    import warnings
+
+    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+
+    warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
+    NetcdfFilesDatabaseSwotLRWW = _NetcdfFilesDatabaseSwotLRWW

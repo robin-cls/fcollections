@@ -1,6 +1,16 @@
 import re
 from enum import Enum, auto
 
+# This generic message can be used as a warning if the optional module import
+# fails. In which case the implementations should define a FilesDatabase with
+# less functionalities
+MISSING_OPTIONAL_DEPENDENCIES_MESSAGE = (
+    "Could not import area selection package, the optional dependencies"
+    "shapely, pyinterp and geopandas are not installed. Geographical "
+    "filters in queries and area selection cropping in datasets will be "
+    "disabled"
+)
+
 # Options that works for most netcdf containing a time series
 XARRAY_TEMPORAL_NETCDFS: dict[str, str] = {
     "engine": "h5netcdf",

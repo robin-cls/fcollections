@@ -51,3 +51,26 @@ class _NetcdfFilesDatabaseL2Nadir(FilesDatabase, PeriodMixin):
     parser = FileNameConventionL2Nadir()
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"
+
+
+try:
+    from fcollections.implementations.optional import (
+        GeoOpenMfDataset,
+        TemporalSerieAreaSelector,
+    )
+
+    class NetcdfFilesDatabaseL2Nadir(_NetcdfFilesDatabaseL2Nadir):
+        reader = GeoOpenMfDataset(
+            area_selector=TemporalSerieAreaSelector(),
+            xarray_options=XARRAY_TEMPORAL_NETCDFS,
+        )
+
+    NetcdfFilesDatabaseL2Nadir.__doc__ = _NetcdfFilesDatabaseL2Nadir.__doc__
+
+except ImportError:
+    import warnings
+
+    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+
+    warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
+    NetcdfFilesDatabaseL2Nadir = _NetcdfFilesDatabaseL2Nadir

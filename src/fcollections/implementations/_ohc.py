@@ -43,3 +43,23 @@ class _NetcdfFilesDatabaseOHC(FilesDatabase, PeriodMixin):
     parser = FileNameConventionOHC()
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS_NO_BACKEND)
     sort_keys = "time"
+
+
+try:
+    from fcollections.implementations.optional import AreaSelector2D, GeoOpenMfDataset
+
+    class NetcdfFilesDatabaseOHC(_NetcdfFilesDatabaseOHC):
+        reader = GeoOpenMfDataset(
+            area_selector=AreaSelector2D(),
+            xarray_options=XARRAY_TEMPORAL_NETCDFS_NO_BACKEND,
+        )
+
+    NetcdfFilesDatabaseOHC.__doc__ = _NetcdfFilesDatabaseOHC.__doc__
+
+except ImportError:
+    import warnings
+
+    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+
+    warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
+    NetcdfFilesDatabaseOHC = _NetcdfFilesDatabaseOHC

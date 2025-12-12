@@ -132,3 +132,25 @@ _AVISO_L3_LR_SSH_LAYOUT_V3 = Layout(
 AVISO_L3_LR_SSH_LAYOUT = CompositeLayout(
     [_AVISO_L3_LR_SSH_LAYOUT_V3, _AVISO_L3_LR_SSH_LAYOUT_V2]
 )
+
+
+try:
+    from fcollections.implementations.optional import (
+        GeoSwotReaderL3LRSSH,
+        SwotGeometryPredicate,
+    )
+
+    class NetcdfFilesDatabaseSwotLRL3(_NetcdfFilesDatabaseSwotLRL3):
+        reader = GeoSwotReaderL3LRSSH()
+        predicate_classes = [SwotGeometryPredicate]
+
+    NetcdfFilesDatabaseSwotLRL3.__doc__ = _NetcdfFilesDatabaseSwotLRL3.__doc__
+
+
+except ImportError:
+    import warnings
+
+    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+
+    warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
+    NetcdfFilesDatabaseSwotLRL3 = _NetcdfFilesDatabaseSwotLRL3

@@ -181,3 +181,21 @@ AVISO_L4_SWOT_LAYOUT = Layout(
         ),
     ]
 )
+
+
+try:
+    from fcollections.implementations.optional import AreaSelector2D, GeoOpenMfDataset
+
+    class NetcdfFilesDatabaseGriddedSLA(_NetcdfFilesDatabaseGriddedSLA):
+        reader = GeoOpenMfDataset(
+            area_selector=AreaSelector2D(), xarray_options=XARRAY_TEMPORAL_NETCDFS
+        )
+
+    NetcdfFilesDatabaseGriddedSLA.__doc__ = _NetcdfFilesDatabaseGriddedSLA.__doc__
+except ImportError:
+    import warnings
+
+    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+
+    warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
+    NetcdfFilesDatabaseGriddedSLA = _NetcdfFilesDatabaseGriddedSLA

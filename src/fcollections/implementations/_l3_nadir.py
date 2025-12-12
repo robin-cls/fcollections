@@ -99,3 +99,27 @@ class _NetcdfFilesDatabaseL3Nadir(FilesDatabase, PeriodMixin):
     unmixer = SubsetsUnmixer(partition_keys=["mission", "resolution"])
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"
+
+
+try:
+    from fcollections.implementations.optional import (
+        GeoOpenMfDataset,
+        TemporalSerieAreaSelector,
+    )
+
+    class NetcdfFilesDatabaseL3Nadir(_NetcdfFilesDatabaseL3Nadir):
+        reader = GeoOpenMfDataset(
+            area_selector=TemporalSerieAreaSelector(),
+            xarray_options=XARRAY_TEMPORAL_NETCDFS,
+        )
+
+    NetcdfFilesDatabaseL3Nadir.__doc__ = _NetcdfFilesDatabaseL3Nadir.__doc__
+
+
+except ImportError:
+    import warnings
+
+    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+
+    warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
+    NetcdfFilesDatabaseL3Nadir = _NetcdfFilesDatabaseL3Nadir

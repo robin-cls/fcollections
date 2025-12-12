@@ -43,3 +43,22 @@ class _NetcdfFilesDatabaseSST(FilesDatabase, PeriodMixin):
     parser = FileNameConventionSST()
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"
+
+
+try:
+    from fcollections.implementations.optional import AreaSelector2D, GeoOpenMfDataset
+
+    class NetcdfFilesDatabaseSST(_NetcdfFilesDatabaseSST):
+        reader = GeoOpenMfDataset(
+            area_selector=AreaSelector2D(longitude="lon", latitude="lat"),
+            xarray_options=XARRAY_TEMPORAL_NETCDFS,
+        )
+
+    NetcdfFilesDatabaseSST.__doc__ = _NetcdfFilesDatabaseSST.__doc__
+except ImportError:
+    import warnings
+
+    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+
+    warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
+    NetcdfFilesDatabaseSST = _NetcdfFilesDatabaseSST

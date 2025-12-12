@@ -45,3 +45,24 @@ class _NetcdfFilesDatabaseMUR(FilesDatabase, PeriodMixin):
     parser = FileNameConventionMUR()
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"
+
+
+try:
+    from fcollections.implementations.optional import AreaSelector2D, GeoOpenMfDataset
+
+    class NetcdfFilesDatabaseMUR(_NetcdfFilesDatabaseMUR):
+        reader = GeoOpenMfDataset(
+            area_selector=AreaSelector2D(longitude="lon", latitude="lat"),
+            xarray_options=XARRAY_TEMPORAL_NETCDFS,
+        )
+
+    NetcdfFilesDatabaseMUR.__doc__ = _NetcdfFilesDatabaseMUR.__doc__
+
+
+except ImportError:
+    import warnings
+
+    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+
+    warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
+    NetcdfFilesDatabaseMUR = _NetcdfFilesDatabaseMUR
