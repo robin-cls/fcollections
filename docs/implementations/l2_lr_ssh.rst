@@ -1,20 +1,17 @@
-Swot Low Rate products
-======================
+Swot L2_LR_SSH
+==============
 
-This chapter will present the functionalities specific to the Level 2 and Level
-3 SWOT Low Rate products. Although similar, each product follows its own file
-name convention and is handled with a dedicated implementation.
+This chapter will present the functionalities specific to the Level 2 SWOT Low
+Rate products.
 
 .. code-block:: python
 
     import fcollections.implementations as oct_sio
     # Handlers
     oct_sio.NetcdfFilesDatabaseSwotLRL2
-    oct_sio.NetcdfFilesDatabaseSwotLRL3
 
     # Layouts
     oct_sio.AVISO_L2_LR_SSH_LAYOUT
-    oct_sio.AVISO_L3_LR_SSH_LAYOUT
 
 Although the implementations do not share the file name convention, they use the
 same reader whose arguments are exposed in the ``query`` interface. We will
@@ -167,32 +164,6 @@ retrieve one or the other side.
     position coordinates may include invalids which can break geo-plots.
 
 
-Handling nadir clipped data in Level-3 Basic and Expert subsets
----------------------------------------------------------------
-
-The L3_LR_SSH Basic and Expert subsets have the Nadir instrument data clipped in
-the Sea Level Anomaly fields. The indexes where the nadir data has been
-introduced are stored along ``num_nadir`` dimension. The SWOT implementation
-offers various choices for handling this clipped data:
-
-- ``nadir=False`` and ``swath=True``: remove the nadir data clipped. This is the
-  default behavior
-- ``nadir=True`` and ``swath=True``: do nothing and keep both the KaRIn and
-  Nadir instruments data
-- ``nadir=True`` and ``swath=False``: extract the Nadir instrument data only.
-  This will give a dataset indexed along the ``num_nadir`` dimension. Because
-  it returns the nadir data only, we lose the possibility of stacking multiple
-  half orbits
-
-.. code-block:: python
-
-    >>> fc = oct_sio.NetcdfFilesDatabaseSwotLRL3("/swot_products/l3_karin_nadir/l3_lr_ssh", fs=fs, layout=oct_sio.AVISO_L3_LR_SSH_LAYOUT)
-    >>> ds = fc.query(version='2.0.1', subset="Basic", cycle_number=550, pass_number=13, nadir=False)
-    Frozen({'num_lines': 9860, 'num_pixels': 69})
-    >>> ds_nadir = fc.query(version='2.0.1', subset="Basic", cycle_number=550, pass_number=13, nadir=True, swath=False)
-    Frozen({'num_nadir': 1748})
-
-
 Query detailed information
 --------------------------
 
@@ -200,5 +171,3 @@ Detailed information on the filters and reading arguments can be found in the
 ``query`` methods
 
 :meth:`fcollections.implementations.NetcdfFilesDatabaseSwotLRL2.query`
-
-:meth:`fcollections.implementations.NetcdfFilesDatabaseSwotLRL3.query`
