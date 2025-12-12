@@ -6,7 +6,6 @@ from fcollections.geometry import (
     StandardLongitudeConvention,
     guess_longitude_convention,
 )
-from fcollections.geometry._model import _split_arr
 
 
 @pytest.mark.parametrize(
@@ -41,8 +40,20 @@ from fcollections.geometry._model import _split_arr
 def test_normalize(convention, array, expected_arr):
     conv = LongitudeConvention(*convention)
     arr = conv.normalize(np.array(array))
-    print(arr)
     assert np.array_equal(arr, np.array(expected_arr))
+
+
+def test_normalize_inplace():
+    convention = StandardLongitudeConvention.CONV_180.value
+    reference = np.array([50, 370])
+    expected = np.array([50, 10])
+
+    normalized = convention.normalize(reference)
+    assert np.array_equal(normalized, expected)
+    assert not np.array_equal(normalized, reference)
+
+    convention.normalize(reference, inplace=True)
+    assert np.array_equal(normalized, reference)
 
 
 @pytest.mark.parametrize(

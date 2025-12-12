@@ -50,7 +50,10 @@ class LongitudeConvention:
             return np.array([self.lon_min, self.lon_max])
 
         is_max = lon == self.lon_max
-        lon = (lon - self.lon_min) % 360 + self.lon_min
+        # In place operations
+        lon -= self.lon_min
+        lon %= 360
+        lon += self.lon_min
         lon[is_max] = self.lon_max
 
         return lon
