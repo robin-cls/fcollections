@@ -425,7 +425,7 @@ This layout must be given at class instanciation, because even if a dataset is
 present on multiple platforms, there is no guarantee that the files'
 organization is the same. An integrated default layout would be prone to
 breaking, so we instead define independant default layouts (see
-:doc:`implementations/index`) and ask the user to properly inject them in the
+:doc:`implementations/catalog`) and ask the user to properly inject them in the
 databases.
 
 .. code-block:: python

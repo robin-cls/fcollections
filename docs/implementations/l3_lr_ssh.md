@@ -34,6 +34,86 @@ tool to run the following script.
 :language: python
 ```
 
+## Query overview
+
+Detailed information on the filters and reading arguments can be found in the
+``query`` API description
+
+{meth}`fcollections.implementations.NetcdfFilesDatabaseSwotLRL3.query`
+
+The following examples can be used to build complex queries
+
+::::{tab-set}
+:::{tab-item} Half Orbits
+  - A unique half orbit
+    ```python
+    fc.query(cycle_number=1, pass_number=1)
+    ```
+  - One half orbit repeating over all cycles
+    ```python
+    fc.query(pass_number=1)
+    ```
+  - A list of half orbits, over multiple cycles
+    ```python
+    fc.query(cycle_number=slice(1, 4), pass_number=[1, 3])
+    ```
+:::
+:::{tab-item} Periods
+  - A time stamp
+    ```python
+    fc.query(time='2024-01-01')
+    ```
+  - A period
+    ```python
+    fc.query(time=('2024-01-01', '2024-03-31'))
+    ```
+:::
+:::{tab-item} Variables subset
+  - A subset of variables
+    ```python
+    fc.query(selected_variables=['time', 'longitude', 'latitude'])
+    ```
+
+    :::{note}
+      Available variables can explored using {meth}`fcollections.implementations.NetcdfFilesDatabaseSwotLRL3.variables_info`
+    :::
+:::
+:::{tab-item} Area selection
+  - Zoom over an area selection
+    ```python
+    fc.query(bbox=(-10, 5, 35, 40))
+    ```
+:::
+:::{tab-item} Reading options
+  - Nadir and KaRIn data (Basic, Expert only)
+    ```python
+    fc.query(nadir=True)
+    ```
+  - Nadir data only (Basic, Expert only)
+    ```python
+    fc.query(swath=False, nadir=True)
+    ```
+  - Stacking over cycles (Basic, Expert, Technical only)
+    ```python
+    fc.query(stack='CYCLES')
+    ```
+  - Stacking over both cycles and passes (Basic, Expert, Technical only)
+    ```python
+    fc.query(stack='CYCLES_PASSES')
+    ```
+:::
+:::{tab-item} Subset definitions
+  - Fix a version
+    ```python
+    fc.query(version='2.0.1')
+    ```
+  - Choose one dataset
+    ```python
+    fc.query(subset='Expert')
+    ```
+:::
+::::
+
 ## Stack for temporal analysis
 
 The most prominent functionality is the ability to stack the half orbits when
@@ -174,10 +254,3 @@ plt.ylabel(f'{ds_nadir.ssha_filtered.attrs["standard_name"]} [{ds_nadir.ssha_fil
 plt.xlabel(f'{ds_nadir.latitude.attrs["standard_name"]} [{ds_nadir.latitude.attrs["units"]}]')
 plt.title("SLA Nadir")
 ```
-
-## Query detailed information
-
-Detailed information on the filters and reading arguments can be found in the
-``query`` methods
-
-{meth}`fcollections.implementations.NetcdfFilesDatabaseSwotLRL3.query`

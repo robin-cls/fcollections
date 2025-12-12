@@ -243,7 +243,7 @@ the file collection is organized and speeds up the requests.
 .. note::
 
     Pre-configured layouts are associated to the implementations. They can be
-    found in the :doc:`summary table <implementations/index>`
+    found in the :doc:`summary table <implementations/catalog>`
 
 Below is an example of how a layout shall be configured. The given query filters
 match the ``<version>/<subset>/<cycle_number>`` structure declared in the layout

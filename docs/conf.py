@@ -32,6 +32,7 @@ extensions = [
     "sphinx_tabs.tabs",
     "sphinx.ext.viewcode",
     "myst_nb",
+    "sphinx_design",
 ]
 
 # -- Intersphinx ---------------------------------------------------------------
@@ -48,6 +49,8 @@ intersphinx_mapping = {
 nb_output_stderr = "remove"
 nb_download = True
 nb_execution_mode = "auto"
+
+myst_enable_extensions = ["colon_fence"]
 
 # -- Options for autosummary extension ---------------------------------------
 
