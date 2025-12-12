@@ -31,16 +31,10 @@ class FileNameConventionMUR(FileNameConvention):
         )
 
 
-class _NetcdfFilesDatabaseMUR(FilesDatabase, PeriodMixin):
+class BasicNetcdfFilesDatabaseMUR(FilesDatabase, PeriodMixin):
     """Database mapping to select and read GHRSST Level 4 MUR Global Foundation
     Sea Surface Temperature Analysis product Netcdf file in a local file
-    system.
-
-    Attributes
-    ----------
-    path: str
-        path to directory containing NetCDF files
-    """
+    system."""
 
     parser = FileNameConventionMUR()
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
@@ -50,14 +44,11 @@ class _NetcdfFilesDatabaseMUR(FilesDatabase, PeriodMixin):
 try:
     from fcollections.implementations.optional import AreaSelector2D, GeoOpenMfDataset
 
-    class NetcdfFilesDatabaseMUR(_NetcdfFilesDatabaseMUR):
+    class NetcdfFilesDatabaseMUR(BasicNetcdfFilesDatabaseMUR):
         reader = GeoOpenMfDataset(
             area_selector=AreaSelector2D(longitude="lon", latitude="lat"),
             xarray_options=XARRAY_TEMPORAL_NETCDFS,
         )
-
-    NetcdfFilesDatabaseMUR.__doc__ = _NetcdfFilesDatabaseMUR.__doc__
-
 
 except ImportError:
     import warnings
@@ -65,4 +56,4 @@ except ImportError:
     from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
-    NetcdfFilesDatabaseMUR = _NetcdfFilesDatabaseMUR
+    NetcdfFilesDatabaseMUR = BasicNetcdfFilesDatabaseMUR

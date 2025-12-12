@@ -298,9 +298,14 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
     path
         path to a directory containing NetCDF files
     fs
-        File system hosting the files
+        File system hosting the files. Can be used to access local or remote
+        (S3, FTP, ...) file systems. Underlying readers may not be compatible
+        with all file systems implementations
     layout
-        File tree structure description. Used to speed up file listing
+        Layout of the subfolders. Useful to extract information and have an
+        efficient file system scanning. The recommended layout can mismatch the
+        current files organization, in which case the user can build its own or
+        set this parameter to None
 
     Attributes
     ----------

@@ -84,15 +84,9 @@ class FileNameConventionL3Nadir(FileNameConvention):
         )
 
 
-class _NetcdfFilesDatabaseL3Nadir(FilesDatabase, PeriodMixin):
+class BasicNetcdfFilesDatabaseL3Nadir(FilesDatabase, PeriodMixin):
     """Database mapping to select and read L3 nadir Netcdf files in a local
-    file system.
-
-    Attributes
-    ----------
-    path: str
-        path to a directory containing NetCDF files
-    """
+    file system."""
 
     parser = FileNameConventionL3Nadir()
     deduplicator = Deduplicator(unique=("time",), auto_pick_last=("production_date",))
@@ -107,14 +101,11 @@ try:
         TemporalSerieAreaSelector,
     )
 
-    class NetcdfFilesDatabaseL3Nadir(_NetcdfFilesDatabaseL3Nadir):
+    class NetcdfFilesDatabaseL3Nadir(BasicNetcdfFilesDatabaseL3Nadir):
         reader = GeoOpenMfDataset(
             area_selector=TemporalSerieAreaSelector(),
             xarray_options=XARRAY_TEMPORAL_NETCDFS,
         )
-
-    NetcdfFilesDatabaseL3Nadir.__doc__ = _NetcdfFilesDatabaseL3Nadir.__doc__
-
 
 except ImportError:
     import warnings
@@ -122,4 +113,4 @@ except ImportError:
     from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
-    NetcdfFilesDatabaseL3Nadir = _NetcdfFilesDatabaseL3Nadir
+    NetcdfFilesDatabaseL3Nadir = BasicNetcdfFilesDatabaseL3Nadir

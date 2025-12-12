@@ -68,13 +68,7 @@ class FileNameConventionS1AOWI(FileNameConvention):
 
 class NetcdfFilesDatabaseS1AOWI(FilesDatabase, PeriodMixin):
     """Database mapping to select and read S1A Ocean surface wind product
-    Netcdf files in a local file system.
-
-    Attributes
-    ----------
-    path: str
-        path to directory containing NetCDF files
-    """
+    Netcdf files in a local file system."""
 
     parser = FileNameConventionS1AOWI()
     reader = OpenMfDataset(xarray_options=XARRAY_TEMPORAL_NETCDFS)

@@ -60,7 +60,11 @@ autodoc_default_options = {
     "show-inheritance": True,
 }
 
-autodoc_class_signature = "separated"
+# Keep the default. In case a class A extend another class B and does
+# redefine its parameters nor attributes, keeping mixed displays the constructor
+# signature next to the class name. The allows having hints about the __init__
+# method without having to navigate the docstrings
+autodoc_class_signature = "mixed"
 
 autodoc_preserve_defaults = True
 

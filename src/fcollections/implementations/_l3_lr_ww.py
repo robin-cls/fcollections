@@ -50,22 +50,8 @@ class FileNameConventionSwotL3WW(FileNameConvention):
         )
 
 
-class _NetcdfFilesDatabaseSwotLRWW(FilesDatabase, PeriodMixin):
+class BasicNetcdfFilesDatabaseSwotLRWW(FilesDatabase, PeriodMixin):
     """Database mapping to explore and read the L3_LR_WIND_WAVE product.
-
-    Attributes
-    ----------
-    path
-        path to a directory containing the NetCDF files
-    fs
-        File system hosting the files. Can be used to access local or remote
-        (S3, FTP, ...) file systems. Underlying readers may not be compatible
-        with all file systems implementations
-    layout
-        Layout of the subfolders. Useful to extract information and have an
-        efficient file system scanning. The recommended layout can mismatch the
-        current files organization, in which case the user can build its own or
-        set this parameter to None
 
     See Also
     --------
@@ -90,11 +76,9 @@ try:
         SwotGeometryPredicate,
     )
 
-    class NetcdfFilesDatabaseSwotLRWW(_NetcdfFilesDatabaseSwotLRWW):
+    class NetcdfFilesDatabaseSwotLRWW(BasicNetcdfFilesDatabaseSwotLRWW):
         reader = GeoSwotReaderL3WW()
         predicate_classes = [SwotGeometryPredicate]
-
-    NetcdfFilesDatabaseSwotLRWW.__doc__ = _NetcdfFilesDatabaseSwotLRWW.__doc__
 
 except ImportError:
     import warnings
@@ -102,4 +86,4 @@ except ImportError:
     from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
-    NetcdfFilesDatabaseSwotLRWW = _NetcdfFilesDatabaseSwotLRWW
+    NetcdfFilesDatabaseSwotLRWW = BasicNetcdfFilesDatabaseSwotLRWW

@@ -38,15 +38,9 @@ class FileNameConventionL2Nadir(FileNameConvention):
         )
 
 
-class _NetcdfFilesDatabaseL2Nadir(FilesDatabase, PeriodMixin):
+class BasicNetcdfFilesDatabaseL2Nadir(FilesDatabase, PeriodMixin):
     """Database mapping to select and read L2 nadir Netcdf files in a local
-    file system.
-
-    Attributes
-    ----------
-    path: str
-        path to a directory containing NetCDF files
-    """
+    file system."""
 
     parser = FileNameConventionL2Nadir()
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
@@ -59,13 +53,11 @@ try:
         TemporalSerieAreaSelector,
     )
 
-    class NetcdfFilesDatabaseL2Nadir(_NetcdfFilesDatabaseL2Nadir):
+    class NetcdfFilesDatabaseL2Nadir(BasicNetcdfFilesDatabaseL2Nadir):
         reader = GeoOpenMfDataset(
             area_selector=TemporalSerieAreaSelector(),
             xarray_options=XARRAY_TEMPORAL_NETCDFS,
         )
-
-    NetcdfFilesDatabaseL2Nadir.__doc__ = _NetcdfFilesDatabaseL2Nadir.__doc__
 
 except ImportError:
     import warnings
@@ -73,4 +65,4 @@ except ImportError:
     from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
-    NetcdfFilesDatabaseL2Nadir = _NetcdfFilesDatabaseL2Nadir
+    NetcdfFilesDatabaseL2Nadir = BasicNetcdfFilesDatabaseL2Nadir

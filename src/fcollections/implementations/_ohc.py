@@ -30,15 +30,9 @@ class FileNameConventionOHC(FileNameConvention):
         )
 
 
-class _NetcdfFilesDatabaseOHC(FilesDatabase, PeriodMixin):
+class BasicNetcdfFilesDatabaseOHC(FilesDatabase, PeriodMixin):
     """Database mapping to select and read ocean heat content Netcdf files in a
-    local file system.
-
-    Attributes
-    ----------
-    path: str
-        path to directory containing NetCDF files
-    """
+    local file system."""
 
     parser = FileNameConventionOHC()
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS_NO_BACKEND)
@@ -48,13 +42,11 @@ class _NetcdfFilesDatabaseOHC(FilesDatabase, PeriodMixin):
 try:
     from fcollections.implementations.optional import AreaSelector2D, GeoOpenMfDataset
 
-    class NetcdfFilesDatabaseOHC(_NetcdfFilesDatabaseOHC):
+    class NetcdfFilesDatabaseOHC(BasicNetcdfFilesDatabaseOHC):
         reader = GeoOpenMfDataset(
             area_selector=AreaSelector2D(),
             xarray_options=XARRAY_TEMPORAL_NETCDFS_NO_BACKEND,
         )
-
-    NetcdfFilesDatabaseOHC.__doc__ = _NetcdfFilesDatabaseOHC.__doc__
 
 except ImportError:
     import warnings
@@ -62,4 +54,4 @@ except ImportError:
     from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
-    NetcdfFilesDatabaseOHC = _NetcdfFilesDatabaseOHC
+    NetcdfFilesDatabaseOHC = BasicNetcdfFilesDatabaseOHC
