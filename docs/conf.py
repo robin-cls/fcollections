@@ -50,7 +50,11 @@ nb_output_stderr = "remove"
 nb_download = True
 nb_execution_mode = "auto"
 
+# Enable ::: syntax instead of ``` to avoid tricky nesting of directives
 myst_enable_extensions = ["colon_fence"]
+
+# Stop at the first execution error and raise an exception
+nb_execution_raise_on_error = True
 
 # -- Options for autosummary extension ---------------------------------------
 
