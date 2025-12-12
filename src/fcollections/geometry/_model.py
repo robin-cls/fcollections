@@ -50,7 +50,10 @@ class LongitudeConvention:
             return np.array([self.lon_min, self.lon_max])
 
         is_max = lon == self.lon_max
-        lon = (lon - self.lon_min) % 360 + self.lon_min
+        # In place operations
+        lon -= self.lon_min
+        lon %= 360
+        lon += self.lon_min
         lon[is_max] = self.lon_max
 
         return lon
@@ -114,6 +117,13 @@ def guess_longitude_convention(lon: np.array) -> StandardLongitudeConvention:
     Returns
     -------
         the detected StandardLongitudeConvention enum
+
+    Raises
+    ------
+    ValueError
+        In case the input longitudes span over multiple intervals. ex: [-170, 0,
+        310] uses both [-180, 180] and [0, 360] conventions and will trigger an
+        exception
     """
     lon = lon[~np.isnan(lon)]
 
@@ -123,9 +133,12 @@ def guess_longitude_convention(lon: np.array) -> StandardLongitudeConvention:
     if np.all((lon >= -180) & (lon <= 180)):
         return StandardLongitudeConvention.CONV_180
 
-    raise ValueError(
-        f"Impossible to guess the convention: longitudes do not follow any known convention amongst [ {', '.join([str(c.value) for c in StandardLongitudeConvention])} ]"
+    conventions = ", ".join([str(c.value) for c in StandardLongitudeConvention])
+    msg = (
+        "Impossible to guess the convention: longitudes do not follow any "
+        f"known convention amongst [ {conventions} ]"
     )
+    raise ValueError(msg)
 
 
 class Distances:

@@ -1,13 +1,8 @@
 from __future__ import annotations
 
-import typing as tp
-
 import numpy as np
 import pytest
-
-if tp.TYPE_CHECKING:
-    import xarray as xr_t
-
+import xarray as xr
 from utils import brute_force_geographical_selection, extract_box_from_polygon
 
 from fcollections.implementations.optional._area_selectors import (
@@ -32,7 +27,6 @@ from fcollections.implementations.optional._area_selectors import (
         ((0, 2), (1, 6), (0,)),
         ((3, 4), (3, 4), ()),
         ((2, 3), (3, 5), (0, 1)),
-        ((4, 5), (4, 3), (1,)),
         # tests circularity in x axis
         ((5, 1), (1, 6), (1,)),
         ((6, 1), (1, 6), ()),
@@ -50,6 +44,14 @@ def test_select_2d_indices_intersect_bounds(x_bounds, y_bounds, result):
     y_arr = np.array([[3, 2.5, 2], [5, 4.5, 4]])
     (ind_x, _) = _select_2d_indices_intersect_bounds(x_arr, y_arr, x_bounds, y_bounds)
     assert tuple(np.unique(ind_x)) == result
+
+
+def test_select_2d_indices_intersect_bounds_error():
+    x_bounds, y_bounds = (4, 5), (4, 3)
+    x_arr = np.array([[2, 3, 4], [3, 4, 5]])
+    y_arr = np.array([[3, 2.5, 2], [5, 4.5, 4]])
+    with pytest.raises(ValueError):
+        _select_2d_indices_intersect_bounds(x_arr, y_arr, x_bounds, y_bounds)
 
 
 class Test_select_slice_intersect_bounds:
@@ -238,7 +240,7 @@ class Test_SwathAreaSelector:
         "longitude, latitude", [("bad_lon", "latitude"), ("longitude", "bad_lat")]
     )
     def test_bad_lonlat(
-        self, l2_lr_ssh_basic_dataset: xr_t.Dataset, longitude: str, latitude: str
+        self, l2_lr_ssh_basic_dataset: xr.Dataset, longitude: str, latitude: str
     ):
         """Test apply with bad longitude and latitude names."""
         selector = SwathAreaSelector(longitude=longitude, latitude=latitude)
@@ -246,7 +248,7 @@ class Test_SwathAreaSelector:
             selector.apply(l2_lr_ssh_basic_dataset, (0, 0, 1, 1))
 
     @pytest.mark.parametrize("latitude", [-75, -30, 0, 30, 75])
-    def test_apply(self, l2_lr_ssh_basic_dataset: xr_t.Dataset, latitude: float):
+    def test_apply(self, l2_lr_ssh_basic_dataset: xr.Dataset, latitude: float):
         """Test apply with a bbox intersecting the dataset."""
         # Pass in the reference dataset
         pass_number = 25
@@ -265,9 +267,7 @@ class Test_SwathAreaSelector:
         assert reference == ds
 
     @pytest.mark.parametrize("latitude", [-75, -30, 0, 30, 75])
-    def test_apply_circular(
-        self, l2_lr_ssh_basic_dataset: xr_t.Dataset, latitude: float
-    ):
+    def test_apply_circular(self, l2_lr_ssh_basic_dataset: xr.Dataset, latitude: float):
         """Test apply with a bbox intersecting the dataset."""
         # Pass in the reference dataset
         pass_number = 25
@@ -286,7 +286,7 @@ class Test_SwathAreaSelector:
     @pytest.mark.parametrize("bbox", [(-180, -90, 180, 90), (-179, -90, 179, 90)])
     def test_apply_global(
         self,
-        l2_lr_ssh_basic_dataset: xr_t.Dataset,
+        l2_lr_ssh_basic_dataset: xr.Dataset,
         bbox: tuple[float, float, float, float],
     ):
         selector = SwathAreaSelector()
@@ -296,7 +296,7 @@ class Test_SwathAreaSelector:
 
     @pytest.mark.parametrize("latitude", [-75, -30, 0, 30, 75])
     def test_apply_box_too_small(
-        self, l2_lr_ssh_basic_dataset: xr_t.Dataset, latitude: float
+        self, l2_lr_ssh_basic_dataset: xr.Dataset, latitude: float
     ):
         """Test apply with a small bbox with no data inside."""
         selector = SwathAreaSelector()
@@ -309,7 +309,7 @@ class Test_SwathAreaSelector:
 
     @pytest.mark.parametrize("latitude", [-75, -30, 0, 30, 75])
     def test_apply_box_outside(
-        self, l2_lr_ssh_basic_dataset: xr_t.Dataset, latitude: float
+        self, l2_lr_ssh_basic_dataset: xr.Dataset, latitude: float
     ):
         """Test apply with a small bbox with no data inside."""
         selector = SwathAreaSelector()
@@ -322,11 +322,37 @@ class Test_SwathAreaSelector:
         assert ds.sizes["num_lines"] == 0
 
     @pytest.mark.parametrize("bbox", [(180, -90, -180, 90), (179, -90, -179, 90)])
-    def test_apply_bad_box(self, l2_lr_ssh_basic_dataset: xr_t.Dataset, bbox):
+    def test_apply_bad_box(self, l2_lr_ssh_basic_dataset: xr.Dataset, bbox):
         """Test apply with a bbox where lon_min = lon_max."""
         selector = SwathAreaSelector()
         ds = selector.apply(l2_lr_ssh_basic_dataset, bbox)
         assert ds.sizes["num_lines"] == 0
+
+    def test_apply_unknown_convention(self):
+        """Test apply with an input dataset without convention on
+        longitudes."""
+        selector = SwathAreaSelector()
+
+        bbox = -30, -20, 30, 20
+        ds = xr.Dataset(
+            data_vars={
+                # This monotonic sequence will not be monotonic anymore after a
+                # convention change. The selector should be robust to this.
+                # In CONV_360: [30, 160, 310, 340, 20, 50, 340]
+                # In CONV_180: [30, 160, -50, -20, 20, 50, -20]
+                "longitude": (
+                    ("num_lines", "num_pixels"),
+                    np.array([[-330, -200, -50, -20, 20, 50, 340]]).T,
+                ),
+                "latitude": (
+                    ("num_lines", "num_pixels"),
+                    np.array([[0, 0, 0, 0, 0, 0, 0]]).T,
+                ),
+            }
+        )
+        ds_actual = selector.apply(ds, bbox)
+        ds_expected = ds.isel(num_lines=[0, 3, 4, 6])
+        xr.testing.assert_identical(ds_actual, ds_expected)
 
 
 class Test_TemporalSerieAreaSelector:

@@ -4,7 +4,10 @@ import logging
 import numpy as np
 import xarray as xr
 
-from fcollections.geometry import guess_longitude_convention
+from fcollections.geometry import (
+    StandardLongitudeConvention,
+    guess_longitude_convention,
+)
 
 from ._model import IAreaSelector
 
@@ -23,10 +26,22 @@ class AreaSelector1D(IAreaSelector, abc.ABC):
         # Finally it selects data with indices slices.
         (lon_min, lat_min, lon_max, lat_max) = bbox
 
+        # Need a copy, _select_2d_indices_intersect_bounds may modify the array
+        # in place
         lon = ds[self.longitude].values.copy()
         lat = ds[self.latitude].values
 
-        data_convention = guess_longitude_convention(lon).value
+        try:
+            data_convention = guess_longitude_convention(lon).value
+        except ValueError:
+            msg = (
+                "Input longitudes does not fit in one of the known 360° "
+                "intervals. Using [0, 360] (a copy of the input will be "
+                "made)"
+            )
+            logger.info(msg)
+            data_convention = StandardLongitudeConvention.CONV_360.value
+            data_convention.normalize(lon, inplace=True)
         bbox_lon_norm = data_convention.normalize(np.array((lon_min, lon_max)))
 
         idx = _select_2d_indices_intersect_bounds(
@@ -98,7 +113,10 @@ class SwathAreaSelector(AreaSelector1D):
             logger.debug("No intersection between the bbox and the dataset")
             return {"num_lines": slice(0)}
 
-        return {"num_lines": slice(_id[0], _id[-1] + 1)}
+        # If one pixel of the swath is in the box, take the entire line. Use set
+        # to take the unique values of num_lines (they will be repeated for each
+        # num_pixels in the box)
+        return {"num_lines": list(set(_id))}
 
 
 class AreaSelector2D(IAreaSelector):
@@ -262,7 +280,11 @@ def _select_2d_indices_intersect_bounds(
 
     # No circularity in y axis
     if y0 > y1:
-        y0, y1 = y1, y0
+        msg = (
+            "Check bbox validity: y_bounds[0]={y0} > y_bounds[1]={y1} ("
+            "invalid condition for latitudes)"
+        )
+        raise ValueError(msg)
 
     # Handle circularity in x axis
     if x0 > x1:
