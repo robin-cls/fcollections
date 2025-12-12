@@ -1,5 +1,3 @@
-import warnings
-
 from fcollections.core import Layout
 
 __all__ = []
