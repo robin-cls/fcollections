@@ -35,7 +35,7 @@ class AreaSelector1D(IAreaSelector, abc.ABC):
             data_convention = guess_longitude_convention(lon).value
         except ValueError:
             msg = (
-                "Input longitudes does not fit in one of the knwon 360° "
+                "Input longitudes does not fit in one of the known 360° "
                 "intervals. Using [0, 360] (a copy of the input will be "
                 "made)"
             )
