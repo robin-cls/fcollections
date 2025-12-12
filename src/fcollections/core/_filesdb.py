@@ -201,7 +201,7 @@ def _convention_parameters(
             ["param", field.name],
             textwrap.fill(field.description),
             field.name,
-            field.type.__name__,
+            field.type_name,
             False,
             None,
         )
