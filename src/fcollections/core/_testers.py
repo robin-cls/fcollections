@@ -69,6 +69,13 @@ class ITester(abc.ABC, tp.Generic[U, T]):
     def type(self) -> type[T]:
         """Type of the tested field."""
 
+    @property
+    def type_name(self) -> str:
+        """Type name of the tested field for signature parameters."""
+        # Most tester will only accept one class as a reference value. The name
+        # of this class can be used for defining the signature parameters
+        return self.type.__name__
+
 
 class StringTester(ITester[str, str]):
 
@@ -121,7 +128,11 @@ class IntegerTester(ITester[list[int] | slice | int, int]):
 
     @property
     def type(self) -> type[int]:
-        return int
+        return list[int] | slice | int
+
+    @property
+    def type_name(self) -> str:
+        return str(self.type)
 
 
 class EnumTester(ITester[type[Enum] | list[type[Enum]], type[Enum]]):

@@ -2,7 +2,11 @@ from fcollections.core import Layout
 
 __all__ = []
 
-from ._dac import FileNameConventionDAC, NetcdfFilesDatabaseDAC
+from ._dac import (
+    BasicNetcdfFilesDatabaseDAC,
+    FileNameConventionDAC,
+    NetcdfFilesDatabaseDAC,
+)
 from ._definitions import (
     AcquisitionMode,
     Delay,
@@ -18,12 +22,14 @@ from ._era5 import FileNameConventionERA5, NetcdfFilesDatabaseERA5
 from ._gridded_sla import AVISO_L4_SWOT_LAYOUT as _AVISO_L4_SWOT_LAYOUT
 from ._gridded_sla import CMEMS_NADIR_SSHA_LAYOUT as _CMEMS_NADIR_SSHA_LAYOUT
 from ._gridded_sla import (
+    BasicNetcdfFilesDatabaseGriddedSLA,
     FileNameConventionGriddedSLA,
     FileNameConventionGriddedSLAInternal,
     NetcdfFilesDatabaseGriddedSLA,
 )
 from ._l2_lr_ssh import AVISO_L2_LR_SSH_LAYOUT as _AVISO_L2_LR_SSH_LAYOUT
 from ._l2_lr_ssh import (
+    BasicNetcdfFilesDatabaseSwotLRL2,
     FileNameConventionSwotL2,
     L2Version,
     L2VersionField,
@@ -31,14 +37,42 @@ from ._l2_lr_ssh import (
     Timeliness,
     build_version_parser,
 )
-from ._l2_nadir import FileNameConventionL2Nadir, NetcdfFilesDatabaseL2Nadir
+from ._l2_nadir import (
+    BasicNetcdfFilesDatabaseL2Nadir,
+    FileNameConventionL2Nadir,
+    NetcdfFilesDatabaseL2Nadir,
+)
 from ._l3_lr_ssh import AVISO_L3_LR_SSH_LAYOUT as _AVISO_L3_LR_SSH_LAYOUT
-from ._l3_lr_ssh import FileNameConventionSwotL3, NetcdfFilesDatabaseSwotLRL3
-from ._l3_lr_ww import FileNameConventionSwotL3WW, NetcdfFilesDatabaseSwotLRWW
-from ._l3_nadir import FileNameConventionL3Nadir, NetcdfFilesDatabaseL3Nadir
-from ._mur import FileNameConventionMUR, NetcdfFilesDatabaseMUR
-from ._ocean_color import FileNameConventionOC, NetcdfFilesDatabaseOC
-from ._ohc import FileNameConventionOHC, NetcdfFilesDatabaseOHC
+from ._l3_lr_ssh import (
+    BasicNetcdfFilesDatabaseSwotLRL3,
+    FileNameConventionSwotL3,
+    NetcdfFilesDatabaseSwotLRL3,
+)
+from ._l3_lr_ww import (
+    BasicNetcdfFilesDatabaseSwotLRWW,
+    FileNameConventionSwotL3WW,
+    NetcdfFilesDatabaseSwotLRWW,
+)
+from ._l3_nadir import (
+    BasicNetcdfFilesDatabaseL3Nadir,
+    FileNameConventionL3Nadir,
+    NetcdfFilesDatabaseL3Nadir,
+)
+from ._mur import (
+    BasicNetcdfFilesDatabaseMUR,
+    FileNameConventionMUR,
+    NetcdfFilesDatabaseMUR,
+)
+from ._ocean_color import (
+    BasicNetcdfFilesDatabaseOC,
+    FileNameConventionOC,
+    NetcdfFilesDatabaseOC,
+)
+from ._ohc import (
+    BasicNetcdfFilesDatabaseOHC,
+    FileNameConventionOHC,
+    NetcdfFilesDatabaseOHC,
+)
 from ._readers import (
     StackLevel,
     SwotReaderL2LRSSH,
@@ -46,8 +80,16 @@ from ._readers import (
     SwotReaderL3WW,
 )
 from ._s1aowi import FileNameConventionS1AOWI, NetcdfFilesDatabaseS1AOWI
-from ._sst import FileNameConventionSST, NetcdfFilesDatabaseSST
-from ._swh import FileNameConventionSWH, NetcdfFilesDatabaseSWH
+from ._sst import (
+    BasicNetcdfFilesDatabaseSST,
+    FileNameConventionSST,
+    NetcdfFilesDatabaseSST,
+)
+from ._swh import (
+    BasicNetcdfFilesDatabaseSWH,
+    FileNameConventionSWH,
+    NetcdfFilesDatabaseSWH,
+)
 
 # Realiased constant to be picked up by Sphinx to work around autodoc limitation
 #: Layout on Aviso FTP, Aviso TDS for the L2_LR_SSH product
@@ -62,6 +104,17 @@ AVISO_L4_SWOT_LAYOUT: Layout = _AVISO_L4_SWOT_LAYOUT
 CMEMS_NADIR_SSHA_LAYOUT: Layout = _CMEMS_NADIR_SSHA_LAYOUT
 
 __all__ = [
+    "BasicNetcdfFilesDatabaseDAC",
+    "BasicNetcdfFilesDatabaseGriddedSLA",
+    "BasicNetcdfFilesDatabaseSwotLRL2",
+    "BasicNetcdfFilesDatabaseL2Nadir",
+    "BasicNetcdfFilesDatabaseSwotLRL3",
+    "BasicNetcdfFilesDatabaseSwotLRWW",
+    "BasicNetcdfFilesDatabaseL3Nadir",
+    "BasicNetcdfFilesDatabaseMUR",
+    "BasicNetcdfFilesDatabaseOC",
+    "BasicNetcdfFilesDatabaseOHC",
+    "BasicNetcdfFilesDatabaseSST",
     "NetcdfFilesDatabaseSwotLRL2",
     "NetcdfFilesDatabaseSwotLRL3",
     "NetcdfFilesDatabaseGriddedSLA",
@@ -69,6 +122,7 @@ __all__ = [
     "NetcdfFilesDatabaseDAC",
     "NetcdfFilesDatabaseOC",
     "NetcdfFilesDatabaseSWH",
+    "BasicNetcdfFilesDatabaseSWH",
     "NetcdfFilesDatabaseOHC",
     "NetcdfFilesDatabaseS1AOWI",
     "NetcdfFilesDatabaseMUR",

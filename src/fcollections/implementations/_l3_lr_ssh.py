@@ -53,15 +53,9 @@ class FileNameConventionSwotL3(FileNameConvention):
         )
 
 
-class _NetcdfFilesDatabaseSwotLRL3(FilesDatabase, PeriodMixin):
+class BasicNetcdfFilesDatabaseSwotLRL3(FilesDatabase, PeriodMixin):
     """Database mapping to select and read Swot LR L3 Netcdf files in a local
-    file system.
-
-    Attributes
-    ----------
-    path: str
-        path to a directory containing NetCDF files
-    """
+    file system."""
 
     parser = FileNameConventionSwotL3()
     reader = SwotReaderL3LRSSH()
@@ -140,12 +134,9 @@ try:
         SwotGeometryPredicate,
     )
 
-    class NetcdfFilesDatabaseSwotLRL3(_NetcdfFilesDatabaseSwotLRL3):
+    class NetcdfFilesDatabaseSwotLRL3(BasicNetcdfFilesDatabaseSwotLRL3):
         reader = GeoSwotReaderL3LRSSH()
         predicate_classes = [SwotGeometryPredicate]
-
-    NetcdfFilesDatabaseSwotLRL3.__doc__ = _NetcdfFilesDatabaseSwotLRL3.__doc__
-
 
 except ImportError:
     import warnings
@@ -153,4 +144,4 @@ except ImportError:
     from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
-    NetcdfFilesDatabaseSwotLRL3 = _NetcdfFilesDatabaseSwotLRL3
+    NetcdfFilesDatabaseSwotLRL3 = BasicNetcdfFilesDatabaseSwotLRL3

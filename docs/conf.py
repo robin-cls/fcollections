@@ -35,6 +35,7 @@ extensions = [
 
 # -- Intersphinx ---------------------------------------------------------------
 intersphinx_mapping = {
+    "fsspec": ("https://filesystem-spec.readthedocs.io/en/latest/", None),
     "python": ("http://docs.python.org/3", None),
     "numpy": ("http://docs.scipy.org/doc/numpy/", None),
     "matplotlib": ("https://matplotlib.org/stable/", None),
@@ -58,6 +59,14 @@ autodoc_default_options = {
     "undoc-members": True,
     "show-inheritance": True,
 }
+
+# Keep the default. In case a class A extend another class B and does
+# redefine its parameters nor attributes, keeping mixed displays the constructor
+# signature next to the class name. The allows having hints about the __init__
+# method without having to navigate the docstrings
+autodoc_class_signature = "mixed"
+
+autodoc_preserve_defaults = True
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

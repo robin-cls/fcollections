@@ -81,15 +81,9 @@ class FileNameConventionOC(FileNameConvention):
         )
 
 
-class _NetcdfFilesDatabaseOC(FilesDatabase, PeriodMixin):
+class BasicNetcdfFilesDatabaseOC(FilesDatabase, PeriodMixin):
     """Database mapping to select and read ocean color Netcdf files in a local
-    file system.
-
-    Attributes
-    ----------
-    path: str
-        path to directory containing NetCDF files
-    """
+    file system."""
 
     parser = FileNameConventionOC()
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
@@ -99,14 +93,11 @@ class _NetcdfFilesDatabaseOC(FilesDatabase, PeriodMixin):
 try:
     from fcollections.implementations.optional import AreaSelector2D, GeoOpenMfDataset
 
-    class NetcdfFilesDatabaseOC(_NetcdfFilesDatabaseOC):
+    class NetcdfFilesDatabaseOC(BasicNetcdfFilesDatabaseOC):
         reader = GeoOpenMfDataset(
             area_selector=AreaSelector2D(longitude="lon", latitude="lat"),
             xarray_options=XARRAY_TEMPORAL_NETCDFS,
         )
-
-    NetcdfFilesDatabaseOC.__doc__ = _NetcdfFilesDatabaseOC.__doc__
-
 
 except ImportError:
     import warnings
@@ -114,4 +105,4 @@ except ImportError:
     from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
-    NetcdfFilesDatabaseOC = _NetcdfFilesDatabaseOC
+    NetcdfFilesDatabaseOC = BasicNetcdfFilesDatabaseOC

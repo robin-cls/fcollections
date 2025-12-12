@@ -44,15 +44,9 @@ class FileNameConventionSWH(FileNameConvention):
         )
 
 
-class _NetcdfFilesDatabaseSWH(FilesDatabase, PeriodMixin):
+class BasicNetcdfFilesDatabaseSWH(FilesDatabase, PeriodMixin):
     """Database mapping to select and read significant wave height Netcdf files
-    in a local file system.
-
-    Attributes
-    ----------
-    path: str
-        path to directory containing NetCDF files
-    """
+    in a local file system."""
 
     parser = FileNameConventionSWH()
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
@@ -65,14 +59,11 @@ try:
         TemporalSerieAreaSelector,
     )
 
-    class NetcdfFilesDatabaseSWH(_NetcdfFilesDatabaseSWH):
+    class NetcdfFilesDatabaseSWH(BasicNetcdfFilesDatabaseSWH):
         reader = GeoOpenMfDataset(
             area_selector=TemporalSerieAreaSelector(),
             xarray_options=XARRAY_TEMPORAL_NETCDFS,
         )
-
-    NetcdfFilesDatabaseSWH.__doc__ = _NetcdfFilesDatabaseSWH.__doc__
-
 
 except ImportError:
     import warnings
@@ -80,4 +71,4 @@ except ImportError:
     from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
-    NetcdfFilesDatabaseSWH = _NetcdfFilesDatabaseSWH
+    NetcdfFilesDatabaseSWH = BasicNetcdfFilesDatabaseSWH

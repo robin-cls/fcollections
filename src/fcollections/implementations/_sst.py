@@ -30,15 +30,9 @@ class FileNameConventionSST(FileNameConvention):
         )
 
 
-class _NetcdfFilesDatabaseSST(FilesDatabase, PeriodMixin):
+class BasicNetcdfFilesDatabaseSST(FilesDatabase, PeriodMixin):
     """Database mapping to select and read sea surface temperature Netcdf files
-    in a local file system.
-
-    Attributes
-    ----------
-    path: str
-        path to directory containing NetCDF files
-    """
+    in a local file system."""
 
     parser = FileNameConventionSST()
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
@@ -48,17 +42,16 @@ class _NetcdfFilesDatabaseSST(FilesDatabase, PeriodMixin):
 try:
     from fcollections.implementations.optional import AreaSelector2D, GeoOpenMfDataset
 
-    class NetcdfFilesDatabaseSST(_NetcdfFilesDatabaseSST):
+    class NetcdfFilesDatabaseSST(BasicNetcdfFilesDatabaseSST):
         reader = GeoOpenMfDataset(
             area_selector=AreaSelector2D(longitude="lon", latitude="lat"),
             xarray_options=XARRAY_TEMPORAL_NETCDFS,
         )
 
-    NetcdfFilesDatabaseSST.__doc__ = _NetcdfFilesDatabaseSST.__doc__
 except ImportError:
     import warnings
 
     from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
-    NetcdfFilesDatabaseSST = _NetcdfFilesDatabaseSST
+    NetcdfFilesDatabaseSST = BasicNetcdfFilesDatabaseSST

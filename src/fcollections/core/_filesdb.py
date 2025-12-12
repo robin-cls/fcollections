@@ -183,6 +183,9 @@ def _reading_parameters(
             # is removed from the interface. Ex. OpenMfDataset and
             # GeoOpenMfDataset
             "preprocess",
+            # Remove kwargs from the final methods. kwargs is not precise enough
+            # for high level users
+            "kwargs",
         ]
     }
 
@@ -201,7 +204,10 @@ def _convention_parameters(
             ["param", field.name],
             textwrap.fill(field.description),
             field.name,
-            field.type.__name__,
+            # Docstrings in the project do not repeat the typing in the
+            # Parameters section. We set None to comply with this implicit
+            # convention
+            None,
             False,
             None,
         )
@@ -294,35 +300,52 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
     ----------
     path
         path to a directory containing NetCDF files
+    fs
+        File system hosting the files. Can be used to access local or remote
+        (S3, FTP, ...) file systems. Underlying readers may not be compatible
+        with all file systems implementations
+    layout
+        Layout of the subfolders. Useful to extract information and have an
+        efficient file system scanning. The recommended layout can mismatch the
+        current files organization, in which case the user can build its own or
+        set this parameter to None
+
+    Attributes
+    ----------
     discoverer
-        file discoverer
-    reader
-        file reader
-    unmixer
-        Specify how to interpret the file metadata table to unmix subsets
-    deduplicator
-        Deduplicate the file metadata table of a unique subset (after unmixing)
-    sort_keys
-        Keys that specifies the fields used to sort the records extracted from
-        the filenames. Useful to order the files prior to reading them
-    metadata_injection
-        Configures how metadata from the files listing can be injected in a
-        dataset returned from the read. The keys is the columns of the file
-        metadata table, the value is a tuple of dimensions for insertion
-    predicate_classes
-        List of predicates that are built at each query. The predicates
-        intercepts the input parameters to build a custom record predicate.
-        Usually, it is a complex test involving auxiliary data, such as ground
-        track footprints or half_orbit/periods tables
+        File discoverer. Walks in a folder (can be on a remote file system),
+        parses the listed files and filters them.
     """
 
     parser: FileNameConvention | None = None
+    """Files name parser."""
     reader: IFilesReader | None = None
+    """Files reader."""
     unmixer: SubsetsUnmixer | None = None
+    """Specify how to interpret the file metadata table to unmix subsets."""
     deduplicator: Deduplicator | None = None
+    """Deduplicate the file metadata table of a unique subset (after
+    unmixing)."""
     sort_keys: list[str] | str | None = None
+    """Keys that specifies the fields used to sort the records extracted from
+    the filenames.
+
+    Useful to order the files prior to reading them.
+    """
     metadata_injection: dict[str, tuple[str, ...]] | None = None
+    """Configures how metadata from the files listing can be injected in a
+    dataset returned from the read.
+
+    The keys is the columns of the file metadata table, the value is a
+    tuple of dimensions for insertion.
+    """
     predicate_classes: list[type[IPredicate]] | None = None
+    """List of predicates that are built at each query.
+
+    The predicates intercepts the input parameters to build a custom
+    record predicate. Usually, it is a complex test involving auxiliary
+    data, such as ground track footprints or half_orbit/periods tables.
+    """
 
     def __init__(
         self,
@@ -366,8 +389,8 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         sort: bool = False,
         deduplicate: bool = False,
         unmix: bool = False,
-        predicates=(),
-        stat_fields=(),
+        predicates: tp.Iterable[IPredicate] = (),
+        stat_fields: tuple[str] = (),
         **kwargs,
     ) -> pda.DataFrame:
         """List the files matching the given criteria.
@@ -390,8 +413,9 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
             an error is raised
         predicates
             Additional complex filters to run on the record parsed by the
-            filename. ex. lambda record: record[1] in [1, 4, 5]. Predicates are
-            knowledgeable about the record contents and the file name convention
+            filename. ex. ``lambda record: record[1] in [1, 4, 5]``. Predicates
+            are knowledgeable about the record contents and the file name
+            convention
         stat_fields
             File system information that can be retrieved from the fsspec
             underlying implementation. For example, 'size' or 'created' are
@@ -478,8 +502,8 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
 
         Returns
         -------
-            A dataset containing the result of the query, or an None if
-            there is nothing matching the query
+        A dataset containing the result of the query, or an None if there is
+        nothing matching the query
         """
         # This docstring will be superseded by the metaclass
         bad_kwargs = [

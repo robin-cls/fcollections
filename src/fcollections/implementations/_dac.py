@@ -12,6 +12,7 @@ from fcollections.core import (
     FileNameConvention,
     FileNameFieldDateJulian,
     FilesDatabase,
+    Layout,
     OpenMfDataset,
 )
 
@@ -40,15 +41,9 @@ class FileNameConventionDAC(FileNameConvention):
         )
 
 
-class _NetcdfFilesDatabaseDAC(FilesDatabase, DiscreteTimesMixin):
+class BasicNetcdfFilesDatabaseDAC(FilesDatabase, DiscreteTimesMixin):
     """Database mapping to select and read Dynamic atmospheric correction
-    Netcdf files in a local file system.
-
-    Attributes
-    ----------
-    path: str
-        path to directory containing NetCDF files
-    """
+    Netcdf files in a local file system."""
 
     parser = FileNameConventionDAC()
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS_NO_BACKEND)
@@ -56,23 +51,23 @@ class _NetcdfFilesDatabaseDAC(FilesDatabase, DiscreteTimesMixin):
     sort_keys = ["time"]
 
     def __init__(
-        self, path: Path, fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem()
+        self,
+        path: Path,
+        fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem(),
+        layout: Layout | None = None,
     ):
-        super().__init__(path, fs)
+        super().__init__(path, fs, layout)
         super(FilesDatabase, self).__init__(np.timedelta64(6, "h"))
 
 
 try:
     from fcollections.implementations.optional import AreaSelector2D, GeoOpenMfDataset
 
-    class NetcdfFilesDatabaseDAC(_NetcdfFilesDatabaseDAC):
+    class NetcdfFilesDatabaseDAC(BasicNetcdfFilesDatabaseDAC):
         reader = GeoOpenMfDataset(
             area_selector=AreaSelector2D(),
             xarray_options=XARRAY_TEMPORAL_NETCDFS_NO_BACKEND,
         )
-
-    NetcdfFilesDatabaseDAC.__doc__ = _NetcdfFilesDatabaseDAC.__doc__
-
 
 except ImportError:
     import warnings
@@ -80,4 +75,4 @@ except ImportError:
     from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
-    NetcdfFilesDatabaseDAC = _NetcdfFilesDatabaseDAC
+    NetcdfFilesDatabaseDAC = BasicNetcdfFilesDatabaseDAC
