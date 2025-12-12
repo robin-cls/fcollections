@@ -309,7 +309,7 @@ def test_field_test(field, reference, tested, filtered):
     [
         (FileNameFieldString(""), str),
         (FileNameFieldFloat(""), float),
-        (FileNameFieldInteger(""), int),
+        (FileNameFieldInteger(""), list[int] | slice | int),
         (FileNameFieldEnum("", Color), Color),
         (FileNameFieldDatetime("", ""), np.datetime64),
         (FileNameFieldDateJulian("", np.datetime64("1950-01-01T00")), np.datetime64),
@@ -325,6 +325,18 @@ def test_field_test(field, reference, tested, filtered):
 )
 def test_field_type(field, expected_type):
     assert field.type == expected_type
+
+
+@pytest.mark.parametrize(
+    "field, expected_type_name",
+    [
+        (FileNameFieldInteger(""), "list[int] | slice | int"),
+        (FileNameFieldEnum("", Color), "Color"),
+        (FileNameFieldPeriod("", ""), "Period"),
+    ],
+)
+def test_field_type_name(field: FileNameField, expected_type_name: str):
+    assert field.type_name == expected_type_name
 
 
 @pytest.fixture(scope="session")
