@@ -1,33 +1,45 @@
+---
+kernelspec:
+  language: python
+  name: python3
+jupytext:
+  text_representation:
+    extension: .md
+    format_name: myst
+---
 # Swot L2_LR_SSH
 
 This chapter will present the functionalities specific to the Level 2 SWOT Low
 Rate products.
 
-```python
+```{code-cell}
+from fcollections.implementations import (
+    # Handler
+    NetcdfFilesDatabaseSwotLRL2,
+    # Layouts
+    AVISO_L2_LR_SSH_LAYOUT,
+    # Version
+    L2Version, Timeliness)
 
-import fcollections.implementations as fs_impl
-# Handlers
-fs_impl.NetcdfFilesDatabaseSwotLRL2
-
-# Layouts
-fs_impl.AVISO_L2_LR_SSH_LAYOUT
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import cartopy.crs as ccrs
 ```
 
-Although the implementations do not share the file name convention, they use the
-same reader whose arguments are exposed in the ``query`` interface. We will
-illustrate these functionalities by accessing the data from the AVISO FTP server
-You will need credentials to authentify (see the
-[aviso website](https://www.aviso.altimetry.fr/))
+## Data samples
 
-```python
-from fsspec.implementations.ftp import FTPFileSystem
-fs = FTPFileSystem('ftp-access.aviso.altimetry.fr', 21, username='...', password='...')
+We will illustrate the functionalities using a data sample from [AVISO](https://www.aviso.altimetry.fr/).
+You can use the [altimetry-downloader-aviso](https://robin-cls.github.io/aviso/api.html)
+tool to run the following script.
+
+```{literalinclude} scripts/pull_data_l2_lr_ssh.py
+:language: python
 ```
 
 ## Stack for temporal analysis
 
 The most prominent functionality is the ability to stack the half orbits when
-the grid is fixed (Basic, Expert, Technical and WindWave subsets). This allows
+the grid is fixed (Basic, Expert and WindWave subsets). This allows
 to work along the ``cycle_number`` dimension and compute temporal analysis
 (mean, standard deviation, ...).
 
@@ -40,13 +52,15 @@ There are currently three modes for stacking the half orbits
   ``pass_number`` dimensions. Useful for regional analysis where the half orbits
   are cropped and we need an additional dimension to reflect the spatial jump
 
-```python
-fc = oct_sio.NetcdfFilesDatabaseSwotLRL3("/swot_products/l3_karin_nadir/l3_lr_ssh", fs=fs, layout=oct_sio.AVISO_L3_LR_SSH_LAYOUT)
-fc.query(stack='CYCLES', version='2.0.1', cycle_number=[1, 2, 3], pass_number=10, subset=oct_sio.ProductSubset.Basic)
+```{code-cell}
+fc = NetcdfFilesDatabaseSwotLRL2("data")
+ds = fc.query(stack='CYCLES', cycle_number=[9, 10, 11], pass_number=10, subset='Basic')
+ds.ssha_karin_2.data
 ```
 
-```python
-fc.query(stack='CYCLES_PASSES', version='2.0.1', cycle_number=[1, 2, 3], pass_number=[10, 11], subset=oct_sio.ProductSubset.Basic)
+```{code-cell}
+ds = fc.query(stack='CYCLES_PASSES', cycle_number=[9, 10, 11], pass_number=[10, 11], subset='Basic')
+ds.ssha_karin_2.data
 ```
 
 ```{note}
@@ -57,26 +71,27 @@ Incomplete cycles are completed with invalids
 
 The Level-2 version is a complex tag composed of a temporality (forward I or
 reprocessed G), a baseline (major version A, B, C, D, ...), a minor version
-(0, 1, 2, ..) and a product counter (01, 02, ...). The ``L2Version`` class can
-handle the tag information and filter out non-desired versions. It can be
-partially initialized in order to control the granularity of the filter.
+(0, 1, 2, ..) and a product counter (01, 02, ...). The
+{class}`fcollections.implementations.L2Version` class can handle the tag
+information and filter out non-desired versions. It can be partially initialized
+in order to control the granularity of the filter.
 
-```python
-fc = oct_sio.NetcdfFilesDatabaseSwotLRL2('/swot_products/l2_karin/l2_lr_ssh', fs=fs, layout=oct_sio.AVISO_L2_LR_SSH_LAYOUT)
-version = oct_sio.L2Version(temporality=oct_sio.Timeliness.I)
+```{code-cell}
+version = L2Version(temporality=Timeliness.I)
 version
 ```
 
-```python
-fc.list_files(cycle_number=10, pass_number=10, version=version, subset='Unsmoothed')
+```{code-cell}
+fc.list_files(cycle_number=10, pass_number=10, version=version)
 ```
 
-```python
-version = oct_sio.L2Version(baseline='C')
+```{code-cell}
+version = L2Version(baseline='C')
+version
 ```
 
-```python
-fc.list_files(cycle_number=10, pass_number=slice(10, 12), version=version, subset='Unsmoothed')
+```{code-cell}
+fc.list_files(cycle_number=9, pass_number=10, version=version)
 ```
 
 ## Area selection
@@ -91,13 +106,12 @@ If bbox's longitude crosses -180/180, data around the crossing and matching the 
 
 To list files corresponding to half orbits crossing the bounding box:
 
-```python
-fc = oct_sio.NetcdfFilesDatabaseSwotLRL3("/swot_products/l3_karin_nadir/l3_lr_ssh", fs=fs, layout=oct_sio.AVISO_L3_LR_SSH_LAYOUT)
+```{code-cell}
+bbox = -126, 32, -120, 40
 fc.list_files(
-    version='2.0.1',
-    subset="Basic",
-    cycle_number=[29],
-    bbox = (-16, 36, -10, 44))
+    version='PIC?',
+    subset='Basic',
+    bbox=bbox)
 ```
 
 To query a subset of Swot LR L3 data crossing the bounding box:
@@ -106,18 +120,33 @@ To query a subset of Swot LR L3 data crossing the bounding box:
 Lines of the swath crossing the bounding box will be entirely selected.
 ```
 
-```python
+```{code-cell}
+bbox = -126, 32, -120, 40
+ds_area = fc.query(subset="Basic", version='P?C?', cycle_number=9, pass_number=11, bbox=bbox)
 
-fc = oct_sio.NetcdfFilesDatabaseSwotLRL3("/swot_products/l3_karin_nadir/l3_lr_ssh", fs=fs, layout=oct_sio.AVISO_L3_LR_SSH_LAYOUT)
-ds = fc.query(
-    version='2.0.1',
-    subset="Basic",
-    cycle_number=[29],
-    pass_number=[516],
-    bbox = (-16, 36, -10, 44))
-```
+# Figure
+localbox_cartopy = bbox[0] - 1, bbox[2] + 1, bbox[1] - 1, bbox[3] + 1
+fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(projection=ccrs.PlateCarree()))
+ax.set_extent(localbox_cartopy)
 
-```{image} query_bbox.png
+plot_kwargs = dict(
+    x="longitude",
+    y="latitude",
+    cmap="Spectral_r",
+    vmin=-1.5,
+    vmax=1.5,
+    cbar_kwargs={"shrink": 0.3},)
+
+# SWOT KaRIn SLA plots
+ds_area.ssha_karin_2.plot.pcolormesh(ax=ax, **plot_kwargs)
+ax.set_title("SLA KaRIn (uncalibrated) and selection box (in red)")
+ax.coastlines()
+ax.gridlines(draw_labels=['left', 'bottom'])
+
+
+# Add the patch to the Axes
+rect = patches.Rectangle((bbox[0], bbox[1]), bbox[2] - bbox[0], bbox[3] - bbox[1], linewidth=1.5, edgecolor='r', facecolor='none')
+ax.add_patch(rect)
 ```
 
 ## Swath sides in Level-2 Unsmoothed subset
@@ -127,18 +156,28 @@ swath sides. This means we can open one of the two sides. The following figure
 illustrates how the ``left_swath`` and ``right_swath`` parameters can be used to
 retrieve one or the other side.
 
-```python
-fc = oct_sio.NetcdfFilesDatabaseSwotLRL2('/swot_products/l2_karin/l2_lr_ssh', fs=fs, layout=oct_sio.AVISO_L2_LR_SSH_LAYOUT)
-ds_left = fc.query(subset='Unsmoothed', level='L2', cycle_number=525, pass_number=20, left_swath=True, right_swath=False).compute().isel(num_lines=slice(10000, 15000, 3))
-ds_left
-```
+```{code-cell}
+ds_left = fc.query(subset='Unsmoothed', cycle_number=9, pass_number=10, left_swath=True, right_swath=False,
+                  selected_variables=['longitude', 'latitude', 'sig0_karin_2']).compute()
+ds_right = fc.query(subset='Unsmoothed', cycle_number=9, pass_number=10, left_swath=False, right_swath=True,
+                  selected_variables=['longitude', 'latitude', 'sig0_karin_2']).compute()
 
-```python
-ds_right = fc.query(subset='Unsmoothed', level='L2', cycle_number=525, pass_number=20, left_swath=False, right_swath=True).compute().isel(num_lines=slice(10000, 15000, 3))
-ds_right
-```
 
-```{image} unsmoothed_sides.png
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4))
+
+plot_kwargs = dict(
+    cmap="Greys_r",
+    cbar_kwargs={"shrink": 0.3},
+    vmin=5, vmax=60)
+
+# SWOT KaRIn SLA plots
+s = slice(45000, 50000, 3)
+ds_left.isel(num_lines=s).sig0_karin_2.plot.imshow(ax=ax1, **plot_kwargs)
+ds_right.isel(num_lines=s).sig0_karin_2.plot.imshow(ax=ax2, **plot_kwargs)
+
+ax1.set_title("Sigma0 KaRIn Left Swath")
+ax2.set_title("Sigma0 KaRIn Right Swath")
+fig.tight_layout()
 ```
 
 ```{note}
