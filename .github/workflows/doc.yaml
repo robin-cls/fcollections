@@ -65,13 +65,13 @@ jobs:
         id: restore-cache
         with:
           path: docs/implementations/data
-          key: data-${{ hashFiles('scripts/pull_data*.py') }}
+          key: data-${{ hashFiles('docs/implementations/scripts/pull_data*.py') }}
       - name: Pull Samples
         if: steps.cache.outputs.cache-hit != 'true'
         shell: bash -l {0}
         run: |
-          python docs/implementations/scripts/pull_l2_lr_ssh.py
-          python docs/implementations/scripts/pull_l3_lr_ssh.py
+          python docs/implementations/scripts/pull_data_l2_lr_ssh.py
+          python docs/implementations/scripts/pull_data_l3_lr_ssh.py
       - name: Save fetched data
         uses: actions/cache/save@v4
         if: steps.cache.outputs.cache-hit != 'true'
