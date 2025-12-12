@@ -183,6 +183,9 @@ def _reading_parameters(
             # is removed from the interface. Ex. OpenMfDataset and
             # GeoOpenMfDataset
             "preprocess",
+            # Remove kwargs from the final methods. kwargs is not precise enough
+            # for high level users
+            "kwargs",
         ]
     }
 
