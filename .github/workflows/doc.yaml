@@ -69,7 +69,7 @@ jobs:
       - name: Setup AVISO credentials
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          echo "machine tds-odatis.aviso.altimetry.fr login ${{ secrets.AVISO_USER }} password ${{ secrets.AVISO_PASSWORD }}"" > ~/.netrc
+          echo "machine tds-odatis.aviso.altimetry.fr login ${{ secrets.AVISO_USER }} password ${{ secrets.AVISO_PASSWORD }}" > ~/.netrc
       - name: Pull Samples
         if: steps.cache.outputs.cache-hit != 'true'
         shell: bash -l {0}
