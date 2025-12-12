@@ -31,6 +31,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_tabs.tabs",
     "sphinx.ext.viewcode",
+    "myst_nb",
 ]
 
 # -- Intersphinx ---------------------------------------------------------------
