@@ -27,7 +27,9 @@ jobs:
             python=3.12
             pip
             sphinx
+            sphinx-book-theme
             sphinx-copybutton
+            sphinx-design
             sphinx-inline-tabs
             sphinx_rtd_theme
             sphinx-tabs
@@ -35,6 +37,7 @@ jobs:
             fsspec
             h5netcdf
             jinja2
+            myst-nb
             netCDF4
             numba
             numpy
@@ -53,6 +56,28 @@ jobs:
         shell: bash -l {0}
         run: |
           pip install -e .
+      - name: Install AVISO Client
+        shell: bash -l {0}
+        run: |
+          pip install altimetry-downloader-aviso
+      - name: Cache fetched data
+        uses: actions/cache@v4
+        id: restore-cache
+        with:
+          path: docs/implementations/data
+          key: data-${{ hashFiles('scripts/pull_data*.py') }}
+      - name: Pull Samples
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash -l {0}
+        run: |
+          python docs/implementations/scripts/pull_l2_lr_ssh.py
+          python docs/implementations/scripts/pull_l3_lr_ssh.py
+      - name: Save fetched data
+        uses: actions/cache/save@v4
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          path: docs/implementations/data
+          key: ${{ steps.restore-cache.outputs.cache-primary-key }}
       - name: Build Sphinx HTML
         shell: bash -l {0}
         run: |
