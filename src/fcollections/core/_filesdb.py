@@ -201,7 +201,10 @@ def _convention_parameters(
             ["param", field.name],
             textwrap.fill(field.description),
             field.name,
-            field.type_name,
+            # Docstrings in the project do not repeat the typing in the
+            # Parameters section. We set None to comply with this implicit
+            # convention
+            None,
             False,
             None,
         )
