@@ -464,7 +464,7 @@ class FileDiscoverer:
     def list(
         self,
         path: str,
-        predicates: tuple[tp.Callable[tuple[tp.Any, ...], bool], ...] = (),
+        predicates: tuple[tp.Callable[[tuple[tp.Any, ...]], bool], ...] = (),
         stat_fields: tuple[str] = (),
         **filters,
     ) -> pda.DataFrame:

@@ -35,6 +35,7 @@ extensions = [
 
 # -- Intersphinx ---------------------------------------------------------------
 intersphinx_mapping = {
+    "fsspec": ("https://filesystem-spec.readthedocs.io/en/latest/", None),
     "python": ("http://docs.python.org/3", None),
     "numpy": ("http://docs.scipy.org/doc/numpy/", None),
     "matplotlib": ("https://matplotlib.org/stable/", None),
@@ -58,6 +59,10 @@ autodoc_default_options = {
     "undoc-members": True,
     "show-inheritance": True,
 }
+
+autodoc_class_signature = "separated"
+
+autodoc_preserve_defaults = True
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
