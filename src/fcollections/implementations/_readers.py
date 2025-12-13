@@ -305,10 +305,21 @@ def _read_expert_swath(
 ):
     if stack == StackLevel.NOSTACK:
         xarray_options = dict(
-            combine="nested", concat_dim="num_lines", engine="h5netcdf"
+            combine="nested",
+            concat_dim="num_lines",
+            engine="h5netcdf",
+            join="outer",
+            data_vars="all",
+            compat="no_conflicts",
         )
     else:
-        xarray_options = dict(combine="by_coords", engine="h5netcdf")
+        xarray_options = dict(
+            combine="by_coords",
+            engine="h5netcdf",
+            join="outer",
+            data_vars="all",
+            compat="no_conflicts",
+        )
 
     reader = OpenMfDataset(xarray_options=xarray_options)
     ds = reader.read(
@@ -732,6 +743,8 @@ class SwotReaderL3WW(OpenMfDataset):
             xarray_options=dict(
                 engine="h5netcdf",
                 data_vars="minimal",
+                compat="no_conflicts",
+                coords="different",
                 combine="nested",
                 concat_dim="n_box",
             )
