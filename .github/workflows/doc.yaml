@@ -81,6 +81,7 @@ jobs:
           python docs/implementations/scripts/pull_data_l3_lr_ssh.py
       - name: Save fetched data
         uses: actions/cache/save@v4
+        if: steps.restore_samples.outputs['cache-hit'] != 'true'
         with:
           path: docs/implementations/data
           key: samples-${{ hashFiles('docs/implementations/scripts/pull_data*.py') }}
