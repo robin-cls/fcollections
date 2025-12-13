@@ -31,6 +31,8 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_tabs.tabs",
     "sphinx.ext.viewcode",
+    "myst_nb",
+    "sphinx_design",
 ]
 
 # -- Intersphinx ---------------------------------------------------------------
@@ -42,6 +44,20 @@ intersphinx_mapping = {
     "pyinterp": ("https://cnes.github.io/pangeo-pyinterp/", None),
     "xarray": ("https://docs.xarray.dev/en/stable/", None),
 }
+
+# -- Options for myst-nb extension -------------------------------------------
+nb_output_stderr = "remove"
+nb_download = True
+nb_execution_mode = "auto"
+
+# Enable ::: syntax instead of ``` to avoid tricky nesting of directives
+myst_enable_extensions = ["colon_fence"]
+
+# Stop at the first execution error and raise an exception that is shown on
+# stderr instead of in the log file
+nb_execution_raise_on_error = True
+nb_execution_show_tb = True
+
 
 # -- Options for autosummary extension ---------------------------------------
 
@@ -71,7 +87,7 @@ autodoc_preserve_defaults = True
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "sphinx_rtd_theme"
+html_theme = "sphinx_book_theme"
 html_static_path = ["_static"]
 html_last_updated_fmt = "%a, %d %B %Y %H:%M:%S"
 
@@ -80,8 +96,8 @@ html_logo = "_static/SWOT_spacecraft_model.png"
 
 # Theme options
 html_theme_options = {
-    "logo_only": True,
     "navigation_depth": 4,
+    "use_download_button": True,
 }
 
 # These paths are either relative to html_static_path

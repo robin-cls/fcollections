@@ -7,7 +7,13 @@ FCollections
     install
     getting_started
     custom
-    implementations/index
+
+.. toctree::
+    :caption: Implementations
+
+    implementations/catalog
+    implementations/l2_lr_ssh
+    implementations/l3_lr_ssh
 
 .. toctree::
     :caption: Utilities
