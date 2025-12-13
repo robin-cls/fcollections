@@ -29,7 +29,6 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
-    "sphinx_tabs.tabs",
     "sphinx.ext.viewcode",
     "myst_nb",
     "sphinx_design",

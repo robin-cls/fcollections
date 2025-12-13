@@ -4,9 +4,9 @@ Installation
 How to install
 --------------
 
-.. tabs::
+.. tab-set::
 
-    .. tab:: Conda
+    .. tab-item:: Conda
 
         You can install or upgrade Files Collection using the `conda install
         <https://docs.conda.io/projects/conda/en/latest/commands/install.html>`_
@@ -30,7 +30,7 @@ How to install
         ``python -m pip install files-collections[geo]``
 
 
-    .. tab:: Pip
+    .. tab-item:: Pip
 
         You can install or upgrade Files Collection using the `pip install
         <https://packaging.python.org/en/latest/tutorials/installing-packages/>`_
