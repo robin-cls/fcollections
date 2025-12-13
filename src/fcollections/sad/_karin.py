@@ -7,7 +7,7 @@ import requests
 
 from ._interface import IAuxiliaryDataFetcher
 
-if tp.TYPE_CHECKING:
+if tp.TYPE_CHECKING:  # pragma: no cover
     from pathlib import Path
 
 logger = logging.getLogger(__name__)

@@ -32,15 +32,15 @@ class IAuxiliaryDataFetcher(abc.ABC):
 
     @abc.abstractmethod
     def _download(self, remote_file: str, target_folder: Path):
-        # Download the given remote_file into a target folder
-        pass
+        """Download the given remote_file into a target folder."""
 
     @abc.abstractmethod
     def _file_name(self, key: str) -> str:
-        # This method contains the mapping between the keys and the files that
-        # can be downloaded.
-        # For example: dict(foo='file_foo.nc', bar='file_bar.txt')
-        pass
+        """This method contains the mapping between the keys and the files that
+        can be downloaded.
+
+        For example: dict(foo='file_foo.nc', bar='file_bar.txt')
+        """
 
     @property
     def name(self) -> str:

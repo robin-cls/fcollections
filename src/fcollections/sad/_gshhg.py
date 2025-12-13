@@ -3,15 +3,13 @@ from __future__ import annotations
 import io
 import itertools
 import logging
-import os
 import tarfile
 import typing as tp
-import urllib.parse
 from ftplib import FTP
 
 from ._interface import IAuxiliaryDataFetcher
 
-if tp.TYPE_CHECKING:
+if tp.TYPE_CHECKING:  # pragma: no cover
     from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -65,17 +63,18 @@ def fetch_ftp_file(url: str, filename: str, target_folder: Path):
     ftp.quit()
     logger.info("Downloading %s... Done", filename)
 
+    # Filter out non-netcdf and flatten the tar gz structure
+    def tar_info_filter(tar_info: tarfile.TarInfo, _) -> tarfile.TarInfo | None:
+        if ".nc" not in tar_info.name:
+            logger.debug("Not an netcdf, skipping extraction")
+            return None
+
+        tar_info.name = tar_info.name.split("/")[-1]
+        return tar_info
+
     # Extract in-memory buffer
     tar_data.seek(0)
     with tarfile.open(fileobj=tar_data, mode="r") as tar:
         for member in tar.getmembers():
-            # Remove the top-level directory (first path part). Only works
-            # there is a unique root folder
-            parts = member.name.split("/", 1)
-            if len(parts) > 1:
-                # rewrite the path to exclude the root folder
-                member.name = parts[1]
-            else:
-                # skip top-level folder itself
-                continue
-            tar.extract(member, path=target_folder)
+            logger.debug("Extracting %s", member.name)
+            tar.extract(member, path=target_folder, filter=tar_info_filter)

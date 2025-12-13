@@ -1,13 +1,4 @@
 import numpy as np
-import xarray as xr
-
-
-def broadcast_arrays(z1: xr.DataArray, z2: xr.DataArray):
-    # xarray broadcast is not able to align the chunks when broadcasting
-    dims = z1.dims
-    additional_dims = [d for d in dims if d not in z2.dims]
-    z2 = z2.expand_dims(additional_dims).transpose(*dims)
-    return np.broadcast_arrays(z1.data, z2.data)
 
 
 def slice_along_axis(array: np.ndarray, axis: int, slice_along_axis: slice):
