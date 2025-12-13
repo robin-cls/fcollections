@@ -26,6 +26,8 @@ jobs:
           create-args: >
             python=3.12
             pip
+            cartopy
+            matplotlib
             sphinx
             sphinx-book-theme
             sphinx-copybutton
@@ -75,10 +77,8 @@ jobs:
         shell: bash -l {0}
         run: |
           set -e
-          mkdir docs/implementations/data/
-          touch docs/implementations/data/dummy.json
-          # python docs/implementations/scripts/pull_data_l2_lr_ssh.py
-          # python docs/implementations/scripts/pull_data_l3_lr_ssh.py
+          python docs/implementations/scripts/pull_data_l2_lr_ssh.py
+          python docs/implementations/scripts/pull_data_l3_lr_ssh.py
       - name: Save fetched data
         uses: actions/cache/save@v4
         with:
