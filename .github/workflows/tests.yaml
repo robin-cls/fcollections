@@ -166,7 +166,7 @@ jobs:
       - name: Combine coverage reports
         run: |
           coverage combine .coverage-ut .coverage-ut-nogeo .coverage-it
-          coverage report
+          coverage report --fail-under=100
           coverage xml
       - name: Upload combined coverage report
         uses: actions/upload-artifact@v4
