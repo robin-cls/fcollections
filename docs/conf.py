@@ -53,8 +53,11 @@ nb_execution_mode = "auto"
 # Enable ::: syntax instead of ``` to avoid tricky nesting of directives
 myst_enable_extensions = ["colon_fence"]
 
-# Stop at the first execution error and raise an exception
+# Stop at the first execution error and raise an exception that is shown on
+# stderr instead of in the log file
 nb_execution_raise_on_error = True
+nb_execution_show_tb = True
+
 
 # -- Options for autosummary extension ---------------------------------------
 

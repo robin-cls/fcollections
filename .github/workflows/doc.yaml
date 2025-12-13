@@ -62,26 +62,28 @@ jobs:
           pip install altimetry-downloader-aviso
       - name: Restore cached sample data
         uses: actions/cache@v4
-        id: restore-samples
+        id: restore_samples
         with:
           path: docs/implementations/data
           key: samples-${{ hashFiles('docs/implementations/scripts/pull_data*.py') }}
       - name: Setup AVISO credentials
-        if: steps.restore-samples.outputs.cache-hit != 'true'
+        if: steps.restore_samples.outputs['cache-hit'] != 'true'
         run: |
           echo "machine tds-odatis.aviso.altimetry.fr login ${{ secrets.AVISO_USER }} password ${{ secrets.AVISO_PASSWORD }}" > ~/.netrc
       - name: Pull Samples
-        if: steps.restore-samples.outputs.cache-hit != 'true'
+        if: steps.restore_samples.outputs['cache-hit'] != 'true'
         shell: bash -l {0}
         run: |
           set -e
-          python docs/implementations/scripts/pull_data_l2_lr_ssh.py
-          python docs/implementations/scripts/pull_data_l3_lr_ssh.py
+          mkdir docs/implementations/data/
+          touch docs/implementations/data/dummy.json
+          # python docs/implementations/scripts/pull_data_l2_lr_ssh.py
+          # python docs/implementations/scripts/pull_data_l3_lr_ssh.py
       - name: Save fetched data
         uses: actions/cache/save@v4
         with:
           path: docs/implementations/data
-          key: ${{ steps.restore-samples.outputs.cache-primary-key }}
+          key: ${{ steps.restore_samples.outputs['cache-primary-key'] }}
       - name: Build Sphinx HTML
         shell: bash -l {0}
         run: |
