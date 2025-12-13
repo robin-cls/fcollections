@@ -4,6 +4,7 @@ import re
 import sys
 import typing as tp
 
+import dask
 import fsspec.implementations.memory as fs_mem
 import numpy as np
 import pandas as pda
@@ -452,7 +453,10 @@ def test_map(db_with_files: FilesDatabaseTest):
     def func(ds: xr.Dataset, record: dict[str, tp.Any]):
         return record["a_number"], list(ds.a.values)
 
-    result = db_with_files.map(func, a_number=1).compute()
+    with dask.config.set(scheduler="synchronous"):
+        # Use synchronous scheduler to run in sequential and compute proper
+        # coverage
+        result = db_with_files.map(func, a_number=1).compute()
     assert result == [(1, [1.0, 1.0])]
 
 

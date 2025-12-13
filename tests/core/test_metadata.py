@@ -101,9 +101,9 @@ def test_group_metadata_from_netcdf(netcdf_dataset, groups):
     assert groups == group_metadata_from_netcdf(netcdf_dataset)
 
 
-def test_render(flattened: dict[str, tp.Any]):
+def test_render(groups: GroupMetadata):
     # Style sheet has been properly applied
-    parsed = bs4.BeautifulSoup(_render_html(flattened), "html.parser")
+    parsed = bs4.BeautifulSoup(groups._repr_html_(), "html.parser")
     assert len(parsed.style.contents) > 0
 
     # Test overall structure
