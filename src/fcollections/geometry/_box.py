@@ -1,9 +1,6 @@
 import pyinterp as pyi
 import pyinterp.geodetic as pyi_geod
 import pyinterp.geohash as pyi_geoh
-from shapely import MultiPolygon, Polygon
-
-from ._model import LongitudeConvention
 
 
 def expand_box(box: pyi_geod.Box, precision: int) -> pyi_geod.Box:
@@ -56,42 +53,3 @@ def expand_box(box: pyi_geod.Box, precision: int) -> pyi_geod.Box:
     return pyi_geod.Box(
         pyi_geod.Point(min_lon, min_lat), pyi_geod.Point(max_lon, max_lat)
     )
-
-
-def normalize_polygon(
-    polygon: Polygon, convention: LongitudeConvention
-) -> Polygon | MultiPolygon:
-    """Normalize a polygon to a longitude convention. The polygon may be split
-    to a MultiPolygon.
-
-    Parameters
-    ----------
-    polygon: Polygon
-        the polygon to normalize
-    convention: LongitudeConvention
-        the longitude convention to use (e.g. (-180, 180))
-
-    Returns
-    -------
-        a Polygon or MultiPolygon with coordinates normalized in the new convention
-    """
-    # TODO This function needs to be completed and refactored
-    keep_coords = []
-    split_coords = []
-    for x, y in polygon.exterior.coords:
-        if convention.lon_min <= x and x <= convention.lon_max:
-            keep_coords.append([x, y])
-        if x < convention.lon_min:
-            x += 360
-            split_coords.append([x, y])
-        if x > convention.lon_max:
-            x -= 360
-            split_coords.append([x, y])
-    # TODO test if len(split_coords) == 0 : return keep_coords
-    if len(split_coords) < 4:
-        return Polygon(keep_coords)
-    # TODO test if len(keep_coords) == 0 : return split_coords
-    if len(keep_coords) < 4:
-        return Polygon(split_coords)
-    # TODO Add points of coordinates (lon_min, y) or (lon_max, y) for including boundaries, to avoid loosing data
-    return MultiPolygon([Polygon(keep_coords), Polygon(split_coords)])

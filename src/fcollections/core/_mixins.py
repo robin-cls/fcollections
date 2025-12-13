@@ -16,8 +16,9 @@ from fcollections.time import (
     times_holes,
 )
 
-if tp.TYPE_CHECKING:
+if tp.TYPE_CHECKING:  # pragma: no cover
     import numpy as np
+    import pandas as pda_t
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +26,8 @@ logger = logging.getLogger(__name__)
 class ITemporalMixin(abc.ABC):
 
     @abc.abstractmethod
-    def list_files(self, *args, **kwargs):
-        pass
+    def list_files(self, *args, **kwargs) -> pda_t.DataFrame:
+        """The mixin relies on this method to build new functionalities."""
 
     @abc.abstractmethod
     def time_holes(self, **filters):
@@ -93,15 +94,7 @@ class DownloadMixin(abc.ABC):
     @property
     @abc.abstractmethod
     def fs(self) -> fsspec.AbstractFileSystem:
-        pass
-
-    def retrieve_files(
-        self, files: list[str], local_path: str, force_download: bool = False
-    ):
-        warnings.warn(
-            "retrieve_file method has been renamed to download", DeprecationWarning
-        )
-        return self.download(files, local_path, force_download)
+        """The mixin relies on this attribute to build new functionalities."""
 
     def download(self, files: list[str], local_path: str, force_download: bool = False):
         """Retrieve files from FTP to local path.

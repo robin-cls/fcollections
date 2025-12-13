@@ -195,9 +195,6 @@ def _reading_parameters(
 def _convention_parameters(
     parser: FileNameConvention,
 ) -> tuple[dict[str, dcs.DocstringParam], dict[str, inspect.Parameter]]:
-    if parser is None:
-        return {}, {}
-
     fields = parser.fields
     convention_docstring_parameters = {
         field.name: dcs.DocstringParam(
@@ -255,9 +252,6 @@ def _create_method(attrs: dict[str, tp.Any], name: str, internal_name: str):
     # will allow each class to define their unique query method with
     # matchin __doc__ attribute that we can override without side
     # effects from one class to another
-    if name in attrs:
-        return
-
     def wrapped(self, *args, **kwargs):
         return getattr(self, internal_name)(*args, **kwargs)
 

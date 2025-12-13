@@ -130,6 +130,6 @@ def env():
     console.print(table)
 
 
-def main():
+def main():  # pragma: no cover (not worth testing, we rely on typer/click)
     """Entry point for the auxiliary data handling."""
     app()

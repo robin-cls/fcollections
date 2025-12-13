@@ -45,7 +45,11 @@ class FileNameField(ICodec[T], ITester[U, T]):
 
     @property
     def description(self) -> str:
-        return self.field_description + " " + self.test_description
+        return (
+            self.test_description
+            if len(self.field_description) == 0
+            else self.field_description + " " + self.test_description
+        )
 
 
 class FileNameFieldString(FileNameField, StringTester, StringCodec):

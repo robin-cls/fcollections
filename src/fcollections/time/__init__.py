@@ -21,7 +21,7 @@ from ._operations import (
 )
 from ._periods import Period
 
-if tp.TYPE_CHECKING:
+if tp.TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as np_t
 
 __all__ = [

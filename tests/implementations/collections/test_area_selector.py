@@ -102,6 +102,7 @@ class Test_select_slice_intersect_bounds:
         [
             ((1, 2), 0, [(2, 4)]),
             ((0, 5), 0, [(0, 5)]),
+            ((2, 1), 0, [(2, 4)]),
         ],
     )
     def test_unordered(self, bounds, ind_start, result):

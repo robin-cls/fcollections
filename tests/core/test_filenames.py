@@ -339,6 +339,24 @@ def test_field_type_name(field: FileNameField, expected_type_name: str):
     assert field.type_name == expected_type_name
 
 
+@pytest.mark.parametrize(
+    "field, elements",
+    [
+        (FileNameFieldInteger("ifield"), ["list", "slice", "integer"]),
+        (FileNameFieldFloat("ffield"), ["float"]),
+        (FileNameFieldString("sfield"), ["string"]),
+        (FileNameFieldDatetime("dfield", ""), ["[%Y-%m-%dT%H:%M:%S]"]),
+        (FileNameFieldPeriod("pfield", ""), ["[%Y-%m-%dT%H:%M:%S]"]),
+        (FileNameFieldEnum("efield", Color), ["RED", "BLUE", "GREEN", "gray"]),
+    ],
+)
+def test_field_description(field: FileNameField, elements: list[str]):
+    for x in elements:
+        assert x in field.description
+    assert field.test_description in field.description
+    assert not field.description.startswith(" ")
+
+
 @pytest.fixture(scope="session")
 def convention():
     regex = re.compile(
@@ -441,6 +459,71 @@ def test_filename_convention_generate_missing_variables(convention, expected_rec
                 for field, v in zip(convention.fields[:-1], expected_record)
             }
         )
+
+
+class TestFieldFormatter:
+
+    @pytest.fixture(autouse=True)
+    def _set_formatter(self, convention: FileNameConvention):
+        self.fmt = convention._formatter
+        self.date = np.datetime64("2023-02-01")
+
+    def test_nominal(self):
+        result = self.fmt.format("Hello {field_date!f}", field_date=self.date)
+        assert result == "Hello 20230201"
+
+    def test_default_conversion_unchanged(self):
+        result = str.format("Hello {field_date}", field_date=self.date)
+        assert result == "Hello 2023-02-01"
+
+    def test_format_spec_applied_after_encoding(self):
+        result = self.fmt.format("{field_date!f:>10}", field_date=self.date)
+        assert result == "  20230201"
+
+    def test_nested_format_spec(self):
+        result = self.fmt.format(
+            "{field_date!f:{width}}", field_date=self.date, width=11
+        )
+        assert result == "20230201   "
+
+    def test_missing_field_encoder_raises(self):
+        with pytest.raises(KeyError):
+            self.fmt.format("{x!f}", x="test")
+
+    def test_auto_numbering_not_compatible(self):
+        with pytest.raises(KeyError):
+            # Auto numbering functionality is broken by our patch
+            self.fmt.format("{!f}", "x")
+
+    def test_auto_numbering_default(self):
+        result = self.fmt.format("{}", "x")
+        assert result == "x"
+
+    def test_max_string_recursion_exceeded(self):
+        # Each ":" introduces another recursive _vformat call
+        deep = "{x:" * 100 + "}" * 100
+        with pytest.raises(ValueError, match="Max string recursion exceeded"):
+            self.fmt.format(deep, x="test")
+
+    def test_manual_then_automatic_raises(self):
+        with pytest.raises(
+            ValueError,
+            match="cannot switch from manual field specification to automatic field numbering",
+        ):
+            self.fmt.format("{0} {}", "a", "b")
+
+    def test_automatic_then_manual_raises(self):
+        with pytest.raises(
+            ValueError,
+            match="cannot switch from manual field specification to automatic field numbering",
+        ):
+            self.fmt.format("{} {0}", "a", "b")
+
+
+def test_filename_convention_generate_no_generation_string():
+    convention = FileNameConvention(re.compile(""), [])
+    with pytest.raises(NotImplementedError):
+        convention.generate()
 
 
 def test_filename_convention_bad_init():

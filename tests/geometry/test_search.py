@@ -26,6 +26,12 @@ def test_query_geometries(phase, pass_numbers):
     assert len(swath_geom.geometry) == len(pass_numbers)
 
 
+def test_query_geometries_int():
+    df_list = query_geometries([25], "calval")
+    df_int = query_geometries(25, "calval")
+    assert df_list.equals(df_int)
+
+
 @pytest.mark.parametrize(
     "phase, bbox, result_passes",
     [

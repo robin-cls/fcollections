@@ -1,10 +1,7 @@
 import dataclasses as dc
-import functools
 from enum import Enum
 
 import numpy as np
-
-from ._distances import distances_along_axis
 
 
 @dc.dataclass
@@ -139,31 +136,3 @@ def guess_longitude_convention(lon: np.array) -> StandardLongitudeConvention:
         f"known convention amongst [ {conventions} ]"
     )
     raise ValueError(msg)
-
-
-class Distances:
-
-    def __init__(
-        self,
-        longitudes: np.ndarray,
-        latitudes: np.ndarray,
-        return_full: bool = True,
-        spherical_approximation: bool = True,
-    ):
-        # Use a standard class to prevent hashing. longitude and latitude are
-        # tables and should not be set as a dataclass attribute else it will
-        # conflict with the functools cache
-        self.longitudes = longitudes
-        self.latitudes = latitudes
-        self.return_full = return_full
-        self.spherical_approximation = spherical_approximation
-
-    @functools.cache
-    def compute(self, axis):
-        return distances_along_axis(
-            self.longitudes,
-            self.latitudes,
-            axis,
-            self.return_full,
-            self.spherical_approximation,
-        )
