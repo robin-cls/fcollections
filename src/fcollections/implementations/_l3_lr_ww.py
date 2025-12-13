@@ -81,9 +81,11 @@ try:
         predicate_classes = [SwotGeometryPredicate]
 
 except ImportError:
-    import warnings
+    import logging
 
     from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
-    warnings.warn(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
+    logger = logging.getLogger(__name__)
+    logger.info(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
+
     NetcdfFilesDatabaseSwotLRWW = BasicNetcdfFilesDatabaseSwotLRWW
