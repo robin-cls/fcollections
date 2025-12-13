@@ -2,6 +2,9 @@ import itertools
 import typing as tp
 from pathlib import Path
 
+import fsspec
+import fsspec.implementations
+import fsspec.implementations.memory
 import numpy as np
 import pytest
 import xarray as xr
@@ -355,6 +358,24 @@ class TestReader:
     def test_expert_nadir_only(self, l3_lr_ssh_basic_files: list[str]):
         ds = self.reader.read(
             ProductSubset.Basic, l3_lr_ssh_basic_files, nadir=True, swath=False
+        )
+        assert set(ds.sizes) == {"num_nadir"}
+
+    def test_expert_nadir_only_memory(self, l3_lr_ssh_basic_files: list[str]):
+        memory = fsspec.get_mapper("memory://")
+        local = fsspec.get_mapper("local:///")
+
+        # Copy one file to memory
+        path = l3_lr_ssh_basic_files[0].as_posix()
+        filename = l3_lr_ssh_basic_files[0].name
+        memory[filename] = local[path]
+
+        ds = self.reader.read(
+            ProductSubset.Basic,
+            [filename],
+            nadir=True,
+            swath=False,
+            fs=fsspec.implementations.memory.MemoryFileSystem(),
         )
         assert set(ds.sizes) == {"num_nadir"}
 
