@@ -16,8 +16,13 @@ if __name__ == "__main__":
         output_dir=DATA_DIR,
         cycle_number=[9, 10, 11],
         pass_number=[10, 11],
+        version="P?C?",
     )
 
     get(
-        "SWOT_L2_LR_SSH_Unsmoothed", output_dir=DATA_DIR, cycle_number=9, pass_number=10
+        "SWOT_L2_LR_SSH_Unsmoothed",
+        output_dir=DATA_DIR,
+        cycle_number=9,
+        pass_number=10,
+        version="PGC?",
     )
