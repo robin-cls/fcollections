@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import sympy as sp
 
-from fcollections.geometry import rotate_derivatives, rotate_vector
+from fcollections.geometry import rotate_derivatives, rotate_vector, track_orientation
 
 
 @pytest.mark.parametrize(
@@ -70,3 +70,33 @@ def test_rotate_derivatives():
     assert np.allclose(dvx_dy_ref[1:-1, 1:-1], dvx_dy[1:-1, 1:-1])
     assert np.allclose(dvy_dx_ref[1:-1, 1:-1], dvy_dx[1:-1, 1:-1])
     assert np.allclose(dvy_dy_ref[1:-1, 1:-1], dvy_dy[1:-1, 1:-1])
+
+
+@pytest.mark.parametrize(
+    "latitudes, longitudes, expected_angle",
+    [
+        ([0, 1], [0, 0], np.pi / 2),
+        ([0, -1], [0, 0], -np.pi / 2),
+        ([0, 0], [0, 1], 0),
+        ([0, 0], [0, -1], np.pi),
+        ([0, 1], [0, 1], np.pi / 4),
+        ([0, 1], [0, -1], 3 * np.pi / 4),
+        ([0, -1], [0, 1], -np.pi / 4),
+        ([0, -1], [0, -1], -3 * np.pi / 4),
+    ],
+    ids=[
+        "northward",
+        "southward",
+        "eastward",
+        "westward",
+        "northeastward",
+        "northwestward",
+        "southeastward",
+        "southwestward",
+    ],
+)
+def test_track_orientation(
+    latitudes: list[int], longitudes: list[int], expected_angle: float
+):
+    angle = track_orientation(latitudes, longitudes)
+    assert angle[0] == expected_angle

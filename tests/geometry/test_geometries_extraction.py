@@ -90,6 +90,12 @@ def test_build(builder, ds_karin):
     assert geometry_length(geom.geometry[0]) == 35
 
 
+def test_build_mutiple_swath(builder, ds_karin):
+    dataset = xr.concat([ds_karin, ds_karin], dim="num_lines")
+    with pytest.raises(KeyError):
+        builder.build(ds=dataset)
+
+
 def geometry_flatten(geom):
     if hasattr(geom, "geoms"):  # Multi<Type> / GeometryCollection
         for g in geom.geoms:

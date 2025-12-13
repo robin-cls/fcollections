@@ -8,6 +8,11 @@ from fcollections.geometry import (
 )
 
 
+def test_invalid_convention():
+    with pytest.raises(ValueError):
+        LongitudeConvention(-180, 360)
+
+
 @pytest.mark.parametrize(
     "convention, array, expected_arr",
     [

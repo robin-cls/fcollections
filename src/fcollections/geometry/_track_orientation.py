@@ -7,7 +7,7 @@ from pyinterp.geodetic import Spheroid
 
 from fcollections.utilities.reshape import slice_along_axis
 
-if tp.TYPE_CHECKING:
+if tp.TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as np_t
 
 

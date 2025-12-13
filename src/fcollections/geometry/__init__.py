@@ -2,7 +2,6 @@ from ._box import expand_box
 from ._distances import distances_along_axis
 from ._extraction import SwathGeometriesBuilder, visvalingam
 from ._model import (
-    Distances,
     LongitudeConvention,
     StandardLongitudeConvention,
     guess_longitude_convention,
@@ -17,7 +16,6 @@ from ._track_orientation import (
 __all__ = [
     "track_orientation",
     "distances_along_axis",
-    "Distances",
     "LongitudeConvention",
     "StandardLongitudeConvention",
     "guess_longitude_convention",
