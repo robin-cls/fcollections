@@ -83,11 +83,11 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: docs/implementations/data
-          key: ${{ steps.restore_samples.outputs['cache-primary-key'] }}
+          key: samples-${{ hashFiles('docs/implementations/scripts/pull_data*.py') }}
       - name: Build Sphinx HTML
         shell: bash -l {0}
         run: |
-          sphinx-build -b html docs build -W
+          sphinx-build -T -b html docs build -W
       - name: Upload artifact for Pages
         uses: actions/upload-pages-artifact@v3
         with:
