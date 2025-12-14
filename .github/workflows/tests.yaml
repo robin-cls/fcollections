@@ -37,6 +37,7 @@ jobs:
             pytest-cov
             sympy
             beautifulsoup4
+            pyftpdlib
             shapely
             geopandas
             pyinterp
@@ -89,6 +90,7 @@ jobs:
             pytest-cov
             sympy
             beautifulsoup4
+            pyftpdlib
             shapely
             geopandas
             pyinterp
