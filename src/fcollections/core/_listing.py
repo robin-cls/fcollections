@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 import abc
+import dataclasses as dc
 import functools
 import logging
 import os
 import typing as tp
 import warnings
-from pathlib import Path
 
+import fsspec
 import pandas as pda
-from fsspec import AbstractFileSystem
-from fsspec.implementations.local import LocalFileSystem
 
 from ._codecs import DecodingError
 from ._filenames import FileNameConvention, FileNameField
@@ -166,6 +165,51 @@ class Layout(ILayout):
             return False
         return record_filter.test(record)
 
+    def parse_node(self, level: int, node: str) -> tuple[tp.Any, ...]:
+        """Interprets a node name.
+
+        Parameters
+        ----------
+        level
+            Depth in the layout. Depth in the layout is the depth of the node
+            with respect to its root minus 1. There is no semantic for the root
+            node, which explains this discrepency of layout-depth and tree-depth
+        node
+            Node name (not its full path)
+
+        Returns
+        -------
+        :
+            Structure information about the node
+        """
+        convention = self.conventions[level]
+        try:
+            return convention.parse(convention.match(node))
+        except (DecodingError, AttributeError):
+            return None
+
+    def test_record(self, level: int, record: tuple[tp.Any, ...]) -> bool:
+        """Checks if the node information matches the filters.
+
+        The test will look for filters at the considered layout depth, and apply
+        them on the record.
+
+        Parameters
+        ----------
+        level
+            Depth in the layout. Depth in the layout is the depth of the node
+            with respect to its root minus 1. There is no semantic for the root
+            node, which explains this discrepency of layout-depth and tree-depth
+        record
+            Interpreted node informations
+
+        Returns
+        -------
+        :
+            True if the node matches the filters, false otherwise
+        """
+        return self.filters[level].test(record)
+
     @property
     def names(self) -> set[str]:
         return set(
@@ -179,212 +223,415 @@ class Layout(ILayout):
         )
 
 
-class CompositeLayout(ILayout):
-    """Implements a heterogeneous layout.
-
-    In case the folder structure is heterogeneous, we expect that some branches
-    of the tree will show different paths. For example, exploring the L3_LR_SSH
-    products gives:
-
-      * ``<v3`` : [version]/[subset]/[cycle_number]
-      * ``>=v3``: [version]/[subset]/[timeliness]/[cycle_number]
-
-    This class solves the heterogeneity problem with a crude implementation,
-    trying multiple layouts in succession until one of them matches/generates
-    the tree path.
-
-    For string generation, the first layout that works will be used to generate
-    the path. Care must be taken when choosing the order of the layouts.
-
-    See Also
-    --------
-    Layout: the implementation for a homogeneous folder structure
-    """
-
-    def __init__(self, layouts: list[Layout]):
-        self._layouts = layouts
-
-    def test(self, level: int, node: str) -> bool:
-        bad = 0
-        with warnings.catch_warnings(action="error"):
-            # The default Layout implementation tries to detect a mismatch
-            # between the configured layout and the actual tree. The Composite
-            # layout tries to emulate the same behavior: a warning is emitted if
-            # none of the layouts can parse the node (it is not filtered out, it
-            # just does not match any of the regexes).
-            # If the number of emitted warnings is the same as the layouts, it
-            # means we are in a suspect case of bad layout
-            for layout in self._layouts:
-                try:
-                    if layout.test(level, node):
-                        return True
-                except IndexError:
-                    pass
-                except UserWarning:
-                    bad += 1
-
-        if bad == len(self._layouts):
-            msg = (
-                f"Node {node} did not match any of the possible conventions."
-                " This is probably due to a mismatch between the layouts and"
-                " the actual tree structure"
-            )
-            warnings.warn(msg)
-        return False
-
-    def generate(self, root: str, **fields: abc.Any) -> str:
-        for ii, layout in enumerate(self._layouts):
-            try:
-                path = layout.generate(root, **fields)
-                logger.debug("Layout [%d] path generation success", ii)
-                return path
-            except ValueError:
-                logger.debug("Layout [%d] path generation failed, trying next", ii)
-        msg = "None of the configured layout could generate a path"
-        raise ValueError(msg)
-
-    def set_filters(self, **references: abc.Any):
-        unknown_references = set(references)
-        filtered_references = {k: v for k, v in references.items() if k in self.names}
-        unknown_references -= set(filtered_references)
-
-        with warnings.catch_warnings(action="ignore"):
-            # Irrelevant filters will automatically be ignored by the underlying
-            # layouts
-            for layout in self._layouts:
-                layout.set_filters(**filtered_references)
-
-        if len(unknown_references) > 0:
-            msg = (
-                "Layout has been configured with unknown references "
-                f"'{unknown_references}'. They will be ignored."
-            )
-            warnings.warn(msg)
-
-    @property
-    def names(self) -> set[str]:
-        return functools.reduce(
-            lambda a, b: a | b, [layout.names for layout in self._layouts]
-        )
-
-
-class ITreeIterable(abc.ABC):
-    """List leafs in a tree-like structure.
-
-    File systems are the most obvious case, with the leafs defined as
-    files or links. Other tree-like structure may implement this
-    interface, for example a remote server organizing URL in a tree
-    structure.
-
-    Some trees may have too many branches to search with respect to the actual
-    need. The tree iterable can take a ILayout as a parameter to reduce the
-    number of searched branches by applying a set of criteria (aka filters).
-    This will prevent leafs from being generated improving generation speed and
-    reducing the number of leafs to process for ITreeIterable callers
+class INode(abc.ABC):
+    """Representation of a file system path.
 
     Parameters
     ----------
-    layout
-        Layout allowing to guess the tree structure and eventually discard some
-        branches along the search
-
-    See Also
-    --------
-    Layout: inform about the tree structure and allows to apply filters to the
-    search
+    name
+        Name of the node. Not to be confused with the full path that should be
+        contained in the info parameter
+    info
+        Additional information. ``name`` - representing the full path - is
+        expected to be in this parameter. Other information will depend on the
+        ``fsspec`` implementations
+    level
+        Nesting level of the current node with respect to the tree root
     """
 
-    def __init__(self, layout: Layout | None = None):
-        self.layout = layout
+    def __init__(self, name: str, info: dict[str, tp.Any], level: int):
+        self.name = name
+        self.info = info
+        self.level = level
 
     @abc.abstractmethod
-    def find(
-        self, root: str, detail: bool = False, **filters: tp.Any
-    ) -> tp.Iterator[str | dict[str, str]]:
-        """List all leafs below the given node.
+    def accept(self, visitor: LayoutVisitor) -> VisitResult:
+        """Accept a visitor.
 
-        Parameters
-        ----------
-        root
-            The tree node to start the search from
-        detail
-            Whether to return additionnal metadata for the leafs (defaults to
-            False)
-        **filters
-            filters for node selection over the fields declared in the layout
-            (optional). Each field can accept a different filter value depending
-            on the underlying FileNameField subclass
+        This method should trigger operations in the visitor. The visitor
+        computes the desired result, and the node is responsible for emitting
+        said-result to the walk operation.
 
-        Yields
-        ------
+        Returns
+        -------
         :
-            A string representing the path from root to a given leaf, or a
-            dictionary if detail=True
+            The visit result
+
+        See Also
+        --------
+        walk
+            Walk operation handling the tree traversal
+        """
+
+    @abc.abstractmethod
+    def children(self) -> tp.Iterator[INode]:
+        """List child nodes.
+
+        Returns
+        -------
+        :
+            The child nodes, either files or folders
         """
 
 
-class FileSystemIterable(ITreeIterable):
-    """List files or links in a file system.
+class FileNode(INode):
+    """File node of a file system tree."""
+
+    def accept(self, visitor: LayoutVisitor) -> VisitResult:
+        return visitor.visit_file(self)
+
+    def children(self) -> tp.Iterator[INode]:
+        """List child nodes.
+
+        Returns
+        -------
+        :
+            An empty list (files have no children)
+        """
+        return []
+
+
+class DirNode(INode):
+    """Directory node of a file system tree.
 
     Parameters
     ----------
+    name
+        Name of the node. Not to be confused with the full path that should be
+        contained in the info parameter
+    info
+        Additional information. The entry ``name`` - representing the full path
+        - is expected to be in this parameter. Other information will depend on
+        the ``fsspec`` implementation
+    level
+        Nesting level of the current node with respect to the tree root
     fs
-        The file system that needs to be iterated upon
-    layout
-        Layout allowing to guess the tree structure and eventually discard some
-        branches along the search
+        File system hosting the node. Useful to list the children
     """
 
-    def __init__(
-        self,
-        fs: AbstractFileSystem = LocalFileSystem(follow_symlinks=True),
-        layout: Layout | None = None,
-    ):
-        super().__init__(layout)
+    def __init__(self, name, info, fs: fsspec.AbstractFileSystem, level: int):
+        super().__init__(name, info, level)
         self.fs = fs
+        self._children: list[INode] | None = None
 
-    def find(
-        self, root: str, detail: bool = False, **filters: tp.Any
-    ) -> tp.Iterator[str | dict[str, str]]:
+    def accept(self, visitor: LayoutVisitor) -> VisitResult:
+        return visitor.visit_dir(self)
 
-        if len(filters) > 0 and self.layout is None:
-            msg = (
-                f"Filters {filters.keys()} have been defined for the file "
-                "system tree walk, but no layout is configured. These "
-                "filters will be ignored"
-            )
-            warnings.warn(msg)
+    def children(self) -> tp.Iterable[INode]:
+        # Cache children computation to avoid expensive relisting and ensure
+        # that one path on the filesystem will be represented by the same node
+        if self._children is None:
+            self._children = list(self._compute_children())
+        return self._children
 
-        if self.layout is not None:
-            self.layout.set_filters(**filters)
+    def _compute_children(self) -> tp.Iterator[INode]:
+        # return list of FileNode or DirNode instances
+        # Block of code extracted from fsspec and simplified (no topbottom
+        # option)
+        path = self.fs._strip_protocol(self.info["name"])
 
-        for current, folders, files in self.fs.walk(root, topdown=True, detail=detail):
-            if self.layout is not None:
-                level = len(Path(current).relative_to(root).parts)
+        try:
+            listing = self.fs.ls(path, detail=True)
+        except (FileNotFoundError, OSError):
+            return
 
-            for folder in tuple(folders):
-                # Will also give the folder name if details=True (folders is a
-                # dict with the folders names as keys)
-                if self.layout is not None and not self.layout.test(level, folder):
-                    logger.debug(
-                        "Ignore folder %s", os.path.join(root, current, folder)
-                    )
-                    if not detail:
-                        # Remove list element
-                        folders.remove(folder)
-                    else:
-                        # Remove dictionary element. note how we iterate on a
-                        # tuple copy of the folders keys
-                        del folders[folder]
-                else:
-                    logger.debug(
-                        "Search folder %s", os.path.join(root, current, folder)
-                    )
-
-            if detail:
-                yield from files.values()
+        for info in listing:
+            # each info name must be at least [path]/part , but here
+            # we check also for names like [path]/part/
+            pathname = info["name"].rstrip("/")
+            name = pathname.rsplit("/", 1)[-1]
+            if info["type"] == "directory" and pathname != path:
+                # do not include "self" path
+                yield DirNode(name, info, self.fs, self.level + 1)
+            elif pathname == path:
+                # file-like with same name as give path
+                # consequence of virtual directories in cloud object stores
+                yield FileNode("", info, self.level + 1)
             else:
-                yield from map(lambda f: os.path.join(root, current, f), files)
+                yield FileNode(name, info, self.level + 1)
+
+
+@dc.dataclass(frozen=True)
+class VisitResult:
+    """Result of a visit.
+
+    The result type is defined by the :class:`IVisitor` implementations.
+
+    Additional information related to semantic definition contained in layouts
+    (:class:`Layout`) is given for further advancement of the visitors.
+
+    Tree traversal can also use exploration hints given by the visitors
+    decide if the current branch should be explored.
+
+    See Also
+    --------
+    walk
+        Handle tree traversal
+    """
+
+    explore_next: bool
+    """True if we should continue to explore the current branch."""
+    payload: tp.Any | None = None
+    """Post processing result of a node by the visitor."""
+    surviving_layouts: list[Layout] = dc.field(default_factory=list)
+    """:class:`LayoutVisitor` only, used to know which semantic is still valid
+    for the current branch."""
+
+
+class IVisitor(abc.ABC):
+    """Visitor processing an :class:`INode`.
+
+    Visitors interpret a node and return information from it. It is up
+    to the implementation to define which information it can get from
+    the node. Some implementations will only return the node path, other
+    will try to interpret it using semantics' definitions.
+
+    An important characteristic of the visitor is its ability to advance
+    from a previous visit result. This gives flexibility to implement
+    specific states during the tree traversal.
+
+    Additionnal metadata about the visit are also returned by the
+    visitor. This information should be used for tree traversal and
+    visitor advancement only, and not returned by the walk operation.
+    """
+
+    @abc.abstractmethod
+    def visit_dir(self, dir_node: DirNode) -> VisitResult:
+        """Visits a directory node.
+
+        Returns
+        -------
+        :
+            Node information and visit metadata.
+        """
+
+    @abc.abstractmethod
+    def visit_file(self, file_node: DirNode) -> VisitResult:
+        """Visits a file node.
+
+        Returns
+        -------
+        :
+            Node information and visit metadata.
+        """
+
+    @abc.abstractmethod
+    def advance(self, result: VisitResult) -> IVisitor:
+        """Advance the visitor.
+
+        The advancement can either return a reference or a copy of the visitor.
+        If a per-branch state is needed, it is advised to return a copy.
+
+        Parameters
+        ----------
+        result
+            Previous result of a visit. Originally intended to be the visit
+            result of the parent node.
+
+        Returns
+        -------
+        :
+            The current visitor or a copy with a modified state
+        """
+
+
+class StandardVisitor(IVisitor):
+    """Visitor for producing the equivalent of
+    :meth:`fsspec.spec.AbstractFileSystem.walk`.
+
+    The useful information is a tuple (root, dirs, files) that mimics
+    the standard output of a walk operation.
+
+    No additionnal metadata related to the visit itself is returned.
+    """
+
+    def visit_dir(self, dir_node: DirNode) -> VisitResult:
+        dirs = []
+        files = []
+        for x in dir_node.children():
+            if isinstance(x, DirNode):
+                dirs.append(x.name)
+            else:
+                files.append(x.name)
+        return VisitResult(True, (dir_node.info["name"], dirs, files))
+
+    def visit_file(self, file_node: DirNode) -> VisitResult:
+        # No payload in visit_file
+        return VisitResult(False)
+
+    def advance(self, result: VisitResult) -> StandardVisitor:
+        # Visitor should advance without copy, duplication or state alteration
+        return self
+
+
+class LayoutVisitor(IVisitor):
+    """Visitor with node interpretation and branch exploration hints.
+
+    The layouts will try to interpret a node and get a record of structured
+    information. Layouts also include filters that are applied to give a hint
+    about tree exploration: if all layouts exclude the current node, exploration
+    should not continue.
+
+    Parameters
+    ----------
+    layouts
+        Semantic definitions for interpreting and testing node meanings
+    stat_fields
+        List of node metadata to add to the record
+    """
+
+    def __init__(self, layouts: list[Layout], stat_fields: tp.Iterable[str] = tuple()):
+        self.layouts = layouts
+        self.stat_fields = list(stat_fields)
+        if "name" not in self.stat_fields:
+            self.stat_fields.insert(0, "name")
+
+    def visit_dir(self, dir_node: DirNode) -> VisitResult:
+        """Visits a directory node.
+
+        The directory node path is parsed into a structured node. If none of the
+        layouts is able to parse the node, it means we are in uncharted
+        territory: tree traversal hint in the visit result will state we should
+        not continue exploring.
+
+        In addition, layout filters are applied on the node information. If all
+        layouts exclude the node, it means no node of interest are in this
+        branch: we want to terminate the current branch exploration as soon as
+        possible to speed up the walk operation.
+
+        Multiple layouts means multiple semantics are possible. This is the case
+        in a heterogeneous folder. When exploring a branch, some layouts may not
+        match the branch semantic. These are pruned as soon as possible, but
+        only for the current branch.
+
+        Returns
+        -------
+        :
+            Node information and visit metadata. The visit metadata includes a
+            tree traversal hint for further exploration, and the surviving
+            layouts that match the current branch
+        """
+        logger.debug("Visiting folder %s", dir_node.info["name"])
+        if dir_node.level == 0:
+            # No parsing nor filtering for the root node
+            return VisitResult(True, None, self.layouts)
+
+        layouts_for_children: list[Layout] = []
+        record = None
+        for layout in self.layouts:
+            # Prune non matching layouts for this directory. We need to test all
+            # layouts to eliminate non matching layouts as early as possible in
+            # a given branch
+            result = layout.parse_node(dir_node.level - 1, dir_node.name)
+            if result is not None:
+                layouts_for_children.append(layout)
+            if record is None:
+                # Do not override a valid record with a None
+                record = result
+
+        if not layouts_for_children:
+            # Outlier
+            # If nobody matches, we do not want to explore further
+            logger.debug(
+                "Folder %s does not match any layout, branch exploration stopped.",
+                dir_node.info["name"],
+            )
+            return VisitResult(False)
+
+        if all(
+            [
+                not layout.test_record(dir_node.level - 1, record)
+                for layout in layouts_for_children
+            ]
+        ):
+            # This folder does not match the filtering criteria. It is ignored
+            logger.debug(
+                "Folder %s filtered out, branch exploration stopped",
+                dir_node.info["name"],
+            )
+            return VisitResult(False)
+
+        # Don't return a payload for dir nodes (will be subject to change later)
+        return VisitResult(True, None, layouts_for_children)
+
+    def visit_file(self, file_node: FileNode) -> VisitResult:
+        """Visits a file node.
+
+        The file node is interpreted to generate a record of structured
+        information. The content of this record depends on the layouts
+        definition. If the interpretation fails, the visit result will not
+        include any information about the node.
+
+        Layout filters are also applied to the node record. If all layouts
+        exclude the node, the visit result will not include any information
+        about the node.
+
+        Raises
+        ------
+        KeyError
+            If the requested stats_fields key are unknown for the given fsspec
+            implementation
+
+        Returns
+        -------
+        :
+            Node information and visit metadata. For file node, no further
+            exploration should be needed. In this case, surviving layouts are
+            not relevant and will not be included in the visit result.
+        """
+        logger.debug("Visiting file %s", file_node.info["name"])
+        # Advance/prune layouts for files
+        for layout in self.layouts:
+            record = layout.parse_node(file_node.level - 1, file_node.name)
+            if record is not None and layout.test_record(file_node.level - 1, record):
+                # Files are leaf, no need to continue exploration
+                return VisitResult(
+                    False, (*record, *[file_node.info[x] for x in self.stat_fields])
+                )
+        return VisitResult(False)
+
+    def advance(self, result: VisitResult) -> LayoutVisitor:
+        return LayoutVisitor(result.surviving_layouts, self.stat_fields)
+
+
+def walk(node: INode, visitor: IVisitor) -> tp.Iterator[tp.Any]:
+    """Recursive walk of a file system tree.
+
+    This is a reimplementation of the similar :func:`os.walk` and
+    :meth:`fsspec.spec.AbstractFileSystem.walk`. The motivation for the
+    reimplementation is that we need to inject some complex logic (node parsing
+    and branch exploration) during the tree traversal.
+
+    Parameters
+    ----------
+    node
+        File or folder node representing a path on the filesystem
+    visitor
+        Visitor that will process the note and produce some results
+
+    Yields
+    ------
+    :
+        The results of all visits in the tree. The result type will depend on
+        the visitor implementation
+
+    See Also
+    --------
+    StandardVisitor
+        Visitor returning (root, dirs, files) tuples similar to a
+        conventionnal walk
+    LayoutVisitor
+        Visitor that can interpret the node paths and return structured
+        information
+    """
+    result = node.accept(visitor)
+    if result.payload is not None:
+        yield result.payload
+    if not result.explore_next:
+        return
+
+    for child in node.children():
+        yield from walk(child, visitor.advance(result))
 
 
 class RecordFilter:
@@ -444,53 +691,101 @@ class RecordFilter:
             self.references[key] = self.fields[index].sanitize(reference)
 
 
-class FileDiscoverer:
-    """Utility class for discovering files in a file system.
+class FileSystemMetadataCollector:
+    """Filtered discovery and aggregation of filesystem metadata.
 
-    Attributes
+    Notes
+    -----
+
+    - The aggregation has yet to be implemented.
+    - Only files' metadata can be collected in the current implementation
+
+    Parameters
     ----------
-    parser: FileNameConvention
-        filename convention allowing to parse the file names
-    fs: AbstractFileSystem
-        fsspec file system. Default: LocalFileSystem
+    path
+        path of directory containing files
+    layouts
+        Succession of conventions describing how to interpret the folder and
+        file nodes
+    fs
+        File system hosting the paths
     """
 
-    def __init__(
-        self, parser: FileNameConvention, iterable: ITreeIterable = FileSystemIterable()
-    ):
-        self.iterable = iterable
-        self.convention = parser
+    def __init__(self, path: str, layouts: list[Layout], fs: fsspec.AbstractFileSystem):
+        self.path = path
+        self.layouts = layouts
+        self.fs = fs
 
-    def list(
+    def discover(
         self,
-        path: str,
         predicates: tuple[tp.Callable[[tuple[tp.Any, ...]], bool], ...] = (),
         stat_fields: tuple[str] = (),
         **filters,
     ) -> pda.DataFrame:
-        """List files in file system.
-
+        """
         Parameters
         ----------
-        path: str
-            path of directory containing files
         predicates
-            Complex predicates run over the include/exclude a file from its
-            associated record
+            Complex predicates for filtering a file's record
         stat_fields
             Name of the file metadata fields that should be returned in the
             record. The info that can be retrieved is dependent on the file
-            system implementation. Check the filesystem 'ls' method to get the
+            system implementation. Check the filesystem ``ls`` method to get the
             available stat fields
+        **filters
+            filters for files/folde selection over the fields declared in the
+            layouts. Each field can accept a different filter value depending on
+            the underlying FileNameField subclass
+
+        Yields
+        ------
+        :
+            The record matching the files
+
+        Raises
+        ------
+        KeyError
+            In case some of the requested stat_fields are not available for the
+            current file system
+        """
+        for layout in self.layouts:
+            # TODO: We should also be able to give the predicates here -> need
+            # to modify the Layout interface
+            layout.set_filters(**filters)
+        visitor = LayoutVisitor(self.layouts, stat_fields)
+        root_node = DirNode(self.path, {"name": self.path}, self.fs, 0)
+
+        records = walk(root_node, visitor)
+        for predicate in predicates:
+            records = filter(predicate, records)
+
+        yield from records
+
+    def to_dataframe(
+        self,
+        predicates: tuple[tp.Callable[[tuple[tp.Any, ...]], bool], ...] = (),
+        stat_fields: tuple[str] = (),
+        **filters,
+    ) -> pda.DataFrame:
+        """
+        Parameters
+        ----------
+        predicates
+            Complex predicates for filtering a file or folder's record
+        stat_fields
+            Name of the file or folder metadata fields that should be returned
+            in the record. The info that can be retrieved is dependent on the
+            file system implementation. Check the filesystem ``ls`` method to
+            get the available stat fields
         **filters
             filters for files/folders selection over the fields declared in the
             file name convention and layout (optional). Each field can accept a
             different filter value depending on the underlying FileNameField
             subclass
 
-        Returns
-        -------
-        pda.DataFrame
+        Yields
+        ------
+        :
             A pandas's dataframe containing all selected filenames + a column
             per field requested
 
@@ -500,91 +795,10 @@ class FileDiscoverer:
             In case some of the requested stat_fields are not available for the
             current file system
         """
-        file_filters = {
-            k: v
-            for k, v in filters.items()
-            if k in [f.name for f in self.convention.fields]
-        }
-        record_filter = RecordFilter(self.convention.fields, **file_filters)
-
-        if self.iterable.layout is not None:
-            layout_filters = {
-                k: v for k, v in filters.items() if k in self.iterable.layout.names
-            }
-        else:
-            layout_filters = {}
-
-        # Build records
-        if len(stat_fields) <= 0:
-            records = (
-                # Filter non matching filenames
-                filter(
-                    record_filter.test,
-                    # Parse the result and append the filename to the record
-                    map(
-                        lambda file_match: (
-                            *self.convention.parse(file_match[1]),
-                            file_match[0],
-                        ),
-                        # Filter out non matching files
-                        filter(
-                            lambda file_match: file_match[1] is not None,
-                            # Match file names
-                            map(
-                                lambda file: (
-                                    file,
-                                    self.convention.match(os.path.basename(file)),
-                                ),
-                                # Walk the folder and find the files
-                                self.iterable.find(
-                                    path, detail=False, **layout_filters
-                                ),
-                            ),
-                        ),
-                    ),
-                )
-            )
-        else:
-            records = (
-                # Filter non matching filenames
-                filter(
-                    record_filter.test,
-                    # Parse the result and append the filename and its requested
-                    # metadata to the record
-                    map(
-                        lambda file_match_stats: (
-                            *self.convention.parse(file_match_stats[1]),
-                            file_match_stats[0],
-                            *file_match_stats[2],
-                        ),
-                        # Filter out non matching files
-                        filter(
-                            lambda file_match_stats: file_match_stats[1] is not None,
-                            # Match file names and filter the stats we want
-                            map(
-                                lambda file_stats: (
-                                    file_stats["name"],
-                                    self.convention.match(
-                                        os.path.basename(file_stats["name"])
-                                    ),
-                                    tuple(file_stats[k] for k in stat_fields),
-                                ),
-                                # Walk the folder and find the files
-                                self.iterable.find(path, detail=True, **layout_filters),
-                            ),
-                        ),
-                    ),
-                )
-            )
-
-        for predicate in predicates:
-            records = filter(predicate, records)
-
-        df = pda.DataFrame(
-            records,
-            columns=[f.name for f in self.convention.fields]
+        file_convention = self.layouts[0].conventions[-1]
+        return pda.DataFrame(
+            self.discover(predicates, stat_fields, **filters),
+            columns=[f.name for f in file_convention.fields]
             + ["filename"]
             + list(stat_fields),
         )
-
-        return df
