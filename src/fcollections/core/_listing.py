@@ -9,6 +9,7 @@ import typing as tp
 import warnings
 
 import fsspec
+import pandas as pda
 
 from ._codecs import DecodingError
 from ._filenames import FileNameConvention, FileNameField
@@ -475,10 +476,15 @@ class LayoutVisitor(IVisitor):
     ----------
     layouts
         Semantic definitions for interpreting and testing node meanings
+    stat_fields
+        List of node metadata to add to the record
     """
 
-    def __init__(self, layouts: list[Layout]):
+    def __init__(self, layouts: list[Layout], stat_fields: tp.Iterable[str] = tuple()):
         self.layouts = layouts
+        self.stat_fields = list(stat_fields)
+        if "name" not in self.stat_fields:
+            self.stat_fields.insert(0, "name")
 
     def visit_dir(self, dir_node: DirNode) -> VisitResult:
         """Visits a directory node.
@@ -560,6 +566,12 @@ class LayoutVisitor(IVisitor):
         exclude the node, the visit result will not include any information
         about the node.
 
+        Raises
+        ------
+        KeyError
+            If the requested stats_fields key are unknown for the given fsspec
+            implementation
+
         Returns
         -------
         :
@@ -573,11 +585,13 @@ class LayoutVisitor(IVisitor):
             record = layout.parse_node(file_node.level - 1, file_node.name)
             if record is not None and layout.test_record(file_node.level - 1, record):
                 # Files are leaf, no need to continue exploration
-                return VisitResult(False, record)
+                return VisitResult(
+                    False, (*record, *[file_node.info[x] for x in self.stat_fields])
+                )
         return VisitResult(False)
 
     def advance(self, result: VisitResult) -> LayoutVisitor:
-        return LayoutVisitor(result.surviving_layouts)
+        return LayoutVisitor(result.surviving_layouts, self.stat_fields)
 
 
 def walk(node: INode, visitor: IVisitor) -> tp.Iterator[tp.Any]:
@@ -675,3 +689,116 @@ class RecordFilter:
             self.references.items(), self.index_in_record
         ):
             self.references[key] = self.fields[index].sanitize(reference)
+
+
+class FileSystemMetadataCollector:
+    """Filtered discovery and aggregation of filesystem metadata.
+
+    Notes
+    -----
+
+    - The aggregation has yet to be implemented.
+    - Only files' metadata can be collected in the current implementation
+
+    Parameters
+    ----------
+    path
+        path of directory containing files
+    layouts
+        Succession of conventions describing how to interpret the folder and
+        file nodes
+    fs
+        File system hosting the paths
+    """
+
+    def __init__(self, path: str, layouts: list[Layout], fs: fsspec.AbstractFileSystem):
+        self.path = path
+        self.layouts = layouts
+        self.fs = fs
+
+    def discover(
+        self,
+        predicates: tuple[tp.Callable[[tuple[tp.Any, ...]], bool], ...] = (),
+        stat_fields: tuple[str] = (),
+        **filters,
+    ) -> pda.DataFrame:
+        """
+        Parameters
+        ----------
+        predicates
+            Complex predicates for filtering a file's record
+        stat_fields
+            Name of the file metadata fields that should be returned in the
+            record. The info that can be retrieved is dependent on the file
+            system implementation. Check the filesystem ``ls`` method to get the
+            available stat fields
+        **filters
+            filters for files/folde selection over the fields declared in the
+            layouts. Each field can accept a different filter value depending on
+            the underlying FileNameField subclass
+
+        Yields
+        ------
+        :
+            The record matching the files
+
+        Raises
+        ------
+        KeyError
+            In case some of the requested stat_fields are not available for the
+            current file system
+        """
+        for layout in self.layouts:
+            # TODO: We should also be able to give the predicates here -> need
+            # to modify the Layout interface
+            layout.set_filters(**filters)
+        visitor = LayoutVisitor(self.layouts, stat_fields)
+        root_node = DirNode(self.path, {"name": self.path}, self.fs, 0)
+
+        records = walk(root_node, visitor)
+        for predicate in predicates:
+            records = filter(predicate, records)
+
+        yield from records
+
+    def to_dataframe(
+        self,
+        predicates: tuple[tp.Callable[[tuple[tp.Any, ...]], bool], ...] = (),
+        stat_fields: tuple[str] = (),
+        **filters,
+    ) -> pda.DataFrame:
+        """
+        Parameters
+        ----------
+        predicates
+            Complex predicates for filtering a file or folder's record
+        stat_fields
+            Name of the file or folder metadata fields that should be returned
+            in the record. The info that can be retrieved is dependent on the
+            file system implementation. Check the filesystem ``ls`` method to
+            get the available stat fields
+        **filters
+            filters for files/folders selection over the fields declared in the
+            file name convention and layout (optional). Each field can accept a
+            different filter value depending on the underlying FileNameField
+            subclass
+
+        Yields
+        ------
+        :
+            A pandas's dataframe containing all selected filenames + a column
+            per field requested
+
+        Raises
+        ------
+        KeyError
+            In case some of the requested stat_fields are not available for the
+            current file system
+        """
+        file_convention = self.layouts[0].conventions[-1]
+        return pda.DataFrame(
+            self.discover(predicates, stat_fields, **filters),
+            columns=[f.name for f in file_convention.fields]
+            + ["filename"]
+            + list(stat_fields),
+        )

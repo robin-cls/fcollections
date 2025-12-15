@@ -23,6 +23,7 @@ from fcollections.core import (
     FileNameFieldInteger,
     FileNameFieldPeriod,
     FileNameFieldString,
+    FileSystemMetadataCollector,
     Layout,
 )
 from fcollections.core._listing import (
@@ -391,7 +392,6 @@ def test_layout_visit_dir(
 )
 def test_layout_visit_file(
     layouts_v2: list[Layout],
-    memory_fs: MemoryFileSystem,
     memory_root: Path,
     path: str,
     level: int,
@@ -408,7 +408,32 @@ def test_layout_visit_file(
     assert not result.explore_next
     assert result.surviving_layouts == []
 
-    assert result.payload == expected_record
+    assert result.payload == (*expected_record, (memory_root / path).as_posix())
+
+
+def test_layout_visit_file_stat_fields(
+    layouts_v2: list[Layout],
+    memory_root: Path,
+    expected_record: tuple[tp.Any, ...],
+):
+    path = "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt"
+    path = memory_root / path
+    node = FileNode(
+        path.name,
+        {"name": path.as_posix(), "size": 100, "type": "file", "created": 250},
+        3,
+    )
+
+    # Simulate layout pruning
+    visitor = LayoutVisitor(layouts_v2[:1], ("size", "type"))
+
+    result = visitor.visit_file(node)
+    assert result.payload == (
+        *expected_record,
+        (memory_root / path).as_posix(),
+        100,
+        "file",
+    )
 
 
 def test_layout_advance(layouts_v2: list[Layout]):
@@ -445,3 +470,77 @@ def test_walk_layout(
     records = list(walk(root_node, visitor))
     assert len(records) == count
     assert all([record[record_index] == expected for record in records])
+
+
+@pytest.fixture
+def collector(
+    memory_fs: MemoryFileSystem,
+    layouts_v2: list[Layout],
+    memory_root: Path,
+) -> FileSystemMetadataCollector:
+    return FileSystemMetadataCollector(
+        (memory_root / "root").as_posix(), layouts_v2, memory_fs
+    )
+
+
+@pytest.mark.parametrize(
+    "filters, expected_selection",
+    [
+        (dict(field_enum=Color.RED, field_f=1.75), [3]),
+        (
+            dict(
+                field_period=Period(
+                    np.datetime64("2011-01-01"), np.datetime64("2013-12-31")
+                )
+            ),
+            list(range(6)),
+        ),
+        (
+            dict(
+                field_date=Period(
+                    np.datetime64("2023-02-03"), np.datetime64("2023-02-08")
+                ),
+                field_s="baz",
+            ),
+            [6, 7, 9, 10],
+        ),
+        (dict(field_f=0.25, field_date_delta=np.datetime64("1950-01-01")), []),
+        (dict(resolution="HR", field_i=list(range(0, 10, 2))), [6, 8]),
+        (
+            dict(
+                predicates=[
+                    lambda record: record[0] % 2 == 0 and record[2] == "foo-bar"
+                ]
+            ),
+            [0, 2, 4],
+        ),
+        (
+            dict(
+                predicates=[
+                    lambda record: record[0] % 2 == 0,
+                    lambda record: record[2] == "foo-bar",
+                ]
+            ),
+            [0, 2, 4],
+        ),
+    ],
+)
+def test_collector(
+    collector: FileSystemMetadataCollector,
+    filters: dict[str, tp.Any],
+    expected_selection: list[int],
+):
+    df = collector.to_dataframe(**filters)
+    assert np.array_equal(sorted(df["field_i"].values), expected_selection)
+    assert "filename" in df.columns
+
+
+def test_collector_stat_fields(collector: FileSystemMetadataCollector):
+    df = collector.to_dataframe(stat_fields=("size", "type"))
+    assert np.array_equal(df["size"].values, np.full(12, fill_value=0))
+    assert np.array_equal(df["type"].values, np.full(12, fill_value="file"))
+
+
+def test_collector_stat_fields_error(collector: FileSystemMetadataCollector):
+    with pytest.raises(KeyError):
+        collector.to_dataframe(stat_fields=("foo",))

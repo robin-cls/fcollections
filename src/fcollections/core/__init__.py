@@ -33,6 +33,7 @@ from ._listing import (
     DirNode,
     FileListingError,
     FileNode,
+    FileSystemMetadataCollector,
     ILayout,
     INode,
     IVisitor,
@@ -110,4 +111,5 @@ __all__ = [
     "StandardVisitor",
     "walk",
     "VisitResult",
+    "FileSystemMetadataCollector",
 ]
