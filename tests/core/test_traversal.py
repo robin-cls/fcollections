@@ -53,6 +53,9 @@ def filepaths() -> list[str]:
         "root/HR_009/file_009_5.6_baz_20230207_RED_20221101_20230705_19500101.txt",
         "root/HR_010/file_010_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt",
         "root/HR_011/file_011_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+        "root/RED/dead_branch",
+        "root/HR_011/dead_branch",
+        "root/dead_branch",
     ]
 
 
@@ -141,7 +144,7 @@ def local_fs() -> LocalFileSystem:
 def local_root(tmp_path_factory: pytest.TempPathFactory, filepaths: list[str]) -> Path:
     my_fc = tmp_path_factory.mktemp("myfc")
     for filepath in filepaths:
-        (my_fc / filepath).parent.mkdir(parents=True)
+        (my_fc / filepath).parent.mkdir(parents=True, exist_ok=True)
         (my_fc / filepath).touch()
     return my_fc
 
@@ -341,12 +344,56 @@ def test_layout_visit_file(
 
 
 def test_layout_advance(layouts_v2: list[Layout]):
-    layout = LayoutVisitor(layouts_v2)
+    visitor = LayoutVisitor(layouts_v2)
     result = VisitResult(True, None, layouts_v2)
-    new_layout = layout.advance(result)
-    assert new_layout is not layout
+    new_visitor = visitor.advance(result)
+    assert new_visitor is not visitor
 
     result = VisitResult(True, None, layouts_v2[:1])
-    new_layout = layout.advance(result)
-    assert len(new_layout.layouts) == 1
-    assert len(layout.layouts) == 2
+    new_visitor = visitor.advance(result)
+    assert len(new_visitor.layouts) == 1
+    assert len(visitor.layouts) == 2
+
+    # FileNameFieldInteger("field_i"),
+    # FileNameFieldFloat("field_f"),
+    # FileNameFieldString("field_s"),
+    # FileNameFieldDatetime("field_date", "%Y%m%d"),
+    # FileNameFieldEnum("field_enum", Color),
+    # FileNameFieldPeriod("field_period", "%Y%m%d"),
+    # FileNameFieldDateDelta("field_date_delta", "%Y%m%d", np.timedelta64(1, "h")),
+
+    # "root/BLUE/LR_001/file_001_.25_foo-bar_20230202_BLUE_20121101_20130705_20010101.txt",
+    # "root/GREEN/LR_002/file_002_.25_foo-bar_20230203_GREEN_20121101_20130705_20010101.txt",
+    # "root/RED/LR_003/file_003_1.75_foo-bar_20230204_RED_20121101_20130705_20010101.txt",
+    # "root/BLUE/LR_004/file_004_1.75_foo-bar_20230205_BLUE_20121101_20130705_20010101.txt",
+    # "root/GREEN/LR_005/file_005_1.75_foo-bar_20230206_GREEN_20121101_20130705_20010101.txt",
+    # "root/RED/HR_006/file_006_5.6_baz_20230207_RED_20221101_20230705_19500101.txt",
+    # "root/BLUE/HR_007/file_007_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt",
+    # "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+    # "root/HR_009/file_009_5.6_baz_20230207_RED_20221101_20230705_19500101.txt",
+    # "root/HR_010/file_010_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt",
+    # "root/HR_011/file_011_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+
+
+@pytest.mark.parametrize(
+    "filters, record_index, expected, count",
+    [({"field_enum": "BLUE"}, 4, Color.BLUE, 4), ({"field_f": "5.6"}, 1, 5.6, 2)],
+)
+def test_walk_layout(
+    layouts_v2: list[Layout],
+    filters: dict[str, tp.Any],
+    record_index: int,
+    expected: tp.Any,
+    count: int,
+    memory_root: Path,
+    memory_fs: MemoryFileSystem,
+):
+    for layout in layouts_v2:
+        layout.set_filters(**filters)
+    visitor = LayoutVisitor(layouts_v2)
+    root_str = (memory_root / "root").as_posix()
+    root_node = DirNode(root_str, {"name": root_str}, memory_fs, 0)
+
+    records = list(walk(root_node, visitor))
+    assert len(records) == count
+    assert all([record[record_index] == expected for record in records])
