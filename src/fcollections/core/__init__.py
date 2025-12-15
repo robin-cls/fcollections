@@ -52,6 +52,16 @@ from ._mixins import (
 )
 from ._readers import IFilesReader, OpenMfDataset, compose
 from ._testers import ITester
+from ._traversal import (
+    DirNode,
+    FileNode,
+    INode,
+    IVisitor,
+    LayoutVisitor,
+    StandardVisitor,
+    VisitResult,
+    walk,
+)
 
 __all__ = [
     "FileNameField",
@@ -92,4 +102,12 @@ __all__ = [
     "ITester",
     "ILayout",
     "CompositeLayout",
+    "INode",
+    "FileNode",
+    "DirNode",
+    "IVisitor",
+    "LayoutVisitor",
+    "StandardVisitor",
+    "walk",
+    "VisitResult",
 ]

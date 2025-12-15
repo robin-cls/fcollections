@@ -13,6 +13,20 @@ from fcollections.core import Layout
 
 
 class INode(abc.ABC):
+    """Representation of a file system path.
+
+    Parameters
+    ----------
+    name
+        Name of the node. Not to be confused with the full path that should be
+        contained in the info parameter
+    info
+        Additional information. ``name`` - representing the full path - is
+        expected to be in this parameter. Other information will depend on the
+        ``fsspec`` implementations
+    level
+        Nesting level of the current node with respect to the tree root
+    """
 
     def __init__(self, name: str, info: dict[str, tp.Any], level: int):
         self.name = name
@@ -21,22 +35,69 @@ class INode(abc.ABC):
 
     @abc.abstractmethod
     def accept(self, visitor: LayoutVisitor) -> VisitResult:
-        pass
+        """Accept a visitor.
+
+        This method should trigger operations in the visitor. The visitor
+        computes the desired result, and the node is responsible for emitting
+        said-result to the walk operation.
+
+        Returns
+        -------
+        :
+            The visit result
+
+        See Also
+        --------
+        walk
+            Walk operation handling the tree traversal
+        """
 
     @abc.abstractmethod
     def children(self) -> tp.Iterator[INode]:
-        pass
+        """List child nodes.
+
+        Returns
+        -------
+        :
+            The child nodes, either files or folders
+        """
 
 
 class FileNode(INode):
+    """File node of a file system tree."""
+
     def accept(self, visitor: LayoutVisitor) -> VisitResult:
         return visitor.visit_file(self)
 
     def children(self) -> tp.Iterator[INode]:
-        return []  # files have no children
+        """List child nodes.
+
+        Returns
+        -------
+        :
+            An empty list (files have no children)
+        """
+        return []
 
 
 class DirNode(INode):
+    """Directory node of a file system tree.
+
+    Parameters
+    ----------
+    name
+        Name of the node. Not to be confused with the full path that should be
+        contained in the info parameter
+    info
+        Additional information. The entry ``name`` - representing the full path
+        - is expected to be in this parameter. Other information will depend on
+        the ``fsspec`` implementation
+    level
+        Nesting level of the current node with respect to the tree root
+    fs
+        File system hosting the node. Useful to list the children
+    """
+
     def __init__(self, name, info, fs: fsspec.AbstractFileSystem, level: int):
         super().__init__(name, info, level)
         self.fs = fs
@@ -81,27 +142,97 @@ class DirNode(INode):
 
 @dc.dataclass(frozen=True)
 class VisitResult:
+    """Result of a visit.
+
+    The result type is defined by the :class:`IVisitor` implementations.
+
+    Additional information related to semantic definition contained in layouts
+    (:class:`Layout`) is given for further advancement of the visitors.
+
+    Tree traversal can also use exploration hints given by the visitors
+    decide if the current branch should be explored.
+
+    See Also
+    --------
+    walk
+        Handle tree traversal
+    """
+
     explore_next: bool
+    """True if we should continue to explore the current branch."""
     payload: tp.Any | None = None
+    """Post processing result of a node by the visitor."""
     surviving_layouts: list[Layout] = dc.field(default_factory=list)
+    """:class:`LayoutVisitor` only, used to know which semantic is still valid
+    for the current branch."""
 
 
 class IVisitor(abc.ABC):
+    """Visitor processing an :class:`INode`.
+
+    Visitors interpret a node and return information from it. It is up
+    to the implementation to define which information it can get from
+    the node. Some implementations will only return the node path, other
+    will try to interpret it using semantics' definitions.
+
+    An important characteristic of the visitor is its ability to advance
+    from a previous visit result. This gives flexibility to implement
+    specific states during the tree traversal.
+
+    Additionnal metadata about the visit are also returned by the
+    visitor. This information should be used for tree traversal and
+    visitor advancement only, and not returned by the walk operation.
+    """
 
     @abc.abstractmethod
     def visit_dir(self, dir_node: DirNode) -> VisitResult:
-        pass
+        """Visits a directory node.
+
+        Returns
+        -------
+        :
+            Node information and visit metadata.
+        """
 
     @abc.abstractmethod
     def visit_file(self, file_node: DirNode) -> VisitResult:
-        pass
+        """Visits a file node.
+
+        Returns
+        -------
+        :
+            Node information and visit metadata.
+        """
 
     @abc.abstractmethod
     def advance(self, result: VisitResult) -> IVisitor:
-        pass
+        """Advance the visitor.
+
+        The advancement can either return a reference or a copy of the visitor.
+        If a per-branch state is needed, it is advised to return a copy.
+
+        Parameters
+        ----------
+        result
+            Previous result of a visit. Originally intended to be the visit
+            result of the parent node.
+
+        Returns
+        -------
+        :
+            The current visitor or a copy with a modified state
+        """
 
 
 class StandardVisitor(IVisitor):
+    """Visitor for producing the equivalent of
+    :meth:`fsspec.spec.AbstractFileSystem.walk`.
+
+    The useful information is a tuple (root, dirs, files) that mimics
+    the standard output of a walk operation.
+
+    No additionnal metadata related to the visit itself is returned.
+    """
 
     def visit_dir(self, dir_node: DirNode) -> VisitResult:
         dirs = []
@@ -123,10 +254,47 @@ class StandardVisitor(IVisitor):
 
 
 class LayoutVisitor(IVisitor):
+    """Visitor with node interpretation and branch exploration hints.
+
+    The layouts will try to interpret a node and get a record of structured
+    information. Layouts also include filters that are applied to give a hint
+    about tree exploration: if all layouts exclude the current node, exploration
+    should not continue.
+
+    Parameters
+    ----------
+    layouts
+        Semantic definitions for interpreting and testing node meanings
+    """
+
     def __init__(self, layouts: list[Layout]):
         self.layouts = layouts
 
     def visit_dir(self, dir_node: DirNode) -> VisitResult:
+        """Visits a directory node.
+
+        The directory node path is parsed into a structured node. If none of the
+        layouts is able to parse the node, it means we are in uncharted
+        territory: tree traversal hint in the visit result will state we should
+        not continue exploring.
+
+        In addition, layout filters are applied on the node information. If all
+        layouts exclude the node, it means no node of interest are in this
+        branch: we want to terminate the current branch exploration as soon as
+        possible to speed up the walk operation.
+
+        Multiple layouts means multiple semantics are possible. This is the case
+        in a heterogeneous folder. When exploring a branch, some layouts may not
+        match the branch semantic. These are pruned as soon as possible, but
+        only for the current branch.
+
+        Returns
+        -------
+        :
+            Node information and visit metadata. The visit metadata includes a
+            tree traversal hint for further exploration, and the surviving
+            layouts that match the current branch
+        """
         logger.debug("Visiting folder %s", dir_node.info["name"])
         if dir_node.level == 0:
             # No parsing nor filtering for the root node
@@ -167,6 +335,24 @@ class LayoutVisitor(IVisitor):
         return VisitResult(True, None, layouts_for_children)
 
     def visit_file(self, file_node: FileNode) -> VisitResult:
+        """Visits a file node.
+
+        The file node is interpreted to generate a record of structured
+        information. The content of this record depends on the layouts
+        definition. If the interpretation fails, the visit result will not
+        include any information about the node.
+
+        Layout filters are also applied to the node record. If all layouts
+        exclude the node, the visit result will not include any information
+        about the node.
+
+        Returns
+        -------
+        :
+            Node information and visit metadata. For file node, no further
+            exploration should be needed. In this case, surviving layouts are
+            not relevant and will not be included in the visit result.
+        """
         logger.debug("Visiting file %s", file_node.info["name"])
         # Advance/prune layouts for files
         for layout in self.layouts:
@@ -180,7 +366,36 @@ class LayoutVisitor(IVisitor):
         return LayoutVisitor(result.surviving_layouts)
 
 
-def walk(node: INode, visitor: IVisitor):
+def walk(node: INode, visitor: IVisitor) -> tp.Iterator[tp.Any]:
+    """Recursive walk of a file system tree.
+
+    This is a reimplementation of the similar :func:`os.walk` and
+    :meth:`fsspec.spec.AbstractFileSystem.walk`. The motivation for the
+    reimplementation is that we need to inject some complex logic (node parsing
+    and branch exploration) during the tree traversal.
+
+    Parameters
+    ----------
+    node
+        File or folder node representing a path on the filesystem
+    visitor
+        Visitor that will process the note and produce some results
+
+    Yields
+    ------
+    :
+        The results of all visits in the tree. The result type will depend on
+        the visitor implementation
+
+    See Also
+    --------
+    StandardVisitor
+        Visitor returning (root, dirs, files) tuples similar to a
+        conventionnal walk
+    LayoutVisitor
+        Visitor that can interpret the node paths and return structured
+        information
+    """
     result = node.accept(visitor)
     if result.payload is not None:
         yield result.payload

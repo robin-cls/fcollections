@@ -167,6 +167,22 @@ class Layout(ILayout):
         return record_filter.test(record)
 
     def parse_node(self, level: int, node: str) -> tuple[tp.Any, ...]:
+        """Interprets a node name.
+
+        Parameters
+        ----------
+        level
+            Depth in the layout. Depth in the layout is the depth of the node
+            with respect to its root minus 1. There is no semantic for the root
+            node, which explains this discrepency of layout-depth and tree-depth
+        node
+            Node name (not its full path)
+
+        Returns
+        -------
+        :
+            Structure information about the node
+        """
         convention = self.conventions[level]
         try:
             return convention.parse(convention.match(node))
@@ -174,6 +190,25 @@ class Layout(ILayout):
             return None
 
     def test_record(self, level: int, record: tuple[tp.Any, ...]) -> bool:
+        """Checks if the node information matches the filters.
+
+        The test will look for filters at the considered layout depth, and apply
+        them on the record.
+
+        Parameters
+        ----------
+        level
+            Depth in the layout. Depth in the layout is the depth of the node
+            with respect to its root minus 1. There is no semantic for the root
+            node, which explains this discrepency of layout-depth and tree-depth
+        record
+            Interpreted node informations
+
+        Returns
+        -------
+        :
+            True if the node matches the filters, false otherwise
+        """
         return self.filters[level].test(record)
 
     @property
