@@ -27,8 +27,10 @@ from fcollections.core import (
 )
 from fcollections.core._listing import (
     DirNode,
+    FileListingError,
     FileNode,
     LayoutVisitor,
+    RecordFilter,
     StandardVisitor,
     VisitResult,
     walk,
@@ -222,6 +224,64 @@ class Color(Enum):
 
 
 @pytest.fixture(scope="session")
+def expected_record() -> tuple[tp.Any, ...]:
+    return (
+        8,
+        7.4,
+        "baz",
+        np.datetime64("2023-02-09T00:00:00.000000"),
+        Color.GREEN,
+        Period(np.datetime64("2022-11-01"), np.datetime64("2023-07-05")),
+        Period(
+            np.datetime64("1950-01-01"),
+            np.datetime64("1950-01-01T01"),
+            include_stop=False,
+        ),
+    )
+
+
+def test_record_filter(expected_record, convention):
+    record_filter = RecordFilter(convention.fields, field_f=7.4, field_s="baz")
+    assert record_filter.test(expected_record)
+
+
+@pytest.mark.parametrize(
+    "field, value, value_sanitized",
+    [
+        ("field_i", 2, 2),
+        ("field_f", 0.25, 0.25),
+        ("field_s", "foo-bar", "foo-bar"),
+        ("field_enum", "BLUE", Color.BLUE),
+        ("field_enum", ("BLUE", "RED"), (Color.BLUE, Color.RED)),
+        ("field_enum", ["BLUE", "RED"], (Color.BLUE, Color.RED)),
+        (
+            "field_date",
+            ("2023-01-01", None),
+            Period(
+                np.datetime64("2023-01-01"), np.datetime64("9999-12-31T23:59:59.999999")
+            ),
+        ),
+        (
+            "field_period",
+            (None, "2023-01-01"),
+            Period(np.datetime64("0001-01-01"), np.datetime64("2023-01-01")),
+        ),
+        ("field_date_delta", "2023-01-01", np.datetime64("2023-01-01")),
+    ],
+)
+def test_record_filter_sanitize(convention, field, value, value_sanitized):
+    expected = RecordFilter(convention.fields, **{field: value})
+    actual = RecordFilter(convention.fields, **{field: value_sanitized})
+
+    assert expected.references == actual.references
+
+
+def test_record_filter_bad_keys(convention):
+    with pytest.raises(FileListingError):
+        RecordFilter(convention.fields, field_f=0.25, fieldA="10")
+
+
+@pytest.fixture(scope="session")
 def layout(convention: FileNameConvention) -> Layout:
     return Layout(
         [
@@ -237,6 +297,26 @@ def layout(convention: FileNameConvention) -> Layout:
             ),
         ]
     )
+
+
+def test_layout_names(layout: Layout):
+    assert layout.names == {"field_enum", "field_i", "resolution"}
+
+
+def test_layout_generate(layout: Layout):
+    actual = layout.generate("root", field_enum=Color.RED, field_i=12, resolution="HR")
+    expected = "root/RED/HR_012"
+    assert actual == expected
+
+
+def test_layout_generate_missing_field(layout: Layout):
+    with pytest.raises(ValueError):
+        layout.generate("root", field_i=12, resolution="HR")
+
+
+def test_layout_generate_bad_field(layout: Layout):
+    with pytest.raises(ValueError):
+        layout.generate("root", field_enum=Color.RED, field_i="12", resolution="HR")
 
 
 @pytest.fixture(scope="session")
@@ -292,23 +372,6 @@ def test_layout_visit_dir(
     assert result.explore_next == expected_explore_next
     assert result.payload is None
     assert result.surviving_layouts == [layouts_v2[ii] for ii in layouts_selection]
-
-
-@pytest.fixture(scope="session")
-def expected_record() -> tuple[tp.Any, ...]:
-    return (
-        8,
-        7.4,
-        "baz",
-        np.datetime64("2023-02-09T00:00:00.000000"),
-        Color.GREEN,
-        Period(np.datetime64("2022-11-01"), np.datetime64("2023-07-05")),
-        Period(
-            np.datetime64("1950-01-01"),
-            np.datetime64("1950-01-01T01"),
-            include_stop=False,
-        ),
-    )
 
 
 @pytest.mark.parametrize(
