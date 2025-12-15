@@ -166,6 +166,16 @@ class Layout(ILayout):
             return False
         return record_filter.test(record)
 
+    def parse_node(self, level: int, node: str) -> tuple[tp.Any, ...]:
+        convention = self.conventions[level]
+        try:
+            return convention.parse(convention.match(node))
+        except (DecodingError, AttributeError):
+            return None
+
+    def test_record(self, level: int, record: tuple[tp.Any, ...]) -> bool:
+        return self.filters[level].test(record)
+
     @property
     def names(self) -> set[str]:
         return set(

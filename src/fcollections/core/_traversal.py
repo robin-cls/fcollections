@@ -83,7 +83,7 @@ class DirNode(INode):
 class VisitResult:
     explore_next: bool
     payload: tp.Any | None = None
-    surviving_layouts: list[Layout] | None = None
+    surviving_layouts: list[Layout] = dc.field(default_factory=list)
 
 
 class IVisitor(abc.ABC):
@@ -122,7 +122,65 @@ class StandardVisitor(IVisitor):
         return self
 
 
-def walk(node: INode, visitor: LayoutVisitor):
+class LayoutVisitor(IVisitor):
+    def __init__(self, layouts: list[Layout]):
+        self.layouts = layouts
+
+    def visit_dir(self, dir_node: DirNode) -> VisitResult:
+        logger.debug("Visiting folder %s", dir_node.info["name"])
+        if dir_node.level == 0:
+            # No parsing nor filtering for the root node
+            return VisitResult(True, None, self.layouts)
+
+        layouts_for_children: list[Layout] = []
+        for layout in self.layouts:
+            # Prune non matching layouts for this directory. We need to test all
+            # layouts to eliminate non matching layouts as early as possible in
+            # a given branch
+            record = layout.parse_node(dir_node.level - 1, dir_node.name)
+            if record is not None:
+                layouts_for_children.append(layout)
+
+        if not layouts_for_children:
+            # Outlier
+            # If nobody matches, we do not want to explore further
+            logger.debug(
+                "Folder %s does not match any layout, branch exploration stopped.",
+                dir_node.info["name"],
+            )
+            return VisitResult(False)
+
+        if all(
+            [
+                not layout.test_record(dir_node.level - 1, record)
+                for layout in layouts_for_children
+            ]
+        ):
+            # This folder does not match the filtering criteria. It is ignored
+            logger.debug(
+                "Folder %s filtered out, branch exploration stopped",
+                dir_node.info["name"],
+            )
+            return VisitResult(False)
+
+        # Don't return a payload for dir nodes (will be subject to change later)
+        return VisitResult(True, None, layouts_for_children)
+
+    def visit_file(self, file_node: FileNode) -> VisitResult:
+        logger.debug("Visiting file %s", file_node.info["name"])
+        # Advance/prune layouts for files
+        for layout in self.layouts:
+            record = layout.parse_node(file_node.level - 1, file_node.name)
+            if record is not None and layout.test_record(file_node.level - 1, record):
+                # Files are leaf, no need to continue exploration
+                return VisitResult(False, record)
+        return VisitResult(False)
+
+    def advance(self, result: VisitResult) -> LayoutVisitor:
+        return LayoutVisitor(result.surviving_layouts)
+
+
+def walk(node: INode, visitor: IVisitor):
     result = node.accept(visitor)
     if result.payload is not None:
         yield result.payload

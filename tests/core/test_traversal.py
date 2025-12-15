@@ -1,7 +1,11 @@
+import re
 import socket
 import threading
+import typing as tp
+from enum import Enum, auto
 from pathlib import Path
 
+import numpy as np
 import pytest
 from fsspec.implementations.ftp import FTPFileSystem
 from fsspec.implementations.local import LocalFileSystem
@@ -10,7 +14,26 @@ from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
 
-from fcollections.core._traversal import DirNode, StandardVisitor, walk
+from fcollections.core import (
+    FileNameConvention,
+    FileNameFieldDateDelta,
+    FileNameFieldDatetime,
+    FileNameFieldEnum,
+    FileNameFieldFloat,
+    FileNameFieldInteger,
+    FileNameFieldPeriod,
+    FileNameFieldString,
+    Layout,
+)
+from fcollections.core._traversal import (
+    DirNode,
+    FileNode,
+    LayoutVisitor,
+    StandardVisitor,
+    VisitResult,
+    walk,
+)
+from fcollections.time import Period
 
 
 @pytest.fixture(scope="session")
@@ -27,6 +50,9 @@ def filepaths() -> list[str]:
         "root/RED/HR_006/file_006_5.6_baz_20230207_RED_20221101_20230705_19500101.txt",
         "root/BLUE/HR_007/file_007_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt",
         "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+        "root/HR_009/file_009_5.6_baz_20230207_RED_20221101_20230705_19500101.txt",
+        "root/HR_010/file_010_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt",
+        "root/HR_011/file_011_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
     ]
 
 
@@ -180,6 +206,147 @@ def test_walk(
     assert nodes_reimpl == nodes_fsspec
 
 
-def test_walk_layout():
-    # nodes = list(walk(root_node, LayoutVisitor([Mock()])))
-    pass
+class Color(Enum):
+    RED = auto()
+    GREEN = auto()
+    BLUE = auto()
+    gray = auto()
+
+
+@pytest.fixture(scope="session")
+def layout(convention: FileNameConvention) -> Layout:
+    return Layout(
+        [
+            FileNameConvention(
+                re.compile(r"(?P<field_enum>\w+)"),
+                [convention.get_field("field_enum")],
+                "{field_enum!f}",
+            ),
+            FileNameConvention(
+                re.compile(r"(?P<resolution>\w+)_(?P<field_i>\d{3})"),
+                [FileNameFieldString("resolution"), FileNameFieldInteger("field_i")],
+                "{resolution!f}_{field_i:>03d}",
+            ),
+        ]
+    )
+
+
+@pytest.fixture(scope="session")
+def convention():
+    regex = re.compile(
+        r"file_(?P<field_i>\d+)_(?P<field_f>[+-]?([0-9]*[.])?[0-9]+)_(?P<field_s>[a-zA-Z0-9.-]+)_(?P<field_date>\d{8})_(?P<field_enum>\w+)_(?P<field_period>\d{8}_\d{8})_(?P<field_date_delta>\d{8}).txt"
+    )
+    fields = [
+        FileNameFieldInteger("field_i"),
+        FileNameFieldFloat("field_f"),
+        FileNameFieldString("field_s"),
+        FileNameFieldDatetime("field_date", "%Y%m%d"),
+        FileNameFieldEnum("field_enum", Color),
+        FileNameFieldPeriod("field_period", "%Y%m%d"),
+        FileNameFieldDateDelta("field_date_delta", "%Y%m%d", np.timedelta64(1, "h")),
+    ]
+    generation_string = "file_{field_i:>03d}_{field_f}_{field_s}_{field_date!f}_{field_enum!f}_{field_period!f}_{field_date_delta!f}.txt"
+    return FileNameConvention(regex, fields, generation_string)
+
+
+@pytest.fixture(scope="session")
+def layouts_v2(layout: Layout, convention: FileNameConvention) -> list[Layout]:
+    return [
+        Layout([*layout.conventions, convention]),
+        Layout([layout.conventions[1], convention]),
+    ]
+
+
+@pytest.mark.parametrize(
+    "path, level, expected_explore_next, layouts_selection",
+    [
+        ("root", 0, True, [0, 1]),
+        ("root/RED", 1, True, [0]),
+        ("root/HR_009", 1, True, [1]),
+        ("root/outlier", 1, False, []),
+    ],
+)
+def test_layout_visit_dir(
+    layouts_v2: list[Layout],
+    memory_fs: MemoryFileSystem,
+    memory_root: Path,
+    path: str,
+    level: int,
+    expected_explore_next: bool,
+    layouts_selection: list[int],
+):
+
+    path = memory_root / path
+    node = DirNode(path.name, {"name": path.as_posix()}, memory_fs, level)
+
+    visitor = LayoutVisitor(layouts_v2)
+    result = visitor.visit_dir(node)
+    assert result.explore_next == expected_explore_next
+    assert result.payload is None
+    assert result.surviving_layouts == [layouts_v2[ii] for ii in layouts_selection]
+
+
+@pytest.fixture(scope="session")
+def expected_record() -> tuple[tp.Any, ...]:
+    return (
+        8,
+        7.4,
+        "baz",
+        np.datetime64("2023-02-09T00:00:00.000000"),
+        Color.GREEN,
+        Period(np.datetime64("2022-11-01"), np.datetime64("2023-07-05")),
+        Period(
+            np.datetime64("1950-01-01"),
+            np.datetime64("1950-01-01T01"),
+            include_stop=False,
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    "path, level, layouts_selection",
+    [
+        (
+            "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+            3,
+            [0],
+        ),
+        (
+            "root/HR_009/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+            2,
+            [1],
+        ),
+    ],
+)
+def test_layout_visit_file(
+    layouts_v2: list[Layout],
+    memory_fs: MemoryFileSystem,
+    memory_root: Path,
+    path: str,
+    level: int,
+    expected_record: tuple[tp.Any, ...],
+    layouts_selection: list[int],
+):
+    path = memory_root / path
+    node = FileNode(path.name, {"name": path.as_posix()}, level)
+
+    # Simulate layout pruning
+    visitor = LayoutVisitor([layouts_v2[ii] for ii in layouts_selection])
+
+    result = visitor.visit_file(node)
+    assert not result.explore_next
+    assert result.surviving_layouts == []
+
+    assert result.payload == expected_record
+
+
+def test_layout_advance(layouts_v2: list[Layout]):
+    layout = LayoutVisitor(layouts_v2)
+    result = VisitResult(True, None, layouts_v2)
+    new_layout = layout.advance(result)
+    assert new_layout is not layout
+
+    result = VisitResult(True, None, layouts_v2[:1])
+    new_layout = layout.advance(result)
+    assert len(new_layout.layouts) == 1
+    assert len(layout.layouts) == 2
