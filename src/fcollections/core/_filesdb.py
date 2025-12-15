@@ -17,8 +17,8 @@ from fsspec import AbstractFileSystem
 from fsspec.implementations.local import LocalFileSystem
 
 from ._filenames import FileNameConvention
-from ._listing import FileDiscoverer, FileSystemIterable, Layout
 from ._metadata import GroupMetadata
+from ._obsolete import FileDiscoverer, FileSystemIterable, Layout
 from ._readers import IFilesReader
 
 if tp.TYPE_CHECKING:  # pragma: no cover

@@ -25,7 +25,7 @@ from fcollections.core import (
     FileNameFieldString,
     Layout,
 )
-from fcollections.core._traversal import (
+from fcollections.core._listing import (
     DirNode,
     FileNode,
     LayoutVisitor,

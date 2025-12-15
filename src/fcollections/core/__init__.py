@@ -30,14 +30,18 @@ from ._filesdb import (
     SubsetsUnmixer,
 )
 from ._listing import (
-    CompositeLayout,
-    FileDiscoverer,
+    DirNode,
     FileListingError,
-    FileSystemIterable,
+    FileNode,
     ILayout,
-    ITreeIterable,
+    INode,
+    IVisitor,
     Layout,
+    LayoutVisitor,
     RecordFilter,
+    StandardVisitor,
+    VisitResult,
+    walk,
 )
 from ._metadata import (
     GroupMetadata,
@@ -50,18 +54,14 @@ from ._mixins import (
     ITemporalMixin,
     PeriodMixin,
 )
+from ._obsolete import (
+    CompositeLayout,
+    FileDiscoverer,
+    FileSystemIterable,
+    ITreeIterable,
+)
 from ._readers import IFilesReader, OpenMfDataset, compose
 from ._testers import ITester
-from ._traversal import (
-    DirNode,
-    FileNode,
-    INode,
-    IVisitor,
-    LayoutVisitor,
-    StandardVisitor,
-    VisitResult,
-    walk,
-)
 
 __all__ = [
     "FileNameField",
