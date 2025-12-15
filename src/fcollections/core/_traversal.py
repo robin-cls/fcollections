@@ -301,13 +301,17 @@ class LayoutVisitor(IVisitor):
             return VisitResult(True, None, self.layouts)
 
         layouts_for_children: list[Layout] = []
+        record = None
         for layout in self.layouts:
             # Prune non matching layouts for this directory. We need to test all
             # layouts to eliminate non matching layouts as early as possible in
             # a given branch
-            record = layout.parse_node(dir_node.level - 1, dir_node.name)
-            if record is not None:
+            result = layout.parse_node(dir_node.level - 1, dir_node.name)
+            if result is not None:
                 layouts_for_children.append(layout)
+            if record is None:
+                # Do not override a valid record with a None
+                record = result
 
         if not layouts_for_children:
             # Outlier

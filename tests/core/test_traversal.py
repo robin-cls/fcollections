@@ -36,6 +36,11 @@ from fcollections.core._traversal import (
 from fcollections.time import Period
 
 
+def test_file_node_no_children():
+    node = FileNode("foo", {}, 0)
+    assert len(node.children()) == 0
+
+
 @pytest.fixture(scope="session")
 def filepaths() -> list[str]:
     # The files that we will use to test the listing and filtering using the
@@ -354,30 +359,10 @@ def test_layout_advance(layouts_v2: list[Layout]):
     assert len(new_visitor.layouts) == 1
     assert len(visitor.layouts) == 2
 
-    # FileNameFieldInteger("field_i"),
-    # FileNameFieldFloat("field_f"),
-    # FileNameFieldString("field_s"),
-    # FileNameFieldDatetime("field_date", "%Y%m%d"),
-    # FileNameFieldEnum("field_enum", Color),
-    # FileNameFieldPeriod("field_period", "%Y%m%d"),
-    # FileNameFieldDateDelta("field_date_delta", "%Y%m%d", np.timedelta64(1, "h")),
-
-    # "root/BLUE/LR_001/file_001_.25_foo-bar_20230202_BLUE_20121101_20130705_20010101.txt",
-    # "root/GREEN/LR_002/file_002_.25_foo-bar_20230203_GREEN_20121101_20130705_20010101.txt",
-    # "root/RED/LR_003/file_003_1.75_foo-bar_20230204_RED_20121101_20130705_20010101.txt",
-    # "root/BLUE/LR_004/file_004_1.75_foo-bar_20230205_BLUE_20121101_20130705_20010101.txt",
-    # "root/GREEN/LR_005/file_005_1.75_foo-bar_20230206_GREEN_20121101_20130705_20010101.txt",
-    # "root/RED/HR_006/file_006_5.6_baz_20230207_RED_20221101_20230705_19500101.txt",
-    # "root/BLUE/HR_007/file_007_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt",
-    # "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
-    # "root/HR_009/file_009_5.6_baz_20230207_RED_20221101_20230705_19500101.txt",
-    # "root/HR_010/file_010_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt",
-    # "root/HR_011/file_011_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
-
 
 @pytest.mark.parametrize(
     "filters, record_index, expected, count",
-    [({"field_enum": "BLUE"}, 4, Color.BLUE, 4), ({"field_f": "5.6"}, 1, 5.6, 2)],
+    [({"field_enum": "BLUE"}, 4, Color.BLUE, 4), ({"field_f": 5.6}, 1, 5.6, 2)],
 )
 def test_walk_layout(
     layouts_v2: list[Layout],
