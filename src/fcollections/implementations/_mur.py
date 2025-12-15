@@ -6,6 +6,7 @@ from fcollections.core import (
     FileNameConvention,
     FileNameFieldDatetime,
     FilesDatabase,
+    Layout,
     OpenMfDataset,
     PeriodMixin,
 )
@@ -36,7 +37,7 @@ class BasicNetcdfFilesDatabaseMUR(FilesDatabase, PeriodMixin):
     Sea Surface Temperature Analysis product Netcdf file in a local file
     system."""
 
-    parser = FileNameConventionMUR()
+    layouts = [Layout([FileNameConventionMUR()])]
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"
 

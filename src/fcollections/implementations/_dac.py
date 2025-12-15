@@ -45,7 +45,7 @@ class BasicNetcdfFilesDatabaseDAC(FilesDatabase, DiscreteTimesMixin):
     """Database mapping to select and read Dynamic atmospheric correction
     Netcdf files in a local file system."""
 
-    parser = FileNameConventionDAC()
+    layouts = [Layout([FileNameConventionDAC()])]
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS_NO_BACKEND)
     metadata_injection = {"time": ("time",)}
     sort_keys = ["time"]
@@ -54,9 +54,8 @@ class BasicNetcdfFilesDatabaseDAC(FilesDatabase, DiscreteTimesMixin):
         self,
         path: Path,
         fs: fsspec.AbstractFileSystem = fs_loc.LocalFileSystem(),
-        layout: Layout | None = None,
     ):
-        super().__init__(path, fs, layout)
+        super().__init__(path, fs)
         super(FilesDatabase, self).__init__(np.timedelta64(6, "h"))
 
 

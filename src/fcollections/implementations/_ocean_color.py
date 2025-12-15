@@ -11,6 +11,7 @@ from fcollections.core import (
     FileNameFieldEnum,
     FileNameFieldString,
     FilesDatabase,
+    Layout,
     OpenMfDataset,
     PeriodMixin,
 )
@@ -85,7 +86,7 @@ class BasicNetcdfFilesDatabaseOC(FilesDatabase, PeriodMixin):
     """Database mapping to select and read ocean color Netcdf files in a local
     file system."""
 
-    parser = FileNameConventionOC()
+    layouts = [Layout([FileNameConventionOC()])]
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"
 

@@ -6,6 +6,7 @@ from fcollections.core import (
     FileNameConvention,
     FileNameFieldDatetime,
     FilesDatabase,
+    Layout,
     OpenMfDataset,
     PeriodMixin,
 )
@@ -33,6 +34,6 @@ class NetcdfFilesDatabaseERA5(FilesDatabase, PeriodMixin):
     """Database mapping to select and read ERA5 reanalysis product Netcdf files
     in a local file system."""
 
-    parser = FileNameConventionERA5()
+    layouts = [Layout([FileNameConventionERA5()])]
     reader = OpenMfDataset(xarray_options=XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"

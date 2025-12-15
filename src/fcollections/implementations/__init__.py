@@ -20,7 +20,6 @@ from ._definitions import (
 )
 from ._era5 import FileNameConventionERA5, NetcdfFilesDatabaseERA5
 from ._gridded_sla import AVISO_L4_SWOT_LAYOUT as _AVISO_L4_SWOT_LAYOUT
-from ._gridded_sla import CMEMS_NADIR_SSHA_LAYOUT as _CMEMS_NADIR_SSHA_LAYOUT
 from ._gridded_sla import (
     BasicNetcdfFilesDatabaseGriddedSLA,
     FileNameConventionGriddedSLA,
@@ -53,6 +52,7 @@ from ._l3_lr_ww import (
     FileNameConventionSwotL3WW,
     NetcdfFilesDatabaseSwotLRWW,
 )
+from ._l3_nadir import CMEMS_NADIR_SSHA_LAYOUT as _CMEMS_NADIR_SSHA_LAYOUT
 from ._l3_nadir import (
     BasicNetcdfFilesDatabaseL3Nadir,
     FileNameConventionL3Nadir,

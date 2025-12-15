@@ -9,6 +9,7 @@ from fcollections.core import (
     FileNameFieldPeriod,
     FileNameFieldString,
     FilesDatabase,
+    Layout,
     PeriodMixin,
     SubsetsUnmixer,
 )
@@ -59,7 +60,7 @@ class BasicNetcdfFilesDatabaseSwotLRWW(FilesDatabase, PeriodMixin):
         Recommended layout for the database
     """
 
-    parser = FileNameConventionSwotL3WW()
+    layouts = [Layout([FileNameConventionSwotL3WW()])]
     reader = SwotReaderL3WW()
     sort_keys = "time"
 
