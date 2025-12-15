@@ -21,7 +21,7 @@ jobs:
           cache-environment: true
           post-cleanup: 'all'
           create-args: >-
-            python=3.11
+            python=3.12
             pip
             docstring_parser
             fsspec
@@ -74,7 +74,7 @@ jobs:
           cache-environment: true
           post-cleanup: 'all'
           create-args: >-
-            python=3.11
+            python=3.12
             pip
             docstring_parser
             fsspec
