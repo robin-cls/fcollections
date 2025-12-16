@@ -11,6 +11,7 @@ maintainers = [
     {name = "Anne-Sophie Tonneau", email = "atonneau@groupcls.com"}
 ]
 requires-python = ">= 3.8"
+readme = "README.md"
 dependencies = [
     "docstring_parser",
     "fsspec",
