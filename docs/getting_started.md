@@ -125,6 +125,8 @@ fc.variables_info()
 fc.variables_info(subset='Expert')
 ```
 
+(remote)=
+
 ## Remote file systems
 
 It is possible to access a file set from a remote location. Fcollections is based on
