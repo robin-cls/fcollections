@@ -236,12 +236,12 @@ def test_list_l3_layout(
     actual = (
         db.list_files(**filters)
         .drop(columns=["filename"])
-        .sort_values(["time", "mission", "resolution"], ignore_index=True)
+        .sort_values(["time", "resolution", "production_date"], ignore_index=True)
     )
     expected = (
         db_no_layout.list_files(**filters)
         .drop(columns=["filename"])
-        .sort_values(["time", "mission", "resolution"], ignore_index=True)
+        .sort_values(["time", "resolution", "production_date"], ignore_index=True)
     )
     assert len(expected) > 0
     pda.testing.assert_frame_equal(expected, actual)

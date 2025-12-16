@@ -730,9 +730,19 @@ class TestLayout:
         db = NetcdfFilesDatabaseSwotLRL3(l3_lr_ssh_dir_empty_files)
         db_no_layout = NetcdfFilesDatabaseSwotLRL3(l3_lr_ssh_dir_empty_files_layout)
 
-        actual = db.list_files(**filters, sort=True).drop(columns=["filename"])
-        expected = db_no_layout.list_files(**filters, sort=True).drop(
-            columns=["filename"]
+        # Duplicates in the listed files. Needs to sort again manually
+        actual = (
+            db.list_files(**filters)
+            .drop(columns=["filename"])
+            .sort_values(
+                ["cycle_number", "pass_number", "version"],
+                ignore_index=True,
+            )
+        )
+        expected = (
+            db_no_layout.list_files(**filters)
+            .drop(columns=["filename"])
+            .sort_values(["cycle_number", "pass_number", "version"], ignore_index=True)
         )
         assert len(expected) > 0
         pda.testing.assert_frame_equal(expected, actual)
