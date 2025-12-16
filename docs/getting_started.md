@@ -84,8 +84,12 @@ ds = fc.query(selected_variables=['ssha'])
 list(ds.variables)
 ```
 
-Each implementation has its own filters that can be displayed with the ``query``
-method help or in the {doc}`../api` documentation of the implementation.
+Each implementation has its own filters. By order of availability, the user
+should consult:
+
+- The ``Query overview`` section of the implementation's ``Documentation`` (see the [catalog](implementations/catalog))
+- The API documentation of the implementation's method (see the [catalog](implementations/catalog))
+- The prompted help displayed in a jupyter notebook or Python interpreter
 
 ```{code-cell}
 :tags: [hide-output]
