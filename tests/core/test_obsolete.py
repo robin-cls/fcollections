@@ -267,14 +267,6 @@ def test_file_system_tree_layout_independent_filter(
     assert actual == expected
 
 
-def test_file_system_tree_layout_unknown_filter(
-    memory_fs: MemoryFileSystem, layout: Layout
-):
-    it_layout = FileSystemIterable(memory_fs, layout)
-    with pytest.warns(UserWarning):
-        next(it_layout.find("/root", dummy="bar"))
-
-
 def test_file_system_tree_layout_details(memory_fs: MemoryFileSystem, layout: Layout):
     it_layout = FileSystemIterable(memory_fs, layout)
     detailed = list(it_layout.find("/root", resolution="LR", detail=True))

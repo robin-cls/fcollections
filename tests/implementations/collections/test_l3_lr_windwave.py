@@ -1,23 +1,22 @@
 import os
-import re
 import typing as tp
 from pathlib import Path
 
+import numpy as np
 import pytest
 import xarray as xr
+from fsspec.implementations.local import LocalFileSystem
 from utils import brute_force_geographical_selection
 
-from fcollections.core import (
-    FileDiscoverer,
-    FileNameConvention,
-    FileSystemIterable,
-)
+from fcollections.core import FileSystemMetadataCollector
 from fcollections.implementations import (
     AVISO_L3_LR_WINDWAVE_LAYOUT,
     NetcdfFilesDatabaseSwotLRWW,
+    ProductLevel,
     ProductSubset,
     SwotReaderL3WW,
 )
+from fcollections.time import Period
 
 
 class TestReader:
@@ -288,18 +287,24 @@ class TestLayout:
     def test_generate_layout(self):
         path = AVISO_L3_LR_WINDWAVE_LAYOUT.generate(
             "/swot_products/l3_karin/l3_lr_wind_wave",
-            subset="Light",
+            subset=ProductSubset.Extended,
             version="2.0",
             cycle_number=1,
+            pass_number=10,
+            time=Period(np.datetime64("2024-01-01"), np.datetime64("2024-01-02")),
+            level=ProductLevel.L3,
         )
 
-        assert path == "/swot_products/l3_karin/l3_lr_wind_wave/v2_0/Light/cycle_001"
+        assert (
+            path
+            == "/swot_products/l3_karin/l3_lr_wind_wave/v2_0/Extended/cycle_001/SWOT_L3_LR_WIND_WAVE_Extended_001_010_20240101T000000_20240102T000000_v2.0.nc"
+        )
 
     def test_generate_layout_missing_field(self):
         with pytest.raises(ValueError):
             AVISO_L3_LR_WINDWAVE_LAYOUT.generate(
                 "/swot_products/l3_karin/l3_lr_wind_wave",
-                subset="Light",
+                subset=ProductSubset.Light,
                 cycle_number=1,
             )
 
@@ -307,9 +312,11 @@ class TestLayout:
         with pytest.raises(ValueError):
             AVISO_L3_LR_WINDWAVE_LAYOUT.generate(
                 "/swot_products/l3_karin/l3_lr_wind_wave",
-                subset="Light",
-                version="2.0",
+                subset=ProductSubset.Light,
                 cycle_number="x",
+                pass_number=10,
+                time=Period(np.datetime64("2024-01-01"), np.datetime64("2024-01-02")),
+                level=ProductLevel.L3,
             )
 
     @pytest.mark.parametrize(
@@ -319,7 +326,7 @@ class TestLayout:
             ({"version": "2.0"}, [0, 1]),
             ({"subset": "Extended"}, [2]),
             ({"cycle_number": slice(480, 490)}, [0, 1]),
-            ({"pass_number": [10, 11]}, [0, 1, 2]),
+            ({"pass_number": [10, 11]}, [0, 2]),
         ],
     )
     def test_list_layout(
@@ -330,14 +337,12 @@ class TestLayout:
         filters: dict[str, tp.Any],
     ):
 
-        fd = FileDiscoverer(
-            FileNameConvention(re.compile(r".*"), []),
-            FileSystemIterable(layout=AVISO_L3_LR_WINDWAVE_LAYOUT),
+        collector = FileSystemMetadataCollector(
+            l3_lr_ww_dir_layout, NetcdfFilesDatabaseSwotLRWW.layouts, LocalFileSystem()
         )
 
         actual = {
-            os.path.basename(f)
-            for f in fd.list(l3_lr_ww_dir_layout, **filters).filename
+            os.path.basename(f) for f in collector.to_dataframe(**filters).filename
         }
         expected = {os.path.basename(l3_lr_ww_files[ii]) for ii in expected}
         assert len(expected) > 0

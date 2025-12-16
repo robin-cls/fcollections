@@ -4,7 +4,6 @@ import re
 
 from fcollections.core import (
     CaseType,
-    CompositeLayout,
     FileNameConvention,
     FileNameFieldEnum,
     FileNameFieldInteger,
@@ -53,21 +52,6 @@ class FileNameConventionSwotL3(FileNameConvention):
         )
 
 
-class BasicNetcdfFilesDatabaseSwotLRL3(FilesDatabase, PeriodMixin):
-    """Database mapping to select and read Swot LR L3 Netcdf files in a local
-    file system."""
-
-    parser = FileNameConventionSwotL3()
-    reader = SwotReaderL3LRSSH()
-    sort_keys = "time"
-
-    # These keys determines an homogeneous subset. We expect no duplicates in
-    # an homogeneous subset
-    unmixer = SubsetsUnmixer(
-        partition_keys=["version", "subset"], auto_pick_last=("version",)
-    )
-
-
 class _FileNameFieldStringAdapter(FileNameFieldString):
     """Specific field for L3_LR_SSH version in folder versus file.
 
@@ -84,31 +68,32 @@ class _FileNameFieldStringAdapter(FileNameFieldString):
         return super().encode(a.replace(".", "_"))
 
 
-_AVISO_L3_LR_SSH_LAYOUT_V2 = Layout(
+AVISO_L3_LR_SSH_LAYOUT_V2 = Layout(
     [
         FileNameConvention(
-            re.compile(r"v(?P<version>.*)"),
+            re.compile(r"^v(?P<version>.*)$"),
             [_FileNameFieldStringAdapter("version")],
             "v{version!f}",
         ),
         FileNameConvention(
-            re.compile(r"(?P<subset>.*)"),
+            re.compile(r"^(?P<subset>.*)$"),
             [FileNameConventionSwotL3().get_field("subset")],
-            "{subset}",
+            "{subset!f}",
         ),
         FileNameConvention(
-            re.compile(r"cycle_(?P<cycle_number>\d{3})"),
+            re.compile(r"^cycle_(?P<cycle_number>\d{3})$"),
             [FileNameConventionSwotL3().get_field("cycle_number")],
             "cycle_{cycle_number:0>3d}",
         ),
+        FileNameConventionSwotL3(),
     ]
 )
 
-_AVISO_L3_LR_SSH_LAYOUT_V3 = Layout(
+AVISO_L3_LR_SSH_LAYOUT_V3 = Layout(
     [
-        *_AVISO_L3_LR_SSH_LAYOUT_V2.conventions[:2],
+        *AVISO_L3_LR_SSH_LAYOUT_V2.conventions[:2],
         FileNameConvention(
-            re.compile(r"(?P<temporality>reproc|forward)"),
+            re.compile(r"^(?P<temporality>reproc|forward)$"),
             [
                 FileNameFieldEnum(
                     "temporality",
@@ -119,13 +104,29 @@ _AVISO_L3_LR_SSH_LAYOUT_V3 = Layout(
             ],
             "{temporality!f}",
         ),
-        _AVISO_L3_LR_SSH_LAYOUT_V2.conventions[2],
+        AVISO_L3_LR_SSH_LAYOUT_V2.conventions[2],
+        FileNameConventionSwotL3(),
     ]
 )
 
-AVISO_L3_LR_SSH_LAYOUT = CompositeLayout(
-    [_AVISO_L3_LR_SSH_LAYOUT_V3, _AVISO_L3_LR_SSH_LAYOUT_V2]
-)
+
+class BasicNetcdfFilesDatabaseSwotLRL3(FilesDatabase, PeriodMixin):
+    """Database mapping to select and read Swot LR L3 Netcdf files in a local
+    file system."""
+
+    layouts = [
+        Layout([FileNameConventionSwotL3()]),
+        AVISO_L3_LR_SSH_LAYOUT_V2,
+        AVISO_L3_LR_SSH_LAYOUT_V3,
+    ]
+    reader = SwotReaderL3LRSSH()
+    sort_keys = "time"
+
+    # These keys determines an homogeneous subset. We expect no duplicates in
+    # an homogeneous subset
+    unmixer = SubsetsUnmixer(
+        partition_keys=["version", "subset"], auto_pick_last=("version",)
+    )
 
 
 try:

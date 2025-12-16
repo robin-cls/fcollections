@@ -41,12 +41,14 @@ from ._l2_nadir import (
     FileNameConventionL2Nadir,
     NetcdfFilesDatabaseL2Nadir,
 )
-from ._l3_lr_ssh import AVISO_L3_LR_SSH_LAYOUT as _AVISO_L3_LR_SSH_LAYOUT
+from ._l3_lr_ssh import AVISO_L3_LR_SSH_LAYOUT_V2 as _AVISO_L3_LR_SSH_LAYOUT_V2
+from ._l3_lr_ssh import AVISO_L3_LR_SSH_LAYOUT_V3 as _AVISO_L3_LR_SSH_LAYOUT_V3
 from ._l3_lr_ssh import (
     BasicNetcdfFilesDatabaseSwotLRL3,
     FileNameConventionSwotL3,
     NetcdfFilesDatabaseSwotLRL3,
 )
+from ._l3_lr_ww import AVISO_L3_LR_WINDWAVE_LAYOUT as _AVISO_L3_LR_WINDWAVE_LAYOUT
 from ._l3_lr_ww import (
     BasicNetcdfFilesDatabaseSwotLRWW,
     FileNameConventionSwotL3WW,
@@ -95,9 +97,11 @@ from ._swh import (
 #: Layout on Aviso FTP, Aviso TDS for the L2_LR_SSH product
 AVISO_L2_LR_SSH_LAYOUT: Layout = _AVISO_L2_LR_SSH_LAYOUT
 #: Layout on Aviso FTP, Aviso TDS for the L3_LR_SSH product
-AVISO_L3_LR_SSH_LAYOUT: Layout = _AVISO_L3_LR_SSH_LAYOUT
+AVISO_L3_LR_SSH_LAYOUT_V3: Layout = _AVISO_L3_LR_SSH_LAYOUT_V3
+#: Layout on Aviso FTP, Aviso TDS for the L3_LR_SSH product
+AVISO_L3_LR_SSH_LAYOUT_V2: Layout = _AVISO_L3_LR_SSH_LAYOUT_V2
 #: Layout on Aviso FTP, Aviso TDS for the L3_LR_WindWave product
-AVISO_L3_LR_WINDWAVE_LAYOUT: Layout = _AVISO_L3_LR_SSH_LAYOUT
+AVISO_L3_LR_WINDWAVE_LAYOUT: Layout = _AVISO_L3_LR_WINDWAVE_LAYOUT
 #: Layout on Aviso FTP, Aviso TDS for the L4 Sea Level Anomaly experimental product including karin measurements
 AVISO_L4_SWOT_LAYOUT: Layout = _AVISO_L4_SWOT_LAYOUT
 #: Layout on CMEMS for the Level 3 SSHA nadir products
@@ -160,7 +164,8 @@ __all__ = [
     "Delay",
     "S1AOWISlicePostProcessing",
     "AVISO_L2_LR_SSH_LAYOUT",
-    "AVISO_L3_LR_SSH_LAYOUT",
+    "AVISO_L3_LR_SSH_LAYOUT_V2",
+    "AVISO_L3_LR_SSH_LAYOUT_V3",
     "AVISO_L3_LR_WINDWAVE_LAYOUT",
     "AVISO_L4_SWOT_LAYOUT",
     "CMEMS_NADIR_SSHA_LAYOUT",

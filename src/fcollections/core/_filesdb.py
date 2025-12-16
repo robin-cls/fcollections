@@ -17,7 +17,7 @@ from fsspec import AbstractFileSystem
 from fsspec.implementations.local import LocalFileSystem
 
 from ._filenames import FileNameConvention
-from ._listing import FileSystemMetadataCollector
+from ._listing import FileSystemMetadataCollector, Layout
 from ._metadata import GroupMetadata
 from ._readers import IFilesReader
 
