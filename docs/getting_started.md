@@ -11,7 +11,7 @@ jupytext:
 
 ``fcollections`` is a library that aims at reading a collections of files. Its
 primary goal is to combine the selection, reading and concatenation of files
-within a common model: ``FilesDatabase``.
+within a common model.
 
 Let's set up a minimal case with stub data for the SWOT altimetry mission.
 
@@ -33,15 +33,11 @@ ds.to_netcdf(f'{path}/SWOT_L2_LR_SSH_Expert_001_012_20240101T030000_20240101T060
 
 ## Implementations
 
-The generic ``FilesDatabase`` model must be subclassed in order to properly
-define the file listing and reading functionalities. A subclass handling a given
-type of files is called an implementation.
-
 When confronted to a files collection, the first step is to try and find if
 an implementation matching the data already exists. Such implementation may be
 found in the [catalog](implementations/catalog)
 
-From the catalog, we can see that {class}`fcollections.implementations.NetcdfFilesDatabaseSwotLRL2`
+From the catalog, we can see that {class}`NetcdfFilesDatabaseSwotLRL2 <fcollections.implementations.NetcdfFilesDatabaseSwotLRL2>`
 matches our file names. In case no implementation is available, the user can
 build its own following [creation procedure](custom).
 
@@ -133,7 +129,7 @@ fc.variables_info(subset='Expert')
 
 It is possible to access a file set from a remote location. Fcollections is based on
 the powerful ``fsspec`` abstraction. As a consequence, files collections might
-accept any file system, provided that the underlying reader supports it.
+accept any file system.
 
 ```{warning}
 In case the reader does not support a specific file system, an error will be
@@ -167,66 +163,6 @@ implementation of ``fsspec``
 :::
 ::::
 
-(layout_intro)=
-
-## Partial file listing
-
-A files collection is usually stored on a file system storage at a root path,
-with nested folders for organizing the data. By default, all subfolders are
-scanned to build the files metadata table. However, in case filters for listing
-or querying the database are defined, only a subset of the subfolders are
-relevant: a global scan is then inefficient.
-
-In order to finely select the subfolders to explore, a
-{class}`fcollections.core.Layout` object can be given to the
-{class}`fcollections.core.FilesDatabase`. This object gives information about how
-the file collection is organized and speeds up the requests.
-
-```{note}
-Pre-configured layouts are associated to the implementations. They can be found
-in the {doc}`summary table <implementations/catalog>`
-```
-
-Below is an example of how a layout shall be configured. The given query filters
-match the ``<version>/<subset>/<cycle_number>`` structure declared in the layout
-
-```python
-from fsspec.implementations.ftp import FTPFileSystem
-from fcollections.implementations import AVISO_L2_LR_SSH_LAYOUT
-fs = FTPFileSystem('ftp-access.aviso.altimetry.fr', 21, username='...', password='...')
-
-# Use the layout parameter to give the file system tree information
-db = NetcdfFilesDatabaseSwotLRL2('/swot_products/l2_karin/l2_lr_ssh', fs=fs,
-                                 layout=AVISO_L2_LR_SSH_LAYOUT)
-
-# Queries will now be faster
-db.list_files(cycle_number=31, subset='Expert', pass_number=1)
-```
-
-In case the layout object mismatches the actual structure of the file
-collection, the requests will return empty results and a warning will be emitted
-
-```{code-cell}
-# Display warning as a message log in stdout. Can be skipped
-import sys;import logging; logging.basicConfig(stream=sys.stdout)
-logging.captureWarnings(True)
-
-# Recreate a invalid tree structure
-import os
-path = tempfile.mkdtemp()
-os.mkdir(os.path.join(path, 'cycle_001'))
-
-# Querying with a badly matched layout will return empty results
-from fcollections.implementations import AVISO_L2_LR_SSH_LAYOUT
-db = NetcdfFilesDatabaseSwotLRL2(path, layout=AVISO_L2_LR_SSH_LAYOUT)
-ds = db.query(cycle_number=31, subset='Expert', pass_number=1)
-
-ds is None
-```
-
-The user has two options to solve this issue:
-
-- Remove the layout from it database instance, though the requests will fall
-  back to a default a global scan
-- Create the layout object matching the file collection structure, see
-  {ref}`layout` for how to build a layout
+Remote file system listing can be quite long. Implementations are usually
+shipped with layouts for a improved listing speed. See the
+{ref}`Layout <layout>` introduction if listing performance becomes an issue.

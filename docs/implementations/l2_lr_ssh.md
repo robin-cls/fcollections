@@ -16,8 +16,6 @@ Rate products.
 from fcollections.implementations import (
     # Handler
     NetcdfFilesDatabaseSwotLRL2,
-    # Layouts
-    AVISO_L2_LR_SSH_LAYOUT,
     # Version
     L2Version, Timeliness)
 
@@ -203,7 +201,7 @@ fc.list_files(
     bbox=bbox)
 ```
 
-To query a subset of Swot LR L3 data crossing the bounding box:
+To query a subset of Swot LR L2 data crossing the bounding box:
 
 ```{note}
 Lines of the swath crossing the bounding box will be entirely selected.
