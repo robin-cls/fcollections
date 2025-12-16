@@ -7,7 +7,6 @@ import fsspec
 import fsspec.implementations
 import fsspec.implementations.memory
 import numpy as np
-import pandas as pda
 import pytest
 import xarray as xr
 from utils import brute_force_geographical_selection, extract_box_from_polygon
@@ -730,19 +729,12 @@ class TestLayout:
         db = NetcdfFilesDatabaseSwotLRL3(l3_lr_ssh_dir_empty_files)
         db_no_layout = NetcdfFilesDatabaseSwotLRL3(l3_lr_ssh_dir_empty_files_layout)
 
-        # Duplicates in the listed files. Needs to sort again manually
-        actual = (
-            db.list_files(**filters)
-            .drop(columns=["filename"])
-            .sort_values(
-                ["cycle_number", "pass_number", "version"],
-                ignore_index=True,
-            )
-        )
-        expected = (
-            db_no_layout.list_files(**filters)
-            .drop(columns=["filename"])
-            .sort_values(["cycle_number", "pass_number", "version"], ignore_index=True)
-        )
+        # Duplicates in the sort key (unmix set to False allows this). Need to
+        # test the tuples because dataframe order is not ensured
+        actual = db.list_files(**filters).drop(columns=["filename"])
+        expected = db_no_layout.list_files(**filters).drop(columns=["filename"])
+
         assert len(expected) > 0
-        pda.testing.assert_frame_equal(expected, actual)
+        assert set(map(tuple, actual.to_numpy())) == set(
+            map(tuple, expected.to_numpy())
+        )

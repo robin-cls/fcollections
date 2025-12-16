@@ -1,5 +1,4 @@
 import os
-import re
 import typing as tp
 from pathlib import Path
 
@@ -231,20 +230,13 @@ def test_list_l3_layout(
     db = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir_layout)
     db_no_layout = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir_no_layout)
 
-    # Need to sort again and reset the index: we have duplicates (time key) that
-    # makes the ordering unstable
-    actual = (
-        db.list_files(**filters)
-        .drop(columns=["filename"])
-        .sort_values(["time", "resolution", "production_date"], ignore_index=True)
-    )
-    expected = (
-        db_no_layout.list_files(**filters)
-        .drop(columns=["filename"])
-        .sort_values(["time", "resolution", "production_date"], ignore_index=True)
-    )
+    # Duplicates in the sort key (unmix set to False allows this). Need to
+    # test the tuples because dataframe order is not ensured
+    actual = db.list_files(**filters).drop(columns=["filename"])
+    expected = db_no_layout.list_files(**filters).drop(columns=["filename"])
+
     assert len(expected) > 0
-    pda.testing.assert_frame_equal(expected, actual)
+    assert set(map(tuple, actual.to_numpy())) == set(map(tuple, expected.to_numpy()))
 
 
 @pytest.mark.with_geo_packages

@@ -4,14 +4,12 @@ from pathlib import Path
 
 import fsspec.implementations.local as fs_loc
 import numpy as np
-import pandas as pda
 import pytest
 import xarray as xr
 from utils import brute_force_geographical_selection, extract_box_from_polygon
 
 from fcollections.implementations import (
     AVISO_L2_LR_SSH_LAYOUT,
-    FileNameConventionSwotL2,
     L2Version,
     L2VersionField,
     NetcdfFilesDatabaseSwotLRL2,
@@ -671,9 +669,12 @@ class TestLayout:
         db = NetcdfFilesDatabaseSwotLRL2(l2_lr_ssh_dir_empty_files_layout)
         db_no_layout = NetcdfFilesDatabaseSwotLRL2(l2_lr_ssh_dir_empty_files)
 
-        actual = db.list_files(**filters, sort=True).drop(columns=["filename"])
-        expected = db_no_layout.list_files(**filters, sort=True).drop(
-            columns=["filename"]
-        )
+        # Duplicates in the sort key (unmix set to False allows this). Need to
+        # test the tuples because dataframe order is not ensured
+        actual = db.list_files(**filters).drop(columns=["filename"])
+        expected = db_no_layout.list_files(**filters).drop(columns=["filename"])
+
         assert len(expected) > 0
-        pda.testing.assert_frame_equal(expected, actual)
+        assert set(map(tuple, actual.to_numpy())) == set(
+            map(tuple, expected.to_numpy())
+        )
