@@ -231,17 +231,17 @@ def test_list_l3_layout(
     db = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir_layout)
     db_no_layout = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir_no_layout)
 
-    # Need to drop the index: we have duplicates (time key) that makes the
-    # ordering unstable
+    # Need to sort again and reset the index: we have duplicates (time key) that
+    # makes the ordering unstable
     actual = (
-        db.list_files(**filters, sort=True)
+        db.list_files(**filters)
         .drop(columns=["filename"])
-        .reset_index(drop=True)
+        .sort_values(["time", "mission"], ignore_index=True)
     )
     expected = (
-        db_no_layout.list_files(**filters, sort=True)
+        db_no_layout.list_files(**filters)
         .drop(columns=["filename"])
-        .reset_index(drop=True)
+        .sort_values(["time", "mission"], ignore_index=True)
     )
     assert len(expected) > 0
     pda.testing.assert_frame_equal(expected, actual)
