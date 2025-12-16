@@ -234,7 +234,7 @@ def test_list_l3_layout(
     actual = db.list_files(**filters, sort=True).drop(columns=["filename"])
     expected = db_no_layout.list_files(**filters, sort=True).drop(columns=["filename"])
     assert len(expected) > 0
-    assert expected.equals(actual)
+    pda.testing.assert_frame_equal(expected, actual)
 
 
 @pytest.mark.with_geo_packages

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import fsspec.implementations.local as fs_loc
 import numpy as np
+import pandas as pda
 import pytest
 import xarray as xr
 from utils import brute_force_geographical_selection, extract_box_from_polygon
@@ -675,4 +676,4 @@ class TestLayout:
             columns=["filename"]
         )
         assert len(expected) > 0
-        assert expected.equals(actual)
+        pda.testing.assert_frame_equal(expected, actual)

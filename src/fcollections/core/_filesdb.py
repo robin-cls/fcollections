@@ -490,7 +490,7 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
                     (deduplicate and self.deduplicator is not None, self.deduplicator),
                     (
                         sort and self.sort_keys is not None,
-                        lambda df: df.sort_values(self.sort_keys),
+                        lambda df: df.sort_values(self.sort_keys, ignore_index=True),
                     ),
                 ],
             ),
