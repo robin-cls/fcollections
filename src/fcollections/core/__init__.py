@@ -55,12 +55,6 @@ from ._mixins import (
     ITemporalMixin,
     PeriodMixin,
 )
-from ._obsolete import (
-    CompositeLayout,
-    FileDiscoverer,
-    FileSystemIterable,
-    ITreeIterable,
-)
 from ._readers import IFilesReader, OpenMfDataset, compose
 from ._testers import ITester
 
@@ -83,7 +77,6 @@ __all__ = [
     "SubsetsUnmixer",
     "Deduplicator",
     "RecordFilter",
-    "FileDiscoverer",
     "NotExistingPathError",
     "FileNameFieldDateJulianDelta",
     "DownloadMixin",
@@ -96,13 +89,10 @@ __all__ = [
     "ITemporalMixin",
     "IPredicate",
     "Layout",
-    "ITreeIterable",
-    "FileSystemIterable",
     "DecodingError",
     "ICodec",
     "ITester",
     "ILayout",
-    "CompositeLayout",
     "INode",
     "FileNode",
     "DirNode",
