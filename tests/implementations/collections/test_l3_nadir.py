@@ -231,8 +231,8 @@ def test_list_l3_layout(
     db = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir_layout)
     db_no_layout = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir_no_layout)
 
-    actual = db.list_files(**filters).drop(columns=["filename"])
-    expected = db_no_layout.list_files(**filters).drop(columns=["filename"])
+    actual = db.list_files(**filters, sort=True).drop(columns=["filename"])
+    expected = db_no_layout.list_files(**filters, sort=True).drop(columns=["filename"])
     assert len(expected) > 0
     assert expected.equals(actual)
 

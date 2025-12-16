@@ -670,7 +670,9 @@ class TestLayout:
         db = NetcdfFilesDatabaseSwotLRL2(l2_lr_ssh_dir_empty_files_layout)
         db_no_layout = NetcdfFilesDatabaseSwotLRL2(l2_lr_ssh_dir_empty_files)
 
-        actual = db.list_files(**filters).drop(columns=["filename"])
-        expected = db_no_layout.list_files(**filters).drop(columns=["filename"])
+        actual = db.list_files(**filters, sort=True).drop(columns=["filename"])
+        expected = db_no_layout.list_files(**filters, sort=True).drop(
+            columns=["filename"]
+        )
         assert len(expected) > 0
         assert expected.equals(actual)
