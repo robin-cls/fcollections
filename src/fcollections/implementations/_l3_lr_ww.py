@@ -9,11 +9,13 @@ from fcollections.core import (
     FileNameFieldPeriod,
     FileNameFieldString,
     FilesDatabase,
+    Layout,
     PeriodMixin,
     SubsetsUnmixer,
 )
 
 from ._definitions import DESCRIPTIONS, ProductSubset
+from ._l3_lr_ssh import AVISO_L3_LR_SSH_LAYOUT_V2
 from ._readers import SwotReaderL3WW
 
 SWOT_L3_LR_WINDWAVE_PATTERN = re.compile(
@@ -50,6 +52,14 @@ class FileNameConventionSwotL3WW(FileNameConvention):
         )
 
 
+AVISO_L3_LR_WINDWAVE_LAYOUT = Layout(
+    [
+        *AVISO_L3_LR_SSH_LAYOUT_V2.conventions[:3],
+        FileNameConventionSwotL3WW(),
+    ]
+)
+
+
 class BasicNetcdfFilesDatabaseSwotLRWW(FilesDatabase, PeriodMixin):
     """Database mapping to explore and read the L3_LR_WIND_WAVE product.
 
@@ -59,7 +69,7 @@ class BasicNetcdfFilesDatabaseSwotLRWW(FilesDatabase, PeriodMixin):
         Recommended layout for the database
     """
 
-    parser = FileNameConventionSwotL3WW()
+    layouts = [Layout([FileNameConventionSwotL3WW()]), AVISO_L3_LR_WINDWAVE_LAYOUT]
     reader = SwotReaderL3WW()
     sort_keys = "time"
 

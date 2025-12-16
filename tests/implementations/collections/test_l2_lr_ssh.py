@@ -10,7 +10,6 @@ from utils import brute_force_geographical_selection, extract_box_from_polygon
 
 from fcollections.implementations import (
     AVISO_L2_LR_SSH_LAYOUT,
-    FileNameConventionSwotL2,
     L2Version,
     L2VersionField,
     NetcdfFilesDatabaseSwotLRL2,
@@ -610,47 +609,44 @@ class TestQuery:
 
 class TestLayout:
 
-    def test_generate_string(self):
-        conv = FileNameConventionSwotL2()
+    def test_generate_layout(self):
         t0 = np.datetime64("2024-09-25T00")
         t1 = np.datetime64("2024-09-30T00")
-        assert (
-            conv.generate(
-                cycle_number=11,
-                pass_number=15,
-                level=ProductLevel.L2,
-                subset=ProductSubset.Unsmoothed,
-                time=Period(t0, t1),
-                version="PIC2",
-            )
-            == "SWOT_L2_LR_SSH_Unsmoothed_011_015_20240925T000000_20240930T000000_PIC2.nc"
-        )
-
-    def test_generate_layout(self):
         path = AVISO_L2_LR_SSH_LAYOUT.generate(
             "/swot_products/l2_karin/l2_lr_ssh",
-            subset="Expert",
-            version=L2Version(Timeliness.G, "C", 0),
+            subset=ProductSubset.Expert,
+            version=L2Version(Timeliness.G, "C", 0, 1),
             cycle_number=1,
+            pass_number=15,
+            time=Period(t0, t1),
+            level=ProductLevel.L2,
         )
 
-        assert path == "/swot_products/l2_karin/l2_lr_ssh/PGC0/Expert/cycle_001"
+        assert (
+            path
+            == "/swot_products/l2_karin/l2_lr_ssh/PGC0/Expert/cycle_001/SWOT_L2_LR_SSH_Expert_001_015_20240925T000000_20240930T000000_PGC0_01.nc"
+        )
 
     def test_generate_layout_missing_field(self):
         with pytest.raises(ValueError):
             AVISO_L2_LR_SSH_LAYOUT.generate(
                 "/swot_products/l3_karin_nadir/l3_lr_ssh",
-                subset="Expert",
+                subset=ProductSubset.Expert,
                 cycle_number=1,
             )
 
     def test_generate_layout_bad_field(self):
         with pytest.raises(ValueError):
+            t0 = np.datetime64("2024-09-25T00")
+            t1 = np.datetime64("2024-09-30T00")
             AVISO_L2_LR_SSH_LAYOUT.generate(
                 "/swot_products/l3_karin_nadir/l3_lr_ssh",
-                subset="Expert",
-                version="PID0",
+                subset=ProductSubset.Expert,
+                version=L2Version(Timeliness.G, "C", 0, 1),
                 cycle_number="1",
+                pass_number=15,
+                time=Period(t0, t1),
+                level=ProductLevel.L2,
             )
 
     @pytest.mark.parametrize(
@@ -665,14 +661,20 @@ class TestLayout:
         ],
     )
     def test_list_swot_lr_l2_layout(
-        self, l2_lr_ssh_dir_empty_files_layout: Path, filters: dict[str, tp.Any]
+        self,
+        l2_lr_ssh_dir_empty_files: Path,
+        l2_lr_ssh_dir_empty_files_layout: Path,
+        filters: dict[str, tp.Any],
     ):
-        db = NetcdfFilesDatabaseSwotLRL2(
-            l2_lr_ssh_dir_empty_files_layout, layout=AVISO_L2_LR_SSH_LAYOUT
-        )
-        db_no_layout = NetcdfFilesDatabaseSwotLRL2(l2_lr_ssh_dir_empty_files_layout)
+        db = NetcdfFilesDatabaseSwotLRL2(l2_lr_ssh_dir_empty_files_layout)
+        db_no_layout = NetcdfFilesDatabaseSwotLRL2(l2_lr_ssh_dir_empty_files)
 
-        actual = db.list_files(**filters)
-        expected = db_no_layout.list_files(**filters)
+        # Duplicates in the sort key (unmix set to False allows this). Need to
+        # test the tuples because dataframe order is not ensured
+        actual = db.list_files(**filters).drop(columns=["filename"])
+        expected = db_no_layout.list_files(**filters).drop(columns=["filename"])
+
         assert len(expected) > 0
-        assert expected.equals(actual)
+        assert set(map(tuple, actual.to_numpy())) == set(
+            map(tuple, expected.to_numpy())
+        )

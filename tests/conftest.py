@@ -62,6 +62,7 @@ from fixtures._nadir import (
     l3_nadir_dataset_180_180,
     l3_nadir_dir,
     l3_nadir_dir_layout,
+    l3_nadir_dir_no_layout,
     l3_nadir_files,
     l3_nadir_files_2,
 )

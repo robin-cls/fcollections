@@ -4,6 +4,7 @@ from fcollections.core import (
     FileNameConvention,
     FileNameFieldDatetime,
     FilesDatabase,
+    Layout,
     OpenMfDataset,
     PeriodMixin,
 )
@@ -34,7 +35,7 @@ class BasicNetcdfFilesDatabaseSST(FilesDatabase, PeriodMixin):
     """Database mapping to select and read sea surface temperature Netcdf files
     in a local file system."""
 
-    parser = FileNameConventionSST()
+    layouts = [Layout([FileNameConventionSST()])]
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"
 

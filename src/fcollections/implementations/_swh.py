@@ -8,6 +8,7 @@ from fcollections.core import (
     FileNameFieldEnum,
     FileNameFieldPeriod,
     FilesDatabase,
+    Layout,
     OpenMfDataset,
     PeriodMixin,
 )
@@ -48,7 +49,7 @@ class BasicNetcdfFilesDatabaseSWH(FilesDatabase, PeriodMixin):
     """Database mapping to select and read significant wave height Netcdf files
     in a local file system."""
 
-    parser = FileNameConventionSWH()
+    layouts = [Layout([FileNameConventionSWH()])]
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"
 

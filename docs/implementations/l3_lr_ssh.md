@@ -13,11 +13,7 @@ This chapter will present the functionalities specific to the Level 3 SWOT Low
 Rate products.
 
 ```{code-cell}
-from fcollections.implementations import (
-    # Handler
-    NetcdfFilesDatabaseSwotLRL3,
-    # Layouts
-    AVISO_L3_LR_SSH_LAYOUT)
+from fcollections.implementations import NetcdfFilesDatabaseSwotLRL3
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches

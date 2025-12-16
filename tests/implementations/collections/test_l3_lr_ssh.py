@@ -1,4 +1,5 @@
 import itertools
+import re
 import typing as tp
 from pathlib import Path
 
@@ -10,8 +11,10 @@ import pytest
 import xarray as xr
 from utils import brute_force_geographical_selection, extract_box_from_polygon
 
+from fcollections.core import FileNameConvention, Layout
 from fcollections.implementations import (
-    AVISO_L3_LR_SSH_LAYOUT,
+    AVISO_L3_LR_SSH_LAYOUT_V2,
+    AVISO_L3_LR_SSH_LAYOUT_V3,
     FileNameConventionSwotL3,
     NetcdfFilesDatabaseSwotLRL3,
     ProductLevel,
@@ -573,6 +576,19 @@ class TestListing:
         assert db.list_files(cycle_number=399).empty
 
 
+@pytest.fixture(scope="session", autouse=True)
+def add_layout():
+    """Additional layout needed to handle files in l3_lr_ssh_dir fixture."""
+    NetcdfFilesDatabaseSwotLRL3.layouts.append(
+        Layout(
+            [
+                FileNameConvention(re.compile("^basic|expert|unsmoothed$"), []),
+                FileNameConventionSwotL3(),
+            ]
+        )
+    )
+
+
 class TestQuery:
 
     @pytest.mark.parametrize("stack", StackLevel)
@@ -636,42 +652,51 @@ class TestLayout:
         )
 
     def test_generate_layout_v2(self):
-        path = AVISO_L3_LR_SSH_LAYOUT.generate(
+        path = AVISO_L3_LR_SSH_LAYOUT_V2.generate(
             "/swot_products/l3_karin_nadir/l3_lr_ssh",
-            subset="Expert",
+            subset=ProductSubset.Expert,
             version="1.0.2",
             cycle_number=1,
+            pass_number=10,
+            time=Period(np.datetime64("2024-01-01"), np.datetime64("2024-01-02")),
+            level=ProductLevel.L3,
         )
 
-        assert path == "/swot_products/l3_karin_nadir/l3_lr_ssh/v1_0_2/Expert/cycle_001"
+        assert (
+            path
+            == "/swot_products/l3_karin_nadir/l3_lr_ssh/v1_0_2/Expert/cycle_001/SWOT_L3_LR_SSH_Expert_001_010_20240101T000000_20240102T000000_v1.0.2.nc"
+        )
 
     @pytest.mark.parametrize(
         "temporality, expected",
         [
             (
                 Temporality.REPROC,
-                "/swot_products/l3_karin_nadir/l3_lr_ssh/v1_0_2/Expert/reproc/cycle_001",
+                "/swot_products/l3_karin_nadir/l3_lr_ssh/v1_0_2/Expert/reproc/cycle_001/SWOT_L3_LR_SSH_Expert_001_010_20240101T000000_20240102T000000_v1.0.2.nc",
             ),
             (
                 Temporality.FORWARD,
-                "/swot_products/l3_karin_nadir/l3_lr_ssh/v1_0_2/Expert/forward/cycle_001",
+                "/swot_products/l3_karin_nadir/l3_lr_ssh/v1_0_2/Expert/forward/cycle_001/SWOT_L3_LR_SSH_Expert_001_010_20240101T000000_20240102T000000_v1.0.2.nc",
             ),
         ],
     )
     def test_generate_layout_v3(self, temporality: Temporality, expected: str):
-        path = AVISO_L3_LR_SSH_LAYOUT.generate(
+        path = AVISO_L3_LR_SSH_LAYOUT_V3.generate(
             "/swot_products/l3_karin_nadir/l3_lr_ssh",
-            subset="Expert",
+            subset=ProductSubset.Expert,
             version="1.0.2",
             temporality=temporality,
             cycle_number=1,
+            pass_number=10,
+            time=Period(np.datetime64("2024-01-01"), np.datetime64("2024-01-02")),
+            level=ProductLevel.L3,
         )
 
         assert path == expected
 
     def test_generate_layout_missing_field(self):
         with pytest.raises(ValueError):
-            AVISO_L3_LR_SSH_LAYOUT.generate(
+            AVISO_L3_LR_SSH_LAYOUT_V3.generate(
                 "/swot_products/l3_karin_nadir/l3_lr_ssh",
                 version="1.0.2",
                 cycle_number=1,
@@ -679,9 +704,9 @@ class TestLayout:
 
     def test_generate_layout_bad_field(self):
         with pytest.raises(ValueError):
-            AVISO_L3_LR_SSH_LAYOUT.generate(
+            AVISO_L3_LR_SSH_LAYOUT_V3.generate(
                 "/swot_products/l3_karin_nadir/l3_lr_ssh",
-                subset="Expert",
+                subset=ProductSubset.Expert,
                 version="1.0.2",
                 cycle_number="1",
             )
@@ -696,14 +721,20 @@ class TestLayout:
         ],
     )
     def test_list_swot_lr_l3_layout(
-        self, l3_lr_ssh_dir_empty_files_layout: Path, filters: dict[str, tp.Any]
+        self,
+        l3_lr_ssh_dir_empty_files_layout: Path,
+        l3_lr_ssh_dir_empty_files: Path,
+        filters: dict[str, tp.Any],
     ):
-        db = NetcdfFilesDatabaseSwotLRL3(
-            l3_lr_ssh_dir_empty_files_layout, layout=AVISO_L3_LR_SSH_LAYOUT
-        )
+        db = NetcdfFilesDatabaseSwotLRL3(l3_lr_ssh_dir_empty_files)
         db_no_layout = NetcdfFilesDatabaseSwotLRL3(l3_lr_ssh_dir_empty_files_layout)
 
-        actual = db.list_files(**filters)
-        expected = db_no_layout.list_files(**filters)
+        # Duplicates in the sort key (unmix set to False allows this). Need to
+        # test the tuples because dataframe order is not ensured
+        actual = db.list_files(**filters).drop(columns=["filename"])
+        expected = db_no_layout.list_files(**filters).drop(columns=["filename"])
+
         assert len(expected) > 0
-        assert expected.equals(actual)
+        assert set(map(tuple, actual.to_numpy())) == set(
+            map(tuple, expected.to_numpy())
+        )

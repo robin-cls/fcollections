@@ -6,6 +6,7 @@ from fcollections.core import (
     FileNameConvention,
     FileNameFieldDatetime,
     FilesDatabase,
+    Layout,
     OpenMfDataset,
     PeriodMixin,
 )
@@ -34,7 +35,7 @@ class BasicNetcdfFilesDatabaseOHC(FilesDatabase, PeriodMixin):
     """Database mapping to select and read ocean heat content Netcdf files in a
     local file system."""
 
-    parser = FileNameConventionOHC()
+    layouts = [Layout([FileNameConventionOHC()])]
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS_NO_BACKEND)
     sort_keys = "time"
 

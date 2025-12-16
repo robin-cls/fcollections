@@ -17,11 +17,12 @@ from fsspec import AbstractFileSystem
 from fsspec.implementations.local import LocalFileSystem
 
 from ._filenames import FileNameConvention
+from ._listing import FileSystemMetadataCollector, Layout
 from ._metadata import GroupMetadata
-from ._obsolete import FileDiscoverer, FileSystemIterable, Layout
 from ._readers import IFilesReader
 
 if tp.TYPE_CHECKING:  # pragma: no cover
+    import dask.bag.core
     import xarray as xr_t
 
 logger = logging.getLogger(__name__)
@@ -96,7 +97,9 @@ def _extract_parameters(
 ) -> dict[str, tuple[dict[str, dcs.DocstringParam], dict[str, inspect.Parameter]]]:
     parameters = {}
     parameters["reader"] = _reading_parameters(new_class.reader)
-    parameters["convention"] = _convention_parameters(new_class.parser)
+    parameters["convention"] = _convention_parameters(
+        new_class.layouts[0].conventions[-1]
+    )
     parameters["predicates"] = _predicates_parameters(new_class.predicate_classes)
     return parameters
 
@@ -311,8 +314,8 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         parses the listed files and filters them.
     """
 
-    parser: FileNameConvention | None = None
-    """Files name parser."""
+    layouts: list[Layout] | None = None
+    """Semantic describing how the files are organized."""
     reader: IFilesReader | None = None
     """Files reader."""
     unmixer: SubsetsUnmixer | None = None
@@ -345,13 +348,10 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         self,
         path: str,
         fs: AbstractFileSystem = LocalFileSystem(follow_symlinks=True),
-        layout: Layout | None = None,
     ):
         self.path = path
         self.fs = fs
-        self.discoverer = FileDiscoverer(
-            parser=self.parser, iterable=FileSystemIterable(fs, layout=layout)
-        )
+        self.discoverer = FileSystemMetadataCollector(path, self.layouts, fs)
 
         def raise_if_unknown_keys(
             obj: Deduplicator | SubsetsUnmixer | dict[str, tuple[str, ...]] | None,
@@ -377,6 +377,17 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
             raise NotExistingPathError(
                 f"The path {path} doesn't exist in the file system."
             )
+
+    @property
+    def parser(self) -> FileNameConvention:
+        """Amongst all name conventions, get the one managing the files.
+
+        Returns
+        -------
+        :
+            Files name parser
+        """
+        return self.layouts[0].conventions[-1]
 
     def _files(
         self,
@@ -464,8 +475,7 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
                         predicate_builder.parameters(),
                     )
 
-        df = self.discoverer.list(
-            self.path,
+        df = self.discoverer.to_dataframe(
             predicates=predicates,
             stat_fields=stat_fields,
             **{k: kwargs[k] for k in kwargs if k in self.listing_parameters},
@@ -480,7 +490,7 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
                     (deduplicate and self.deduplicator is not None, self.deduplicator),
                     (
                         sort and self.sort_keys is not None,
-                        lambda df: df.sort_values(self.sort_keys),
+                        lambda df: df.sort_values(self.sort_keys, ignore_index=True),
                     ),
                 ],
             ),

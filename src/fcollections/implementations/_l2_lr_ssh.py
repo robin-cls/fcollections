@@ -462,6 +462,8 @@ class L2VersionField(oct_io.FileNameField):
         )
 
     def encode(self, data: L2Version) -> str:
+        if self.ignore_product_counter:
+            return str(L2Version(data.temporality, data.baseline, data.minor_version))
         return str(data)
 
     @property
@@ -526,24 +528,6 @@ class FileNameConventionSwotL2(FileNameConvention):
         )
 
 
-class BasicNetcdfFilesDatabaseSwotLRL2(FilesDatabase, PeriodMixin):
-    """Database mapping to select and read Swot LR L2 Netcdf files in a local
-    file system."""
-
-    parser = FileNameConventionSwotL2()
-    reader = SwotReaderL2LRSSH()
-    sort_keys = "time"
-
-    # These keys determines an homogeneous subset
-    unmixer = SubsetsUnmixer(partition_keys=["level", "subset"])
-    # We expect multiple versions in an homogeneous subset. Only one half orbit
-    # record is tolerated so we deduplicate the multiple version with an
-    # autopick
-    deduplicator = Deduplicator(
-        unique=("cycle_number", "pass_number"), auto_pick_last=("version",)
-    )
-
-
 # In filenames, the version PID0_01 contains the crid and the product counter.
 # In the layout, only the crid PID0 is present. When giving a reference, the
 # user may give a product counter for filtering. This product counter should be
@@ -564,15 +548,34 @@ AVISO_L2_LR_SSH_LAYOUT = Layout(
         FileNameConvention(
             re.compile(r"(?P<subset>.*)"),
             [FileNameConventionSwotL2().get_field("subset")],
-            "{subset}",
+            "{subset!f}",
         ),
         FileNameConvention(
             re.compile(r"cycle_(?P<cycle_number>\d{3})"),
             [FileNameConventionSwotL2().get_field("cycle_number")],
             "cycle_{cycle_number:0>3d}",
         ),
+        FileNameConventionSwotL2(),
     ]
 )
+
+
+class BasicNetcdfFilesDatabaseSwotLRL2(FilesDatabase, PeriodMixin):
+    """Database mapping to select and read Swot LR L2 Netcdf files in a local
+    file system."""
+
+    layouts = [Layout([FileNameConventionSwotL2()]), AVISO_L2_LR_SSH_LAYOUT]
+    reader = SwotReaderL2LRSSH()
+    sort_keys = "time"
+
+    # These keys determines an homogeneous subset
+    unmixer = SubsetsUnmixer(partition_keys=["level", "subset"])
+    # We expect multiple versions in an homogeneous subset. Only one half orbit
+    # record is tolerated so we deduplicate the multiple version with an
+    # autopick
+    deduplicator = Deduplicator(
+        unique=("cycle_number", "pass_number"), auto_pick_last=("version",)
+    )
 
 
 try:

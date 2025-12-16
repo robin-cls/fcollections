@@ -9,6 +9,7 @@ from fcollections.core import (
     FileNameFieldInteger,
     FileNameFieldPeriod,
     FilesDatabase,
+    Layout,
     OpenMfDataset,
     PeriodMixin,
 )
@@ -70,6 +71,6 @@ class NetcdfFilesDatabaseS1AOWI(FilesDatabase, PeriodMixin):
     """Database mapping to select and read S1A Ocean surface wind product
     Netcdf files in a local file system."""
 
-    parser = FileNameConventionS1AOWI()
+    layouts = [Layout([FileNameConventionS1AOWI()])]
     reader = OpenMfDataset(xarray_options=XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"

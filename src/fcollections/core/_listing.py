@@ -147,7 +147,7 @@ class Layout(ILayout):
                 "Layout has been configured with unknown references "
                 f"'{unknown_references}'. They will be ignored."
             )
-            warnings.warn(msg)
+            logger.debug(msg)
 
         self.filters: list[RecordFilter] = filters
 
@@ -588,6 +588,11 @@ class LayoutVisitor(IVisitor):
                 return VisitResult(
                     False, (*record, *[file_node.info[x] for x in self.stat_fields])
                 )
+            elif record is not None:
+                # Leaf node should be identical for all layouts. Do not bother
+                # testing all layouts if the record has already been filtered
+                # out
+                return VisitResult(False)
         return VisitResult(False)
 
     def advance(self, result: VisitResult) -> LayoutVisitor:

@@ -5,8 +5,9 @@ import typing as tp
 
 import numpy as np
 import pytest
+from fsspec.implementations.local import LocalFileSystem
 
-from fcollections.core import FileDiscoverer, FileSystemIterable
+from fcollections.core import FileSystemMetadataCollector
 from fcollections.implementations import (
     AVISO_L4_SWOT_LAYOUT,
     Delay,
@@ -21,7 +22,7 @@ if tp.TYPE_CHECKING:
     from pathlib import Path
 
 
-class TestConvention:
+class TestConventionInternal:
 
     convention = FileNameConventionGriddedSLAInternal()
 
@@ -40,6 +41,39 @@ class TestConvention:
                 np.datetime64("2024-01-03"),
                 include_stop=False,
             ),
+        )
+        actual = self.convention.parse(self.convention.match(filename))
+        assert actual == reference
+
+
+class TestConvention:
+
+    convention = FileNameConventionGriddedSLA()
+
+    def test_convention_generate(self):
+
+        reference = "dt_global_allsat_phy_l4_20230328_20250331.nc"
+        actual = self.convention.generate(
+            delay=Delay.DT,
+            time=Period(
+                np.datetime64("2023-03-28"),
+                np.datetime64("2023-03-29"),
+                include_stop=False,
+            ),
+            production_date=np.datetime64("2025-03-31"),
+        )
+        assert actual == reference
+
+    def test_convention_parse(self):
+        filename = "dt_global_allsat_phy_l4_20230328_20250331.nc.nc"
+        reference = (
+            Delay.DT,
+            Period(
+                np.datetime64("2023-03-28"),
+                np.datetime64("2023-03-29"),
+                include_stop=False,
+            ),
+            np.datetime64("2025-03-31"),
         )
         actual = self.convention.parse(self.convention.match(filename))
         assert actual == reference
@@ -89,10 +123,18 @@ class TestLayout:
             method="miost",
             version="1.0",
             phase=MissionsPhases.science,
+            delay=Delay.NRT,
+            time=Period(
+                np.datetime64("2025-03-31"),
+                np.datetime64("2025-04-01"),
+                include_stop=False,
+            ),
+            production_date=np.datetime64("2025-03-31"),
         )
 
         assert (
-            path == "/duacs-experimental/dt-phy-grids/l4_karin_nadir/v1.0/miost/science"
+            path
+            == "/duacs-experimental/dt-phy-grids/l4_karin_nadir/v1.0/miost/science/nrt_global_allsat_phy_l4_20250331_20250331.nc"
         )
 
     @pytest.mark.parametrize(
@@ -112,13 +154,12 @@ class TestLayout:
         filters: dict[str, tp.Any],
     ):
 
-        fd = FileDiscoverer(
-            FileNameConventionGriddedSLA(),
-            FileSystemIterable(layout=AVISO_L4_SWOT_LAYOUT),
+        collector = FileSystemMetadataCollector(
+            l4_ssha_dir_layout, NetcdfFilesDatabaseGriddedSLA.layouts, LocalFileSystem()
         )
 
         actual = {
-            os.path.basename(f) for f in fd.list(l4_ssha_dir_layout, **filters).filename
+            os.path.basename(f) for f in collector.to_dataframe(**filters).filename
         }
         expected = {os.path.basename(l4_ssha_files[ii]) for ii in expected}
         assert len(expected) > 0

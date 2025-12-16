@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import typing as tp
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -57,11 +58,27 @@ def l3_nadir_files() -> list[str]:
         "cmems_obs-sl_glo_phy-ssh_nrt_s3a-l3-duacs_PT0.2S_202411/2022/06/nrt_global_s3a_phy_l3_5hz_20220617_20240205.nc",
         "cmems_obs-sl_glo_phy-ssh_nrt_s3a-l3-duacs_PT0.2S_202411/2022/06/nrt_global_s3a_phy_l3_5hz_20220617_20240205.nc",
         "cmems_obs-sl_glo_phy-ssh_nrt_s3a-l3-duacs_PT1S_202411/2022/06/nrt_global_s3a_phy_l3_1hz_20220617_20240205.nc",
-        "cmems_obs-sl_glo_phy-ssh_my_c2n-l3-duacs_PT1S_202512/2022/06/dt_global_c2n_phy_l3_1hz_20220617_20240205.nc",
+        "cmems_obs-sl_glo_phy-ssh_my_c2n-l3-duacs_PT1S_202512/2022/06/dt_global_c2n_phy_l3_1hz_20220617_20250205.nc",
         "cmems_obs-sl_glo_phy-ssh_my_c2n-l3-duacs_PT1S_202411/2022/06/dt_global_c2n_phy_l3_1hz_20220617_20240205.nc",
         "cmems_obs-sl_glo_phy-ssh_my_s6a-hr-l3-duacs_PT1S_202211/2020/02/dt_global_s6a_hr_phy_l3_1hz_20200217_20221105.nc",
         "cmems_obs-sl_glo_phy-ssh_my_s6a-lr-l3-duacs_PT1S_202211/2020/02/dt_global_s6a_lr_phy_l3_1hz_20200218_20221105.nc",
     ]
+
+
+@pytest.fixture(scope="session")
+def l3_nadir_dir_no_layout(
+    tmp_path_factory: pytest.TempPathFactory, l3_nadir_files: list[str]
+) -> Path:
+    root = tmp_path_factory.mktemp("SEALEVEL_GLO_PHY_L3_NRT_008_044")
+
+    # create test folder
+    for filepath in l3_nadir_files:
+        filepath = root / Path(filepath).name
+
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        filepath.touch()
+
+    return root
 
 
 @pytest.fixture(scope="session")

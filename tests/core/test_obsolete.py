@@ -267,14 +267,6 @@ def test_file_system_tree_layout_independent_filter(
     assert actual == expected
 
 
-def test_file_system_tree_layout_unknown_filter(
-    memory_fs: MemoryFileSystem, layout: Layout
-):
-    it_layout = FileSystemIterable(memory_fs, layout)
-    with pytest.warns(UserWarning):
-        next(it_layout.find("/root", dummy="bar"))
-
-
 def test_file_system_tree_layout_details(memory_fs: MemoryFileSystem, layout: Layout):
     it_layout = FileSystemIterable(memory_fs, layout)
     detailed = list(it_layout.find("/root", resolution="LR", detail=True))
@@ -314,6 +306,7 @@ def discoverer(
         ),
         (dict(field_f=0.25, field_date_delta=np.datetime64("1950-01-01")), []),
         (dict(resolution="HR", field_i=list(range(0, 10, 2))), [6, 8]),
+        (dict(predicates=[lambda record: record[0] in [0, 3]]), [0, 3]),
     ],
 )
 def test_file_discoverer(discoverer, filters, expected_selection):
@@ -331,3 +324,16 @@ def test_file_discoverer_stat_fields(discoverer):
 def test_file_discoverer_stat_fields_error(discoverer):
     with pytest.raises(KeyError):
         discoverer.list("/folder", stat_fields=("foo",))
+
+
+def test_file_discoverer_no_layout(
+    discoverer: FileDiscoverer, memory_fs: MemoryFileSystem
+):
+    discoverer_no_layout = FileDiscoverer(
+        discoverer.convention, FileSystemIterable(memory_fs)
+    )
+    df_ref = discoverer.list("/root", field_f=0.25)
+    assert len(df_ref) > 0
+
+    df_actual = discoverer_no_layout.list("/root", field_f=0.25)
+    assert df_ref.equals(df_actual)

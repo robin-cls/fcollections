@@ -19,6 +19,7 @@ from fcollections.core import (
     FilesDatabase,
     IFilesReader,
     IPredicate,
+    Layout,
     NotExistingPathError,
     SubsetsUnmixer,
 )
@@ -42,12 +43,12 @@ class FileNameConventionTest(FileNameConvention):
 
 
 class FilesDatabaseTestInconsistentDeduplicator(FilesDatabase):
-    parser = FileNameConventionTest()
+    layouts = [Layout([FileNameConventionTest()])]
     deduplicator = Deduplicator(("a1",), ("a2",))
 
 
 class FilesDatabaseTestInconsistentUnmixer(FilesDatabase):
-    parser = FileNameConventionTest()
+    layouts = [Layout([FileNameConventionTest()])]
     unmixer = SubsetsUnmixer(("a1",), ("a2",))
 
 
@@ -74,7 +75,7 @@ class ReaderStub(IFilesReader):
 
 
 class FilesDatabaseTestNoUnmixer(FilesDatabase):
-    parser = FileNameConventionTest()
+    layouts = [Layout([FileNameConventionTest()])]
     reader = ReaderStub()
 
 

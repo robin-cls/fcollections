@@ -21,7 +21,7 @@ FCollections
     auxiliary
 
 .. toctree::
-    :caption: Advanced
+    :caption: Reference
     :maxdepth: 1
 
     api

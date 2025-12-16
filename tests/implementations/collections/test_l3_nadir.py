@@ -1,21 +1,16 @@
 import os
-import re
 import typing as tp
 from pathlib import Path
 
 import numpy as np
 import pandas as pda
 import pytest
+from fsspec.implementations.local import LocalFileSystem
 
-from fcollections.core import (
-    FileDiscoverer,
-    FileNameConvention,
-    FileSystemIterable,
-)
+from fcollections.core import FileSystemMetadataCollector
 from fcollections.implementations import (
     CMEMS_NADIR_SSHA_LAYOUT,
     Delay,
-    NetcdfFilesDatabaseL2Nadir,
     NetcdfFilesDatabaseL3Nadir,
     ProductLevel,
 )
@@ -24,12 +19,6 @@ from fcollections.time import Period
 
 
 def test_bad_kwargs(l3_nadir_dir: Path):
-    db = NetcdfFilesDatabaseL2Nadir(l3_nadir_dir)
-    with pytest.raises(ValueError):
-        db.list_files(bad_arg="bad_arg")
-    with pytest.raises(ValueError):
-        db.query(bad_arg="bad_arg")
-
     db = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir)
     with pytest.raises(ValueError):
         db.list_files(bad_arg="bad_arg")
@@ -64,24 +53,6 @@ def test_list_l3_nadir(
     files = db.list_files(**args)
     assert files["filename"].size == result_size
     assert all(files["resolution"].values != None)
-
-
-@pytest.mark.parametrize(
-    "args, result_size",
-    [
-        ({}, 3),
-        ({"time": (np.datetime64("2023-07-07"), np.datetime64("2023-07-08"))}, 2),
-        ({"cycle_number": 575}, 2),
-        ({"pass_number": 14}, 2),
-        ({"cycle_number": 574, "pass_number": 15}, 0),
-    ],
-)
-def test_list_l2_nadir(l2_nadir_dir: Path, args: dict[str, tp.Any], result_size: int):
-
-    db = NetcdfFilesDatabaseL2Nadir(l2_nadir_dir)
-
-    files = db.list_files(**args)
-    assert files["filename"].size == result_size
 
 
 @pytest.fixture
@@ -189,17 +160,20 @@ def test_validate(l3_nadir_dir: Path, parsing_result: pda.DataFrame):
         (
             MissionsPhases.j3g,
             Delay.NRT,
-            "/SEALEVEL_GLO_PHY_L3_NRT_008_044/cmems_obs-sl_glo_phy-ssh_nrt_j3g-l3-duacs_PT1S_202411/1995/05",
+            "/SEALEVEL_GLO_PHY_L3_NRT_008_044/cmems_obs-sl_glo_phy-ssh_nrt_j3g-l3-duacs_PT1S_202411/1995/05/nrt_global_j3g_phy_L3_1hz_19950501_20240101",
         ),
         # Test the _ -> - conversion in layout generation
         (
             MissionsPhases.s6a_hr,
             Delay.MY,
-            "/SEALEVEL_GLO_PHY_L3_NRT_008_044/cmems_obs-sl_glo_phy-ssh_my_s6a-hr-l3-duacs_PT1S_202411/1995/05",
+            "/SEALEVEL_GLO_PHY_L3_NRT_008_044/cmems_obs-sl_glo_phy-ssh_my_s6a-hr-l3-duacs_PT1S_202411/1995/05/my_global_s6a_hr_phy_L3_1hz_19950501_20240101",
         ),
     ],
 )
 def test_generate_layout(mission: MissionsPhases, delay: Delay, expected: str):
+    period = Period(
+        np.datetime64("1995-05-01"), np.datetime64("1995-05-02"), include_stop=False
+    )
     path = CMEMS_NADIR_SSHA_LAYOUT.generate(
         "/SEALEVEL_GLO_PHY_L3_NRT_008_044",
         year=1995,
@@ -208,6 +182,9 @@ def test_generate_layout(mission: MissionsPhases, delay: Delay, expected: str):
         delay=delay,
         version="202411",
         mission=mission,
+        product_level=ProductLevel.L3,
+        production_date=np.datetime64("2024-01-01"),
+        time=period,
     )
 
     assert path == expected
@@ -228,14 +205,11 @@ def test_layout_l3(
     l3_nadir_files: list[str],
 ):
     """Test layout filters not integrated in the database."""
-    fd = FileDiscoverer(
-        FileNameConvention(re.compile(r".*"), []),
-        FileSystemIterable(layout=CMEMS_NADIR_SSHA_LAYOUT),
+    collector = FileSystemMetadataCollector(
+        l3_nadir_dir_layout, NetcdfFilesDatabaseL3Nadir.layouts, LocalFileSystem()
     )
 
-    actual = {
-        os.path.basename(f) for f in fd.list(l3_nadir_dir_layout, **filters).filename
-    }
+    actual = {os.path.basename(f) for f in collector.to_dataframe(**filters).filename}
     expected = {os.path.basename(l3_nadir_files[ii]) for ii in expected}
     assert len(expected) > 0
     assert expected == actual
@@ -250,14 +224,19 @@ def test_layout_l3(
         {"resolution": 5},
     ],
 )
-def test_list_l3_layout(l3_nadir_dir_layout: Path, filters: dict[str, tp.Any]):
-    db = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir_layout, layout=CMEMS_NADIR_SSHA_LAYOUT)
-    db_no_layout = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir_layout)
+def test_list_l3_layout(
+    l3_nadir_dir_layout: Path, l3_nadir_dir_no_layout: Path, filters: dict[str, tp.Any]
+):
+    db = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir_layout)
+    db_no_layout = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir_no_layout)
 
-    actual = db.list_files(**filters)
-    expected = db_no_layout.list_files(**filters)
+    # Duplicates in the sort key (unmix set to False allows this). Need to
+    # test the tuples because dataframe order is not ensured
+    actual = db.list_files(**filters).drop(columns=["filename"])
+    expected = db_no_layout.list_files(**filters).drop(columns=["filename"])
+
     assert len(expected) > 0
-    assert expected.equals(actual)
+    assert set(map(tuple, actual.to_numpy())) == set(map(tuple, expected.to_numpy()))
 
 
 @pytest.mark.with_geo_packages

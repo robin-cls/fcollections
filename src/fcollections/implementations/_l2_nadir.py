@@ -7,6 +7,7 @@ from fcollections.core import (
     FileNameFieldInteger,
     FileNameFieldPeriod,
     FilesDatabase,
+    Layout,
     OpenMfDataset,
     PeriodMixin,
 )
@@ -42,7 +43,7 @@ class BasicNetcdfFilesDatabaseL2Nadir(FilesDatabase, PeriodMixin):
     """Database mapping to select and read L2 nadir Netcdf files in a local
     file system."""
 
-    parser = FileNameConventionL2Nadir()
+    layouts = [Layout([FileNameConventionL2Nadir()])]
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"
 
