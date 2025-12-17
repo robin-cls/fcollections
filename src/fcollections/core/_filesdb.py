@@ -439,6 +439,9 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         ValueError
             In case unmix is True, an error is raised if one unique and
             homogeneous subset cannot be extracted from the files metadata table
+        LayoutMismatchError
+            In case ``enable_layouts`` is True and a mismatch between the
+            layouts and the actual files is detected
 
         Returns
         -------
@@ -513,6 +516,15 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
     def _query(self, **kwargs) -> xr_t.Dataset | None:
         """Query a dataset by reading selected files in file system.
 
+        Raises
+        ------
+        LayoutMismatchError
+            In case ``enable_layouts`` is True and a mismatch between the
+            layouts and the actual files is detected
+        ValueError
+            In case if one unique and homogeneous subset could not be extracted
+            from the files metadata table
+
         Returns
         -------
         A dataset containing the result of the query, or an None if there is
@@ -577,6 +589,9 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
 
         Raises
         ------
+        LayoutMismatchError
+            In case ``enable_layouts`` is True and a mismatch between the
+            layouts and the actual files is detected
         ValueError
             In case if one unique and homogeneous subset could not be extracted
             from the files metadata table
@@ -610,6 +625,9 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         ------
         NotImplementedError
             In case dask is not available
+        LayoutMismatchError
+            In case ``enable_layouts`` is True and a mismatch between the
+            layouts and the actual files is detected
         """
         try:
             import dask.bag.core

@@ -494,19 +494,23 @@ class LayoutVisitor(IVisitor):
         Semantic definitions for interpreting and testing node meanings
     stat_fields
         List of node metadata to add to the record
-    on_mismatch
-        Behavior on mismatch
+    on_mismatch_directory
+        Behavior on mismatch for directories
+    on_mismatch_file
+        Behavior on mismatch for files
     """
 
     def __init__(
         self,
         layouts: list[Layout],
         stat_fields: tp.Iterable[str] = tuple(),
-        on_mismatch: LayoutMismatchHandling = LayoutMismatchHandling.RAISE,
+        on_mismatch_directory: LayoutMismatchHandling = LayoutMismatchHandling.RAISE,
+        on_mismatch_file: LayoutMismatchHandling = LayoutMismatchHandling.IGNORE,
     ):
         self.layouts = layouts
         self.stat_fields = list(stat_fields)
-        self.on_mismatch = on_mismatch
+        self.on_mismatch_directory = on_mismatch_directory
+        self.on_mismatch_file = on_mismatch_file
         if "name" not in self.stat_fields:
             self.stat_fields.insert(0, "name")
 
@@ -566,7 +570,7 @@ class LayoutVisitor(IVisitor):
                 record = result
 
         if not layouts_for_children:
-            return self._on_mismatch(dir_node)
+            return self._on_mismatch(dir_node, self.on_mismatch_directory)
 
         if all(
             [
@@ -623,16 +627,21 @@ class LayoutVisitor(IVisitor):
                 # testing all layouts if the record has already been filtered
                 # out
                 return VisitResult(False)
-        return self._on_mismatch(file_node)
+        return self._on_mismatch(file_node, self.on_mismatch_file)
 
     def advance(self, result: VisitResult) -> LayoutVisitor:
         return LayoutVisitor(
-            result.surviving_layouts, self.stat_fields, self.on_mismatch
+            result.surviving_layouts,
+            self.stat_fields,
+            self.on_mismatch_directory,
+            self.on_mismatch_file,
         )
 
-    def _on_mismatch(self, node: INode) -> VisitResult:
+    def _on_mismatch(
+        self, node: INode, on_mismatch: LayoutMismatchHandling
+    ) -> VisitResult:
         # Outlier
-        if self.on_mismatch == LayoutMismatchHandling.IGNORE:
+        if on_mismatch == LayoutMismatchHandling.IGNORE:
             # If nobody matches, we do not want to explore further
             logger.debug(
                 "Node %s does not match any layout, branch exploration stopped.",
@@ -641,7 +650,7 @@ class LayoutVisitor(IVisitor):
             return VisitResult(False)
 
         msg = f"Node {node.info['name']} does not match any layout."
-        if self.on_mismatch == LayoutMismatchHandling.WARN:
+        if on_mismatch == LayoutMismatchHandling.WARN:
             warnings.warn(msg)
             return VisitResult(False)
         else:

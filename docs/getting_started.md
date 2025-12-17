@@ -20,7 +20,6 @@ Let's set up a minimal case with stub data for the SWOT altimetry mission.
 import tempfile
 import numpy as np
 import xarray as xr
-import fsspec.implementations.local as fs_loc
 
 # Create stub data
 path = tempfile.mkdtemp()
@@ -128,47 +127,3 @@ fc.variables_info()
 # Use the enumeration name for filtering
 fc.variables_info(subset='Expert')
 ```
-
-(remote)=
-
-## Remote file systems
-
-It is possible to access a file set from a remote location. Fcollections is based on
-the powerful ``fsspec`` abstraction. As a consequence, files collections might
-accept any file system.
-
-```{warning}
-In case the reader does not support a specific file system, an error will be
-triggered. The solution is to implement its own reader following
-{doc}`custom`
-```
-
-The following code shows how to access data directly from the AVISO public FTP
-server using both FTP and SFTP protocols. You will need credentials to
-authentify (see the [aviso website](https://www.aviso.altimetry.fr/))
-
-::::{tab-set}
-:::{tab-item} FTP
-```python
-from fsspec.implementations.ftp import FTPFileSystem
-fs = FTPFileSystem('ftp-access.aviso.altimetry.fr', 21, username='...', password='...')
-db = NetcdfFilesDatabaseSwotLRL2('/swot_products/l2_karin/l2_lr_ssh/PIC2/Expert/cycle_031', fs=fs)
-ds = db.list_files(pass_number=1)
-```
-:::
-:::{tab-item} SFTP
-```python
-from fsspec.implementations.sftp import SFTPFileSystem
-fs = SFTPFileSystem(host='ftp-access.aviso.altimetry.fr', port=2221, username='...', password='...')
-db = NetcdfFilesDatabaseSwotLRL2('/swot_products/l2_karin/l2_lr_ssh/PIC2/Expert/cycle_031', fs=fs)
-ds = db.list_files(pass_number=1)
-```
-```{note}
-[paramiko](https://www.paramiko.org/) must be installed to use the SFTP
-implementation of ``fsspec``
-:::
-::::
-
-Remote file system listing can be quite long. Implementations are usually
-shipped with layouts for an improved listing speed. See the
-{ref}`Layout <layout>` introduction if listing performance becomes an issue.

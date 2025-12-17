@@ -23,6 +23,7 @@ Select and read a collection of files
 
     install
     getting_started
+    advanced
     custom
 
 .. toctree::

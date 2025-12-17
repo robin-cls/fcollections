@@ -434,7 +434,7 @@ def test_layout_visit_dir_outlier(
 ):
     path = memory_root / path
     node = DirNode(path.name, {"name": path.as_posix()}, memory_fs, 1)
-    visitor = LayoutVisitor(layouts_v2, on_mismatch=on_mismatch)
+    visitor = LayoutVisitor(layouts_v2, on_mismatch_directory=on_mismatch)
 
     with context:
         result = visitor.visit_dir(node)
@@ -501,7 +501,7 @@ def test_layout_visit_file_outlier(
 ):
     path = memory_root / path
     node = DirNode(path.name, {"name": path.as_posix()}, memory_fs, 1)
-    visitor = LayoutVisitor(layouts_v2, on_mismatch=on_mismatch)
+    visitor = LayoutVisitor(layouts_v2, on_mismatch_file=on_mismatch)
 
     with context:
         result = visitor.visit_file(node)
@@ -536,11 +536,16 @@ def test_layout_visit_file_stat_fields(
 
 
 def test_layout_advance(layouts_v2: list[Layout]):
-    visitor = LayoutVisitor(layouts_v2, on_mismatch=LayoutMismatchHandling.WARN)
+    visitor = LayoutVisitor(
+        layouts_v2,
+        on_mismatch_directory=LayoutMismatchHandling.WARN,
+        on_mismatch_file=LayoutMismatchHandling.RAISE,
+    )
     result = VisitResult(True, None, layouts_v2)
     new_visitor = visitor.advance(result)
     assert new_visitor is not visitor
-    assert new_visitor.on_mismatch == visitor.on_mismatch
+    assert new_visitor.on_mismatch_directory == visitor.on_mismatch_directory
+    assert new_visitor.on_mismatch_file == visitor.on_mismatch_file
 
     result = VisitResult(True, None, layouts_v2[:1])
     new_visitor = visitor.advance(result)
@@ -563,7 +568,9 @@ def test_walk_layout(
 ):
     for layout in layouts_v2:
         layout.set_filters(**filters)
-    visitor = LayoutVisitor(layouts_v2, on_mismatch=LayoutMismatchHandling.IGNORE)
+    visitor = LayoutVisitor(
+        layouts_v2, on_mismatch_directory=LayoutMismatchHandling.IGNORE
+    )
     root_str = (memory_root / "root").as_posix()
     root_node = DirNode(root_str, {"name": root_str}, memory_fs, 0)
 
