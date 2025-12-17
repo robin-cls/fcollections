@@ -7,6 +7,7 @@ import logging
 import os
 import typing as tp
 import warnings
+from enum import Enum, auto
 
 import fsspec
 import pandas as pda
@@ -460,6 +461,25 @@ class StandardVisitor(IVisitor):
         return self
 
 
+class VisitError(Exception):
+    """Raised by the visitor during node visit."""
+
+
+class LayoutMismatchError(VisitError):
+    """Raised if all layouts do not match the actual file system structure."""
+
+
+class LayoutMismatchHandling(Enum):
+    """Possibilities when a folder of file node does not match any layout."""
+
+    RAISE = auto()
+    """Raise an exception."""
+    WARN = auto()
+    """Warn the user."""
+    IGNORE = auto()
+    """Ignore the mismatch."""
+
+
 class LayoutVisitor(IVisitor):
     """Visitor with node interpretation and branch exploration hints.
 
@@ -474,11 +494,19 @@ class LayoutVisitor(IVisitor):
         Semantic definitions for interpreting and testing node meanings
     stat_fields
         List of node metadata to add to the record
+    on_mismatch
+        Behavior on mismatch
     """
 
-    def __init__(self, layouts: list[Layout], stat_fields: tp.Iterable[str] = tuple()):
+    def __init__(
+        self,
+        layouts: list[Layout],
+        stat_fields: tp.Iterable[str] = tuple(),
+        on_mismatch: LayoutMismatchHandling = LayoutMismatchHandling.RAISE,
+    ):
         self.layouts = layouts
         self.stat_fields = list(stat_fields)
+        self.on_mismatch = on_mismatch
         if "name" not in self.stat_fields:
             self.stat_fields.insert(0, "name")
 
@@ -499,6 +527,18 @@ class LayoutVisitor(IVisitor):
         in a heterogeneous folder. When exploring a branch, some layouts may not
         match the branch semantic. These are pruned as soon as possible, but
         only for the current branch.
+
+        Warns
+        -----
+        UserWarning
+            In case the dir_node does not match any configured layout and
+            ``on_mismatch`` is set to ``WARN``
+
+        Raises
+        ------
+        LayoutMismatchError
+            In case the dir_node does not match any configured layout and
+            ``on_mismatch`` is set to ``RAISE``
 
         Returns
         -------
@@ -526,13 +566,7 @@ class LayoutVisitor(IVisitor):
                 record = result
 
         if not layouts_for_children:
-            # Outlier
-            # If nobody matches, we do not want to explore further
-            logger.debug(
-                "Folder %s does not match any layout, branch exploration stopped.",
-                dir_node.info["name"],
-            )
-            return VisitResult(False)
+            return self._on_mismatch(dir_node)
 
         if all(
             [
@@ -589,10 +623,29 @@ class LayoutVisitor(IVisitor):
                 # testing all layouts if the record has already been filtered
                 # out
                 return VisitResult(False)
-        return VisitResult(False)
+        return self._on_mismatch(file_node)
 
     def advance(self, result: VisitResult) -> LayoutVisitor:
-        return LayoutVisitor(result.surviving_layouts, self.stat_fields)
+        return LayoutVisitor(
+            result.surviving_layouts, self.stat_fields, self.on_mismatch
+        )
+
+    def _on_mismatch(self, node: INode) -> VisitResult:
+        # Outlier
+        if self.on_mismatch == LayoutMismatchHandling.IGNORE:
+            # If nobody matches, we do not want to explore further
+            logger.debug(
+                "Node %s does not match any layout, branch exploration stopped.",
+                node.info["name"],
+            )
+            return VisitResult(False)
+
+        msg = f"Node {node.info['name']} does not match any layout."
+        if self.on_mismatch == LayoutMismatchHandling.WARN:
+            warnings.warn(msg)
+            return VisitResult(False)
+        else:
+            raise LayoutMismatchError(msg)
 
 
 class NoLayoutVisitor(IVisitor):
@@ -675,6 +728,12 @@ def walk(node: INode, visitor: IVisitor) -> tp.Iterator[tp.Any]:
         File or folder node representing a path on the filesystem
     visitor
         Visitor that will process the note and produce some results
+
+    Raises
+    ------
+    VisitError
+        Raised by the visitor to signal something went wrong during a node
+        visit
 
     Yields
     ------
@@ -787,6 +846,7 @@ class FileSystemMetadataCollector:
         self,
         predicates: tuple[tp.Callable[[tuple[tp.Any, ...]], bool], ...] = (),
         stat_fields: tuple[str] = (),
+        enable_layouts: bool = True,
         **filters,
     ) -> pda.DataFrame:
         """
@@ -799,6 +859,11 @@ class FileSystemMetadataCollector:
             record. The info that can be retrieved is dependent on the file
             system implementation. Check the filesystem ``ls`` method to get the
             available stat fields
+        enable_layouts
+            Set to True to use the layouts for directory names parsing. This
+            will speed up the listing, but may raise an error if some directory
+            do not match the declared layouts. Set to False to scan the entire
+            directory and parse the files only
         **filters
             filters for files/folde selection over the fields declared in the
             layouts. Each field can accept a different filter value depending on
@@ -814,24 +879,38 @@ class FileSystemMetadataCollector:
         KeyError
             In case some of the requested stat_fields are not available for the
             current file system
+        LayoutMismatchError
+            In case ``enable_layouts`` is True and a mismatch between the
+            layouts and the actual files is detected
         """
         for layout in self.layouts:
             # TODO: We should also be able to give the predicates here -> need
             # to modify the Layout interface
             layout.set_filters(**filters)
-        visitor = LayoutVisitor(self.layouts, stat_fields)
+
         root_node = DirNode(self.path, {"name": self.path}, self.fs, 0)
 
-        records = walk(root_node, visitor)
+        if enable_layouts:
+            logger.debug("Using layouts to speed up listing")
+            visitor = LayoutVisitor(self.layouts, stat_fields)
+            records = walk(root_node, visitor)
+        else:
+            logger.debug("Full scan (not using layouts)")
+            layout = self.layouts[-1]
+            visitor = NoLayoutVisitor(
+                layout.conventions[-1], layout.filters[-1], stat_fields
+            )
+            records = walk(root_node, visitor)
+
         for predicate in predicates:
             records = filter(predicate, records)
-
         yield from records
 
     def to_dataframe(
         self,
         predicates: tuple[tp.Callable[[tuple[tp.Any, ...]], bool], ...] = (),
         stat_fields: tuple[str] = (),
+        enable_layouts: bool = True,
         **filters,
     ) -> pda.DataFrame:
         """
@@ -844,6 +923,11 @@ class FileSystemMetadataCollector:
             in the record. The info that can be retrieved is dependent on the
             file system implementation. Check the filesystem ``ls`` method to
             get the available stat fields
+        enable_layouts
+            Set to True to use the layouts for directory names parsing. This
+            will speed up the listing, but may raise an error if some directory
+            do not match the declared layouts. Set to False to scan the entire
+            directory and parse the files only
         **filters
             filters for files/folders selection over the fields declared in the
             file name convention and layout (optional). Each field can accept a
@@ -861,10 +945,13 @@ class FileSystemMetadataCollector:
         KeyError
             In case some of the requested stat_fields are not available for the
             current file system
+        VisitError
+            In case ``enable_layouts`` is True and a mismatch between the
+            layouts and the actual files is detected
         """
         file_convention = self.layouts[0].conventions[-1]
         return pda.DataFrame(
-            self.discover(predicates, stat_fields, **filters),
+            self.discover(predicates, stat_fields, enable_layouts, **filters),
             columns=[f.name for f in file_convention.fields]
             + ["filename"]
             + list(stat_fields),
