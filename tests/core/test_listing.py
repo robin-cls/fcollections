@@ -31,6 +31,7 @@ from fcollections.core._listing import (
     FileListingError,
     FileNode,
     LayoutVisitor,
+    NoLayoutVisitor,
     RecordFilter,
     StandardVisitor,
     VisitResult,
@@ -485,6 +486,91 @@ def test_walk_layout(
     for layout in layouts_v2:
         layout.set_filters(**filters)
     visitor = LayoutVisitor(layouts_v2)
+    root_str = (memory_root / "root").as_posix()
+    root_node = DirNode(root_str, {"name": root_str}, memory_fs, 0)
+
+    records = list(walk(root_node, visitor))
+    assert len(records) == count
+    assert all([record[record_index] == expected for record in records])
+
+
+@pytest.mark.parametrize(
+    "path, level",
+    [
+        ("root", 0),
+        ("root/RED", 1),
+        ("root/outlier", 1),
+    ],
+)
+def test_no_layout_visit_dir(
+    convention: FileNameConvention,
+    memory_fs: MemoryFileSystem,
+    memory_root: Path,
+    path: str,
+    level: int,
+):
+
+    path = memory_root / path
+    node = DirNode(path.name, {"name": path.as_posix()}, memory_fs, level)
+
+    visitor = NoLayoutVisitor(convention, None)
+    result = visitor.visit_dir(node)
+    assert result.explore_next is True
+    assert result.payload is None
+    assert result.surviving_layouts == []
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+        "root/HR_009/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+    ],
+)
+def test_no_layout_visit_file(
+    layouts_v2: list[Layout],
+    memory_root: Path,
+    path: str,
+    expected_record: tuple[tp.Any, ...],
+):
+    path = memory_root / path
+    node = FileNode(path.name, {"name": path.as_posix()}, 10)
+
+    layout = layouts_v2[-1]
+    layout.set_filters()
+
+    # Retrieve RecordFilter automatically built in the Layout
+    visitor = NoLayoutVisitor(layout.conventions[-1], layout.filters[-1])
+
+    result = visitor.visit_file(node)
+    assert not result.explore_next
+    assert result.surviving_layouts == []
+
+    assert result.payload == (*expected_record, (memory_root / path).as_posix())
+
+
+def test_no_layout_advance():
+    visitor = NoLayoutVisitor(None, None)
+    assert visitor is visitor.advance(None)
+
+
+@pytest.mark.parametrize(
+    "filters, record_index, expected, count",
+    [({"field_enum": "BLUE"}, 4, Color.BLUE, 4), ({"field_f": 5.6}, 1, 5.6, 2)],
+)
+def test_walk_no_layout(
+    layouts_v2: list[Layout],
+    filters: dict[str, tp.Any],
+    record_index: int,
+    expected: tp.Any,
+    count: int,
+    memory_root: Path,
+    memory_fs: MemoryFileSystem,
+):
+    layout = layouts_v2[-1]
+    layout.set_filters(**filters)
+
+    visitor = NoLayoutVisitor(layout.conventions[-1], layout.filters[-1])
     root_str = (memory_root / "root").as_posix()
     root_node = DirNode(root_str, {"name": root_str}, memory_fs, 0)
 

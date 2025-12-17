@@ -385,6 +385,11 @@ class IVisitor(abc.ABC):
     def visit_dir(self, dir_node: DirNode) -> VisitResult:
         """Visits a directory node.
 
+        Parameters
+        ----------
+        dir_node
+            The directory node to visit
+
         Returns
         -------
         :
@@ -394,6 +399,11 @@ class IVisitor(abc.ABC):
     @abc.abstractmethod
     def visit_file(self, file_node: DirNode) -> VisitResult:
         """Visits a file node.
+
+        Parameters
+        ----------
+        file_node
+            The file node to visit
 
         Returns
         -------
@@ -583,6 +593,72 @@ class LayoutVisitor(IVisitor):
 
     def advance(self, result: VisitResult) -> LayoutVisitor:
         return LayoutVisitor(result.surviving_layouts, self.stat_fields)
+
+
+class NoLayoutVisitor(IVisitor):
+    """Visitor with file node interpretation only.
+
+    The given convention will interpret the file nodes, the folders are not
+    interpreted.
+
+    Parameters
+    ----------
+    convention
+        Semantic definitions for interpreting a file node
+    record
+        Tester for the file node information
+    stat_fields
+        List of node metadata to add to the record
+    """
+
+    def __init__(
+        self,
+        convention: FileNameConvention,
+        record_filter: RecordFilter,
+        stat_fields: tp.Iterable[str] = tuple(),
+    ):
+        self.convention = convention
+        self.record_filter = record_filter
+        self.stat_fields = list(stat_fields)
+        if "name" not in self.stat_fields:
+            self.stat_fields.insert(0, "name")
+
+    def visit_dir(self, dir_node: DirNode) -> VisitResult:
+        """Visits a directory node.
+
+        Transparent visit of a directory node. The visit will not return any
+        information about the node. The metadata will always hint at continuing
+        the branch exploration.
+
+        Parameters
+        ----------
+        dir_node
+            The directory node to visit
+
+        Returns
+        -------
+        :
+            Node information and visit metadata.
+        """
+        return VisitResult(True)
+
+    def visit_file(self, file_node: DirNode) -> VisitResult:
+        logger.debug("Visiting file %s", file_node.info["name"])
+        # Advance/prune layouts for files
+        try:
+            record = self.convention.parse(self.convention.match(file_node.name))
+        except (DecodingError, AttributeError):
+            return VisitResult(False)
+
+        if self.record_filter.test(record):
+            # Files are leaf, no need to continue exploration
+            return VisitResult(
+                False, (*record, *[file_node.info[x] for x in self.stat_fields])
+            )
+        return VisitResult(False)
+
+    def advance(self, result: VisitResult) -> IVisitor:
+        return self
 
 
 def walk(node: INode, visitor: IVisitor) -> tp.Iterator[tp.Any]:
