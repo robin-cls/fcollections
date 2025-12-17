@@ -2,6 +2,7 @@ import re
 import socket
 import threading
 import typing as tp
+from contextlib import nullcontext
 from enum import Enum, auto
 from pathlib import Path
 
@@ -30,7 +31,10 @@ from fcollections.core._listing import (
     DirNode,
     FileListingError,
     FileNode,
+    LayoutMismatchError,
+    LayoutMismatchHandling,
     LayoutVisitor,
+    NoLayoutVisitor,
     RecordFilter,
     StandardVisitor,
     VisitResult,
@@ -61,9 +65,22 @@ def filepaths() -> list[str]:
         "root/HR_009/file_009_5.6_baz_20230207_RED_20221101_20230705_19500101.txt",
         "root/HR_010/file_010_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt",
         "root/HR_011/file_011_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+        "root/HR_011/KO.txt",
         "root/RED/dead_branch",
         "root/HR_011/dead_branch",
         "root/dead_branch",
+        "clean/RED/LR_000/file_000_.25_foo-bar_20230201_RED_20121101_20130705_20010101.txt",
+        "clean/BLUE/LR_001/file_001_.25_foo-bar_20230202_BLUE_20121101_20130705_20010101.txt",
+        "clean/GREEN/LR_002/file_002_.25_foo-bar_20230203_GREEN_20121101_20130705_20010101.txt",
+        "clean/RED/LR_003/file_003_1.75_foo-bar_20230204_RED_20121101_20130705_20010101.txt",
+        "clean/BLUE/LR_004/file_004_1.75_foo-bar_20230205_BLUE_20121101_20130705_20010101.txt",
+        "clean/GREEN/LR_005/file_005_1.75_foo-bar_20230206_GREEN_20121101_20130705_20010101.txt",
+        "clean/RED/HR_006/file_006_5.6_baz_20230207_RED_20221101_20230705_19500101.txt",
+        "clean/BLUE/HR_007/file_007_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt",
+        "clean/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+        "clean/HR_009/file_009_5.6_baz_20230207_RED_20221101_20230705_19500101.txt",
+        "clean/HR_010/file_010_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt",
+        "clean/HR_011/file_011_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
     ]
 
 
@@ -373,7 +390,6 @@ def layouts_v2(layout: Layout, convention: FileNameConvention) -> list[Layout]:
         ("root", 0, True, [0, 1]),
         ("root/RED", 1, True, [0]),
         ("root/HR_009", 1, True, [1]),
-        ("root/outlier", 1, False, []),
     ],
 )
 def test_layout_visit_dir(
@@ -394,6 +410,37 @@ def test_layout_visit_dir(
     assert result.explore_next == expected_explore_next
     assert result.payload is None
     assert result.surviving_layouts == [layouts_v2[ii] for ii in layouts_selection]
+
+
+@pytest.mark.parametrize(
+    "path, context, on_mismatch",
+    [
+        ("root/outlier", nullcontext(), LayoutMismatchHandling.IGNORE),
+        ("root/outlier", pytest.warns(UserWarning), LayoutMismatchHandling.WARN),
+        (
+            "root/outlier",
+            pytest.raises(LayoutMismatchError),
+            LayoutMismatchHandling.RAISE,
+        ),
+    ],
+)
+def test_layout_visit_dir_outlier(
+    layouts_v2: list[Layout],
+    memory_root: Path,
+    memory_fs: MemoryFileSystem,
+    context,
+    path: Path,
+    on_mismatch: LayoutMismatchHandling,
+):
+    path = memory_root / path
+    node = DirNode(path.name, {"name": path.as_posix()}, memory_fs, 1)
+    visitor = LayoutVisitor(layouts_v2, on_mismatch_directory=on_mismatch)
+
+    with context:
+        result = visitor.visit_dir(node)
+        assert result.payload is None
+        assert result.explore_next is False
+        assert result.surviving_layouts == []
 
 
 @pytest.mark.parametrize(
@@ -432,6 +479,37 @@ def test_layout_visit_file(
     assert result.payload == (*expected_record, (memory_root / path).as_posix())
 
 
+@pytest.mark.parametrize(
+    "path, context, on_mismatch",
+    [
+        ("file_KO.txt", nullcontext(), LayoutMismatchHandling.IGNORE),
+        ("file_KO.txt", pytest.warns(UserWarning), LayoutMismatchHandling.WARN),
+        (
+            "file_KO.txt",
+            pytest.raises(LayoutMismatchError),
+            LayoutMismatchHandling.RAISE,
+        ),
+    ],
+)
+def test_layout_visit_file_outlier(
+    layouts_v2: list[Layout],
+    memory_root: Path,
+    memory_fs: MemoryFileSystem,
+    context,
+    path: Path,
+    on_mismatch: LayoutMismatchHandling,
+):
+    path = memory_root / path
+    node = DirNode(path.name, {"name": path.as_posix()}, memory_fs, 1)
+    visitor = LayoutVisitor(layouts_v2, on_mismatch_file=on_mismatch)
+
+    with context:
+        result = visitor.visit_file(node)
+        assert result.payload is None
+        assert result.explore_next is False
+        assert result.surviving_layouts == []
+
+
 def test_layout_visit_file_stat_fields(
     layouts_v2: list[Layout],
     memory_root: Path,
@@ -458,10 +536,16 @@ def test_layout_visit_file_stat_fields(
 
 
 def test_layout_advance(layouts_v2: list[Layout]):
-    visitor = LayoutVisitor(layouts_v2)
+    visitor = LayoutVisitor(
+        layouts_v2,
+        on_mismatch_directory=LayoutMismatchHandling.WARN,
+        on_mismatch_file=LayoutMismatchHandling.RAISE,
+    )
     result = VisitResult(True, None, layouts_v2)
     new_visitor = visitor.advance(result)
     assert new_visitor is not visitor
+    assert new_visitor.on_mismatch_directory == visitor.on_mismatch_directory
+    assert new_visitor.on_mismatch_file == visitor.on_mismatch_file
 
     result = VisitResult(True, None, layouts_v2[:1])
     new_visitor = visitor.advance(result)
@@ -484,7 +568,9 @@ def test_walk_layout(
 ):
     for layout in layouts_v2:
         layout.set_filters(**filters)
-    visitor = LayoutVisitor(layouts_v2)
+    visitor = LayoutVisitor(
+        layouts_v2, on_mismatch_directory=LayoutMismatchHandling.IGNORE
+    )
     root_str = (memory_root / "root").as_posix()
     root_node = DirNode(root_str, {"name": root_str}, memory_fs, 0)
 
@@ -493,27 +579,121 @@ def test_walk_layout(
     assert all([record[record_index] == expected for record in records])
 
 
-@pytest.fixture
-def collector(
+@pytest.mark.parametrize(
+    "path, level",
+    [
+        ("root", 0),
+        ("root/RED", 1),
+        ("root/outlier", 1),
+    ],
+)
+def test_no_layout_visit_dir(
+    convention: FileNameConvention,
+    memory_fs: MemoryFileSystem,
+    memory_root: Path,
+    path: str,
+    level: int,
+):
+
+    path = memory_root / path
+    node = DirNode(path.name, {"name": path.as_posix()}, memory_fs, level)
+
+    visitor = NoLayoutVisitor(convention, None)
+    result = visitor.visit_dir(node)
+    assert result.explore_next is True
+    assert result.payload is None
+    assert result.surviving_layouts == []
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+        "root/HR_009/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+    ],
+)
+def test_no_layout_visit_file(
+    layouts_v2: list[Layout],
+    memory_root: Path,
+    path: str,
+    expected_record: tuple[tp.Any, ...],
+):
+    path = memory_root / path
+    node = FileNode(path.name, {"name": path.as_posix()}, 10)
+
+    layout = layouts_v2[-1]
+    layout.set_filters()
+
+    # Retrieve RecordFilter automatically built in the Layout
+    visitor = NoLayoutVisitor(layout.conventions[-1], layout.filters[-1])
+
+    result = visitor.visit_file(node)
+    assert not result.explore_next
+    assert result.surviving_layouts == []
+
+    assert result.payload == (*expected_record, (memory_root / path).as_posix())
+
+
+def test_no_layout_advance():
+    visitor = NoLayoutVisitor(None, None)
+    assert visitor is visitor.advance(None)
+
+
+@pytest.mark.parametrize(
+    "filters, record_index, expected, count",
+    [({"field_enum": "BLUE"}, 4, Color.BLUE, 4), ({"field_f": 5.6}, 1, 5.6, 2)],
+)
+def test_walk_no_layout(
+    layouts_v2: list[Layout],
+    filters: dict[str, tp.Any],
+    record_index: int,
+    expected: tp.Any,
+    count: int,
+    memory_root: Path,
+    memory_fs: MemoryFileSystem,
+):
+    layout = layouts_v2[-1]
+    layout.set_filters(**filters)
+
+    visitor = NoLayoutVisitor(layout.conventions[-1], layout.filters[-1])
+    root_str = (memory_root / "root").as_posix()
+    root_node = DirNode(root_str, {"name": root_str}, memory_fs, 0)
+
+    records = list(walk(root_node, visitor))
+    assert len(records) == count
+    assert all([record[record_index] == expected for record in records])
+
+
+@pytest.fixture(
+    scope="session",
+    params=[("clean", True), ("root", False)],
+    ids=["clean_layout", "bad_layout"],
+)
+def collector_status(
     memory_fs: MemoryFileSystem,
     layouts_v2: list[Layout],
     memory_root: Path,
-) -> FileSystemMetadataCollector:
-    return FileSystemMetadataCollector(
-        (memory_root / "root").as_posix(), layouts_v2, memory_fs
+    request: pytest.FixtureRequest,
+) -> tuple[FileSystemMetadataCollector, bool]:
+    return (
+        FileSystemMetadataCollector(
+            (memory_root / request.param[0]).as_posix(), layouts_v2, memory_fs
+        ),
+        request.param[1],
     )
 
 
 @pytest.mark.parametrize(
-    "filters, expected_selection",
+    "filters, expected_selection_clean, expected_selection_bad",
     [
-        (dict(field_enum=Color.RED, field_f=1.75), [3]),
+        (dict(field_enum=Color.RED, field_f=1.75), [3], [3]),
         (
             dict(
                 field_period=Period(
                     np.datetime64("2011-01-01"), np.datetime64("2013-12-31")
                 )
             ),
+            list(range(6)),
             list(range(6)),
         ),
         (
@@ -524,15 +704,21 @@ def collector(
                 field_s="baz",
             ),
             [6, 7, 9, 10],
+            [6, 7, 9, 10],
         ),
-        (dict(field_f=0.25, field_date_delta=np.datetime64("1950-01-01")), []),
-        (dict(resolution="HR", field_i=list(range(0, 10, 2))), [6, 8]),
+        (dict(field_f=0.25, field_date_delta=np.datetime64("1950-01-01")), [], []),
+        (
+            dict(resolution="HR", field_i=list(range(0, 10, 2))),
+            [6, 8],
+            list(range(0, 10, 2)),
+        ),
         (
             dict(
                 predicates=[
                     lambda record: record[0] % 2 == 0 and record[2] == "foo-bar"
                 ]
             ),
+            [0, 2, 4],
             [0, 2, 4],
         ),
         (
@@ -543,25 +729,43 @@ def collector(
                 ]
             ),
             [0, 2, 4],
+            [0, 2, 4],
         ),
     ],
 )
 def test_collector(
-    collector: FileSystemMetadataCollector,
+    collector_status: tuple[FileSystemMetadataCollector, bool],
     filters: dict[str, tp.Any],
-    expected_selection: list[int],
+    expected_selection_clean: list[int],
+    expected_selection_bad: list[int],
 ):
-    df = collector.to_dataframe(**filters)
-    assert np.array_equal(sorted(df["field_i"].values), expected_selection)
+
+    collector, enable_layouts = collector_status
+    df = collector.to_dataframe(enable_layouts=enable_layouts, **filters)
+
+    # In case we gave layout filters not in the file name, it is possible to
+    # have a difference between the LayoutVisitor and NoLayoutVisitor walk
+    if enable_layouts:
+        assert np.array_equal(sorted(df["field_i"].values), expected_selection_clean)
+    else:
+        assert np.array_equal(sorted(df["field_i"].values), expected_selection_bad)
     assert "filename" in df.columns
 
 
-def test_collector_stat_fields(collector: FileSystemMetadataCollector):
-    df = collector.to_dataframe(stat_fields=("size", "type"))
+def test_collector_stat_fields(
+    collector_status: tuple[FileSystemMetadataCollector, bool],
+):
+    collector, enable_layouts = collector_status
+    df = collector.to_dataframe(
+        enable_layouts=enable_layouts, stat_fields=("size", "type")
+    )
     assert np.array_equal(df["size"].values, np.full(12, fill_value=0))
     assert np.array_equal(df["type"].values, np.full(12, fill_value="file"))
 
 
-def test_collector_stat_fields_error(collector: FileSystemMetadataCollector):
+def test_collector_stat_fields_error(
+    collector_status: tuple[FileSystemMetadataCollector, bool],
+):
     with pytest.raises(KeyError):
-        collector.to_dataframe(stat_fields=("foo",))
+        collector, enable_layouts = collector_status
+        collector.to_dataframe(enable_layouts=enable_layouts, stat_fields=("foo",))

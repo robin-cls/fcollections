@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import sys
 import typing as tp
+from pathlib import Path
 
 import dask
 import fsspec.implementations.memory as fs_mem
@@ -16,10 +17,12 @@ from fcollections.core import (
     FileNameConvention,
     FileNameFieldDatetime,
     FileNameFieldInteger,
+    FileNameFieldString,
     FilesDatabase,
     IFilesReader,
     IPredicate,
     Layout,
+    LayoutMismatchError,
     NotExistingPathError,
     SubsetsUnmixer,
 )
@@ -75,7 +78,18 @@ class ReaderStub(IFilesReader):
 
 
 class FilesDatabaseTestNoUnmixer(FilesDatabase):
-    layouts = [Layout([FileNameConventionTest()])]
+    layouts = [
+        Layout([FileNameConventionTest()]),
+        Layout(
+            [
+                FileNameConvention(
+                    regex=re.compile(r"^(?P<b_string>foo|bar)$"),
+                    fields=[FileNameFieldString("b_string")],
+                ),
+                FileNameConventionTest(),
+            ]
+        ),
+    ]
     reader = ReaderStub()
 
 
@@ -262,9 +276,9 @@ def test_unmixing_callable(df_with_duplicates: pda.DataFrame):
 @pytest.fixture(scope="session")
 def db_with_files() -> FilesDatabaseTest:
     fs = fs_mem.MemoryFileSystem()
-    fs.touch("a_file_001_20250101.nc")
-    fs.touch("a_file_002_20250101.nc")
-    db = FilesDatabaseTest(path="/", fs=fs)
+    fs.touch("flat/a_file_001_20250101.nc")
+    fs.touch("flat/a_file_002_20250101.nc")
+    db = FilesDatabaseTest(path="/flat", fs=fs)
     return db
 
 
@@ -301,8 +315,8 @@ def test_metadata_wrong_filters(tmp_path: Path):
 def test_list_files(db_with_files: FilesDatabaseTest):
     expected = pda.DataFrame(
         [
-            (np.datetime64("2025-01-01"), 1, "/a_file_001_20250101.nc"),
-            (np.datetime64("2025-01-01"), 2, "/a_file_002_20250101.nc"),
+            (np.datetime64("2025-01-01"), 1, "/flat/a_file_001_20250101.nc"),
+            (np.datetime64("2025-01-01"), 2, "/flat/a_file_002_20250101.nc"),
         ],
         columns=["time", "a_number", "filename"],
     )
@@ -311,7 +325,7 @@ def test_list_files(db_with_files: FilesDatabaseTest):
 
 def test_list_files_filter(db_with_files: FilesDatabaseTest):
     expected = pda.DataFrame(
-        [(np.datetime64("2025-01-01"), 2, "/a_file_002_20250101.nc")],
+        [(np.datetime64("2025-01-01"), 2, "/flat/a_file_002_20250101.nc")],
         columns=["time", "a_number", "filename"],
     )
     assert expected.equals(db_with_files.list_files(a_number=2))
@@ -325,11 +339,11 @@ def test_list_files_wrong_filter(db_with_files: FilesDatabaseTest):
 @pytest.fixture(scope="session")
 def db_predicate() -> FilesDatabaseTestPredicate:
     fs = fs_mem.MemoryFileSystem()
-    fs.touch("a_file_001_20250101.nc")
-    fs.touch("a_file_002_20250101.nc")
-    fs.touch("a_file_003_20250101.nc")
-    fs.touch("a_file_004_20250101.nc")
-    db = FilesDatabaseTestPredicate(path="/", fs=fs)
+    fs.touch("predicate/a_file_001_20250101.nc")
+    fs.touch("predicate/a_file_002_20250101.nc")
+    fs.touch("predicate/a_file_003_20250101.nc")
+    fs.touch("predicate/a_file_004_20250101.nc")
+    db = FilesDatabaseTestPredicate(path="/predicate", fs=fs)
     return db
 
 
@@ -338,8 +352,8 @@ def test_list_files_predicate(
 ):
     expected = pda.DataFrame(
         [
-            (np.datetime64("2025-01-01"), 2, "/a_file_002_20250101.nc"),
-            (np.datetime64("2025-01-01"), 4, "/a_file_004_20250101.nc"),
+            (np.datetime64("2025-01-01"), 2, "/predicate/a_file_002_20250101.nc"),
+            (np.datetime64("2025-01-01"), 4, "/predicate/a_file_004_20250101.nc"),
         ],
         columns=["time", "a_number", "filename"],
     )
@@ -412,8 +426,8 @@ class FilesDatabaseTestBadDim(FilesDatabaseTest):
 @pytest.fixture(scope="session")
 def db_bad_dim() -> FilesDatabaseTestBadDim:
     fs = fs_mem.MemoryFileSystem()
-    fs.touch("a_file_001_20250101.nc")
-    db = FilesDatabaseTestBadDim(path="/", fs=fs)
+    fs.touch("bad_dim/a_file_001_20250101.nc")
+    db = FilesDatabaseTestBadDim(path="/bad_dim", fs=fs)
     return db
 
 
@@ -430,8 +444,9 @@ class FilesDatabaseTestGoodDim(FilesDatabaseTest):
 @pytest.fixture(scope="session")
 def db_good_dim() -> FilesDatabaseTestGoodDim:
     fs = fs_mem.MemoryFileSystem()
-    fs.touch("a_file_001_20250101.nc")
-    db = FilesDatabaseTestGoodDim(path="/", fs=fs)
+    fs.touch("good_dim/a_file_001_20250101.nc")
+    fs.touch("good_dim/a_file_002_20250101.nc")
+    db = FilesDatabaseTestGoodDim(path="/good_dim", fs=fs)
     return db
 
 
@@ -441,6 +456,47 @@ def test_query_metadata_injection(db_good_dim: FilesDatabaseTestGoodDim):
     assert set(ds.variables) == {"a", "b", "a_number"}
     assert ds.sizes == {"dim_0": 2, "dim_1": 1}
     assert all(ds.a_number.values == 2)
+
+
+@pytest.fixture(scope="session")
+def db_with_files_bad_layout() -> FilesDatabaseTest:
+    fs = fs_mem.MemoryFileSystem()
+    fs.touch("baz/foo/a_file_001_20250101.nc")
+    fs.touch("baz/bar/a_file_002_20250101.nc")
+    db = FilesDatabaseTest(path="/", fs=fs)
+    return db
+
+
+def test_query_bad_layout(db_with_files_bad_layout: FilesDatabaseTest):
+    with pytest.raises(LayoutMismatchError):
+        db_with_files_bad_layout.query()
+
+
+def test_query_bad_layout_fallback(db_with_files_bad_layout: FilesDatabaseTest):
+    fs = db_with_files_bad_layout.fs
+    fixed_path = Path(db_with_files_bad_layout.path) / "baz"
+    db = FilesDatabaseTest(fixed_path, fs, enable_layouts=True)
+    reference = db.query(a_number=1)
+    assert reference is not None
+
+    db = FilesDatabaseTest(db_with_files_bad_layout.path, fs, enable_layouts=False)
+    actual = db.query(a_number=1)
+
+    xr.testing.assert_equal(reference, actual)
+
+
+def test_query_layout_parameter_not_known(db_with_files_bad_layout: FilesDatabaseTest):
+    fs = db_with_files_bad_layout.fs
+    fixed_path = Path(db_with_files_bad_layout.path) / "baz"
+    db = FilesDatabaseTest(fixed_path, fs, enable_layouts=True)
+
+    # Low level interface knows of layout filters
+    df = db.discoverer.to_dataframe(b_string="foo")
+    assert len(df) > 0
+
+    # But higher level interface does not (yet)
+    with pytest.raises(ValueError):
+        db.query(b_string="foo")
 
 
 def test_map_no_dask(monkeypatch: pytest.MonkeyPatch, db_with_files: FilesDatabaseTest):

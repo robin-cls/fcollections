@@ -301,11 +301,11 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         File system hosting the files. Can be used to access local or remote
         (S3, FTP, ...) file systems. Underlying readers may not be compatible
         with all file systems implementations
-    layout
-        Layout of the subfolders. Useful to extract information and have an
-        efficient file system scanning. The recommended layout can mismatch the
-        current files organization, in which case the user can build its own or
-        set this parameter to None
+    enable_layouts
+        Set to True to use the layouts for directory names parsing. This will
+        speed up the listing, but may raise an error if some directory does not
+        match the pre-configured layouts. Set to False to scan the entire
+        directory and parse the files only
 
     Attributes
     ----------
@@ -315,7 +315,13 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
     """
 
     layouts: list[Layout] | None = None
-    """Semantic describing how the files are organized."""
+    """Semantic describing how the files are organized.
+
+    Useful to extract
+    information and have an efficient file system scanning. The pre-configured
+    layouts can mismatch the current files organization, in which case the user
+    can build its own or set ``enable_layouts`` to False.
+    """
     reader: IFilesReader | None = None
     """Files reader."""
     unmixer: SubsetsUnmixer | None = None
@@ -348,10 +354,12 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         self,
         path: str,
         fs: AbstractFileSystem = LocalFileSystem(follow_symlinks=True),
+        enable_layouts: bool = True,
     ):
         self.path = path
         self.fs = fs
         self.discoverer = FileSystemMetadataCollector(path, self.layouts, fs)
+        self.enable_layouts = enable_layouts
 
         def raise_if_unknown_keys(
             obj: Deduplicator | SubsetsUnmixer | dict[str, tuple[str, ...]] | None,
@@ -431,6 +439,9 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         ValueError
             In case unmix is True, an error is raised if one unique and
             homogeneous subset cannot be extracted from the files metadata table
+        LayoutMismatchError
+            In case ``enable_layouts`` is True and a mismatch between the
+            layouts and the actual files is detected
 
         Returns
         -------
@@ -478,6 +489,7 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         df = self.discoverer.to_dataframe(
             predicates=predicates,
             stat_fields=stat_fields,
+            enable_layouts=self.enable_layouts,
             **{k: kwargs[k] for k in kwargs if k in self.listing_parameters},
         )
 
@@ -503,6 +515,15 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
 
     def _query(self, **kwargs) -> xr_t.Dataset | None:
         """Query a dataset by reading selected files in file system.
+
+        Raises
+        ------
+        LayoutMismatchError
+            In case ``enable_layouts`` is True and a mismatch between the
+            layouts and the actual files is detected
+        ValueError
+            In case if one unique and homogeneous subset could not be extracted
+            from the files metadata table
 
         Returns
         -------
@@ -568,6 +589,9 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
 
         Raises
         ------
+        LayoutMismatchError
+            In case ``enable_layouts`` is True and a mismatch between the
+            layouts and the actual files is detected
         ValueError
             In case if one unique and homogeneous subset could not be extracted
             from the files metadata table
@@ -601,6 +625,9 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         ------
         NotImplementedError
             In case dask is not available
+        LayoutMismatchError
+            In case ``enable_layouts`` is True and a mismatch between the
+            layouts and the actual files is detected
         """
         try:
             import dask.bag.core
