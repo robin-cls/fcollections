@@ -151,20 +151,6 @@ class Layout(ILayout):
 
         self.filters: list[RecordFilter] = filters
 
-    def test(self, level: int, node: str) -> bool:
-        convention, record_filter = self.conventions[level], self.filters[level]
-        try:
-            record = convention.parse(convention.match(node))
-        except (DecodingError, AttributeError):
-            msg = (
-                f"Actual node {node} did not match the expected convention "
-                f"{convention.regex}. This is probably due to a mismatch "
-                "between the layout and the actual tree structure"
-            )
-            warnings.warn(msg)
-            return False
-        return record_filter.test(record)
-
     def parse_node(self, level: int, node: str) -> tuple[tp.Any, ...]:
         """Interprets a node name.
 

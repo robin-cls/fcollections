@@ -320,6 +320,27 @@ def test_layout_generate_bad_field(layout: Layout):
         layout.generate("root", field_enum=Color.RED, field_i="12", resolution="HR")
 
 
+@pytest.mark.parametrize(
+    "filters, node, expected_record, test_result",
+    [
+        ({"field_i": [1, 2, 3]}, "LR_001", ("LR", 1), True),
+        ({"field_i": [1, 2, 3]}, "LR_004", ("LR", 4), False),
+        ({"field_X": "unknown_in_layout"}, "LR_004", ("LR", 4), True),
+    ],
+)
+def test_layout_parse_test(
+    layout: Layout,
+    filters: dict[str, int | str],
+    node: str,
+    expected_record: tuple[str, int],
+    test_result: bool,
+):
+    layout.set_filters(**filters)
+    record = layout.parse_node(1, node)
+    assert record == expected_record
+    assert layout.test_record(1, record) is test_result
+
+
 @pytest.fixture(scope="session")
 def convention():
     regex = re.compile(
