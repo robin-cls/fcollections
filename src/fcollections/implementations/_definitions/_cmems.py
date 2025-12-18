@@ -10,7 +10,10 @@ from fcollections.core import (
     FileNameConvention,
     FileNameField,
     FileNameFieldEnum,
+    FileNameFieldFloat,
+    FileNameFieldInteger,
     FileNameFieldString,
+    Layout,
 )
 
 
@@ -220,6 +223,26 @@ class Sensors(Enum):
     MULTI = auto()
 
 
+class FileNameFieldEnumOptional(FileNameFieldEnum):
+
+    def decode(self, input_string: str) -> type[Enum]:
+        if input_string.startswith("-"):
+            return super().decode(input_string[1:])
+
+    def encode(self, enum: type[Enum] | None) -> str:
+        return "" if enum is None else f"-{super().encode(enum)}"
+
+
+class FileNameFieldStringOptional(FileNameFieldString):
+
+    def decode(self, input_string: str) -> str:
+        if input_string.startswith("_"):
+            return super().decode(input_string[1:])
+
+    def encode(self, value: str | None) -> str:
+        return "" if value is None else f"_{super().encode(value)}"
+
+
 _ENUM_FIELDS = [
     FileNameFieldEnum(
         "origin",
@@ -233,7 +256,7 @@ _ENUM_FIELDS = [
         case_type_decoded=CaseType.upper,
         case_type_encoded=CaseType.lower,
     ),
-    FileNameFieldEnum(
+    FileNameFieldEnumOptional(
         "pc",
         ProductClass,
         case_type_decoded=CaseType.upper,
@@ -248,7 +271,7 @@ _ENUM_FIELDS = [
         case_type_decoded=CaseType.upper,
         case_type_encoded=CaseType.lower,
     ),
-    FileNameFieldEnum(
+    FileNameFieldEnumOptional(
         "variable",
         Variable,
         case_type_decoded=CaseType.upper,
@@ -260,7 +283,7 @@ _ENUM_FIELDS = [
         case_type_decoded=CaseType.upper,
         case_type_encoded=CaseType.lower,
     ),
-    FileNameFieldEnum(
+    FileNameFieldEnumOptional(
         "typology",
         Typology,
         case_type_decoded=CaseType.upper,
@@ -268,14 +291,43 @@ _ENUM_FIELDS = [
     ),
 ]
 
-temporal_resolution_field = FileNameFieldString("temporal_resolution")
 
-MODEL = "(?P<origin>{0})_(?P<group>{1})(-(?P<pc>{2})){{0,1}}_(?P<area>{3})_(?P<thematic>{4})(-(?P<variable>{5})){{0,1}}(_(?P<type>{6})){{0,1}}_{8}_(?P<temporal_resolution>irr|P.*)(-(?P<typology>{7})){{0,1}}"
+# TODO: We need a proper time delta field
+class _FileNameFieldIntegerAdapter(FileNameFieldInteger):
+    """Specific field for sampling definition in file versus folder names.
+
+    In folder names, a sampling of 5Hz is given as PT0.2S, whereas it is
+    given as 5Hz in the file name. This field converts PT0.2S -> 5 to
+    have the same folder and file fields.
+    """
+
+    def decode(self, input_string: str) -> int:
+        f = FileNameFieldFloat("dummy")
+        return int(1 / f.decode(input_string[2:-1]))
+
+    def encode(self, data: int) -> str:
+        invert = 1 / data
+        return f"PT{str(invert) if invert % 1 != 0 else str(int(invert))}S"
+
+
+_MODEL_FRAGMENTS = [
+    "(?P<origin>{0})",
+    "_(?P<group>{1})(?P<pc>{2}){{0,1}}",
+    "_(?P<area>{3})",
+    "_(?P<thematic>{4})(?P<variable>{5}){{0,1}}",
+    "(_(?P<type>{6})){{0,1}}",
+    "_{8}",
+    "_(?P<temporal_resolution>irr|PT.*S)(?P<typology>{7}){{0,1}}",
+    "(?P<version>_\\d{{6}}){{0,1}}",
+]
+
+MODEL = "".join(_MODEL_FRAGMENTS)
 
 
 def build_convention(
     complementary: str = "(?P<complementary>.*)",
     complementary_fields: list[FileNameField] | None = None,
+    complementary_generation_string: str = "na",
 ) -> FileNameConvention:
 
     if complementary_fields is None:
@@ -286,12 +338,44 @@ def build_convention(
     )
     regex = re.compile(regex_string)
 
+    generation_fragments = [
+        "{origin!f}",
+        "_{group!f}{pc!f}",
+        "_{area!f}",
+        "_{thematic!f}{variable!f}",
+        "_{type!f}",
+        "_" + complementary_generation_string,
+        "_{temporal_resolution!f}{typology!f}",
+        "{version!f}",  # Optional fragment
+    ]
+
     return FileNameConvention(
         regex,
         [
             *_ENUM_FIELDS[:7],
             *complementary_fields,
-            temporal_resolution_field,
+            _FileNameFieldIntegerAdapter("temporal_resolution"),
             _ENUM_FIELDS[-1],
+            FileNameFieldStringOptional("version"),
         ],
+        "".join(generation_fragments),
+    )
+
+
+def build_layout(
+    dataset_id_convention: FileNameConvention, filename_convention: FileNameConvention
+) -> Layout:
+    return Layout(
+        [
+            dataset_id_convention,
+            FileNameConvention(
+                re.compile(r"(?P<year>\d{4})"), [FileNameFieldInteger("year")], "{year}"
+            ),
+            FileNameConvention(
+                re.compile(r"(?P<month>\d{2})"),
+                [FileNameFieldInteger("month")],
+                "{month:0>2d}",
+            ),
+            filename_convention,
+        ]
     )

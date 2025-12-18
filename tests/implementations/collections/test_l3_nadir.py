@@ -9,10 +9,20 @@ from fsspec.implementations.local import LocalFileSystem
 
 from fcollections.core import FileSystemMetadataCollector
 from fcollections.implementations import (
-    CMEMS_NADIR_SSHA_LAYOUT,
+    CMEMS_SSHA_L3_LAYOUT,
     Delay,
     NetcdfFilesDatabaseL3Nadir,
     ProductLevel,
+)
+from fcollections.implementations._definitions._cmems import (
+    Area,
+    DataType,
+    Group,
+    Origin,
+    ProductClass,
+    Thematic,
+    Typology,
+    Variable,
 )
 from fcollections.missions import MissionsPhases
 from fcollections.time import Period
@@ -154,89 +164,230 @@ def test_validate(l3_nadir_dir: Path, parsing_result: pda.DataFrame):
     assert parsing_result.iloc[[2, 5]].reset_index(drop=True).equals(df_result)
 
 
-@pytest.mark.parametrize(
-    "mission, delay, expected",
-    [
-        (
-            MissionsPhases.j3g,
-            Delay.NRT,
-            "/SEALEVEL_GLO_PHY_L3_NRT_008_044/cmems_obs-sl_glo_phy-ssh_nrt_j3g-l3-duacs_PT1S_202411/1995/05/nrt_global_j3g_phy_L3_1hz_19950501_20240101",
-        ),
-        # Test the _ -> - conversion in layout generation
-        (
-            MissionsPhases.s6a_hr,
-            Delay.MY,
-            "/SEALEVEL_GLO_PHY_L3_NRT_008_044/cmems_obs-sl_glo_phy-ssh_my_s6a-hr-l3-duacs_PT1S_202411/1995/05/my_global_s6a_hr_phy_L3_1hz_19950501_20240101",
-        ),
-    ],
-)
-def test_generate_layout(mission: MissionsPhases, delay: Delay, expected: str):
-    period = Period(
-        np.datetime64("1995-05-01"), np.datetime64("1995-05-02"), include_stop=False
+class TestLayout:
+
+    @pytest.mark.parametrize(
+        "dataset_id",
+        [
+            # SEALEVEL_GLO_PHY_L3_MY_008_062
+            "cmems_obs-sl_glo_phy-ssh_my_c2-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_c2n-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_en-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_enn-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_e1-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_e1g-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_e2-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_g2-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_h2a-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_h2ag-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_h2b-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_j1-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_j1g-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_j1n-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_j2-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_j2n-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_j2g-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_j3-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_j3n-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_j3g-l3-duacs_PT1S-i",
+            "cmems_obs-sl_glo_phy-ssh_my_al-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_alg-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_s3a-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_s3b-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_s6a-lr-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_swon-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_swonc-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_tp-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_my_tpn-l3-duacs_PT1S",
+            # SEALEVEL_GLO_PHY_L3_NRT_008_044
+            "cmems_obs-sl_glo_phy-ssh_nrt_c2n-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_nrt_h2b-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_nrt_h2b-l3-duacs_PT0.2S",
+            "cmems_obs-sl_glo_phy-ssh_nrt_j3n-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_nrt_j3n-l3-duacs_PT0.2S",
+            "cmems_obs-sl_glo_phy-ssh_nrt_j3g-l3-duacs_PT1S-i",
+            "cmems_obs-sl_glo_phy-ssh_nrt_j3g-l3-duacs_PT0.2S-i",
+            "cmems_obs-sl_glo_phy-ssh_nrt_al-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_nrt_s3a-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_nrt_s3a-l3-duacs_PT0.2S",
+            "cmems_obs-sl_glo_phy-ssh_nrt_s3b-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_nrt_s3b-l3-duacs_PT0.2S",
+            "cmems_obs-sl_glo_phy-ssh_nrt_s6a-hr-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_nrt_s6a-hr-l3-duacs_PT0.2S",
+            "cmems_obs-sl_glo_phy-ssh_nrt_swon-l3-duacs_PT1S",
+            "cmems_obs-sl_glo_phy-ssh_nrt_swon-l3-duacs_PT0.2S"
+            # Output of get original files
+            "cmems_obs-sl_glo_phy-ssh_nrt_j3g-l3-duacs_PT0.2S-i_202411",
+        ],
     )
-    path = CMEMS_NADIR_SSHA_LAYOUT.generate(
-        "/SEALEVEL_GLO_PHY_L3_NRT_008_044",
-        year=1995,
-        month=5,
-        resolution=1,
-        delay=delay,
-        version="202411",
-        mission=mission,
-        product_level=ProductLevel.L3,
-        production_date=np.datetime64("2024-01-01"),
-        time=period,
+    def test_dataset_id_regex(self, dataset_id: str):
+        """Check dataset id convention building."""
+        actual = CMEMS_SSHA_L3_LAYOUT.conventions[0].match(dataset_id)
+        assert actual is not None
+
+    @pytest.mark.parametrize(
+        "expected, version, mission, data_type, resolution, typology",
+        [
+            (
+                "cmems_obs-sl_glo_phy-ssh_my_e2-l3-duacs_PT0.2S_202411",
+                "202411",
+                MissionsPhases.e2,
+                DataType.MY,
+                5,
+                None,
+            ),
+            (
+                "cmems_obs-sl_glo_phy-ssh_nrt_c2n-l3-duacs_PT1S-i",
+                None,
+                MissionsPhases.c2n,
+                DataType.NRT,
+                1,
+                Typology.I,
+            ),
+            (
+                "cmems_obs-sl_glo_phy-ssh_nrt_s3b-l3-duacs_PT1S",
+                None,
+                MissionsPhases.s3b,
+                DataType.NRT,
+                1,
+                None,
+            ),
+            (
+                "cmems_obs-sl_glo_phy-ssh_nrt_j3g-l3-duacs_PT0.2S-i_202411",
+                "202411",
+                MissionsPhases.j3g,
+                DataType.NRT,
+                5,
+                Typology.I,
+            ),
+        ],
     )
+    def test_dataset_id_generate(
+        self,
+        expected: str,
+        version: str | None,
+        resolution: float,
+        mission: MissionsPhases,
+        data_type: DataType,
+        typology: Typology | None,
+    ):
+        dataset_id = CMEMS_SSHA_L3_LAYOUT.conventions[0].generate(
+            resolution=resolution,
+            mission=mission,
+            origin=Origin.CMEMS,
+            group=Group.OBS,
+            pc=ProductClass.SL,
+            area=Area.GLO,
+            thematic=Thematic.PHY,
+            variable=Variable.SSH,
+            type=data_type,
+            temporal_resolution=resolution,
+            typology=typology,
+            version=version,
+        )
 
-    assert path == expected
+        assert dataset_id == expected
 
-
-@pytest.mark.parametrize(
-    "filters, expected",
-    [
-        ({"version": "202512"}, [1, 5]),
-        ({"year": 2025}, [1]),
-        ({"month": 6}, [0, 2, 3, 4, 5, 6]),
-    ],
-)
-def test_layout_l3(
-    l3_nadir_dir_layout: Path,
-    expected: list[int],
-    filters: dict[str, tp.Any],
-    l3_nadir_files: list[str],
-):
-    """Test layout filters not integrated in the database."""
-    collector = FileSystemMetadataCollector(
-        l3_nadir_dir_layout, NetcdfFilesDatabaseL3Nadir.layouts, LocalFileSystem()
+    @pytest.mark.parametrize(
+        "mission, delay, expected",
+        [
+            (
+                MissionsPhases.j3g,
+                Delay.NRT,
+                "/SEALEVEL_GLO_PHY_L3_NRT_008_044/cmems_obs-sl_glo_phy-ssh_nrt_j3g-l3-duacs_PT1S_202411/1995/05/nrt_global_j3g_phy_L3_1hz_19950501_20240101",
+            ),
+            # Test the _ -> - conversion in layout generation
+            (
+                MissionsPhases.s6a_hr,
+                Delay.MY,
+                "/SEALEVEL_GLO_PHY_L3_NRT_008_044/cmems_obs-sl_glo_phy-ssh_my_s6a-hr-l3-duacs_PT1S_202411/1995/05/my_global_s6a_hr_phy_L3_1hz_19950501_20240101",
+            ),
+        ],
     )
+    def test_generate_layout(
+        self, mission: MissionsPhases, delay: Delay, expected: str
+    ):
+        period = Period(
+            np.datetime64("1995-05-01"), np.datetime64("1995-05-02"), include_stop=False
+        )
+        path = CMEMS_SSHA_L3_LAYOUT.generate(
+            "/SEALEVEL_GLO_PHY_L3_NRT_008_044",
+            year=1995,
+            month=5,
+            resolution=1,
+            temporal_resolution=1,
+            delay=delay,
+            version="202411",
+            mission=mission,
+            origin=Origin.CMEMS,
+            group=Group.OBS,
+            pc=ProductClass.SL,
+            area=Area.GLO,
+            thematic=Thematic.PHY,
+            variable=Variable.SSH,
+            typology=None,
+            type=delay,
+            product_level=ProductLevel.L3,
+            production_date=np.datetime64("2024-01-01"),
+            time=period,
+        )
 
-    actual = {os.path.basename(f) for f in collector.to_dataframe(**filters).filename}
-    expected = {os.path.basename(l3_nadir_files[ii]) for ii in expected}
-    assert len(expected) > 0
-    assert expected == actual
+        assert path == expected
 
+    @pytest.mark.parametrize(
+        "filters, expected",
+        [
+            ({"version": "202512"}, [1, 5]),
+            ({"year": 2025}, [1]),
+            ({"month": 6}, [0, 2, 3, 4, 5, 6]),
+        ],
+    )
+    def test_layout_l3(
+        self,
+        l3_nadir_dir_layout: Path,
+        expected: list[int],
+        filters: dict[str, tp.Any],
+        l3_nadir_files: list[str],
+    ):
+        """Test layout filters not integrated in the database."""
+        collector = FileSystemMetadataCollector(
+            l3_nadir_dir_layout, NetcdfFilesDatabaseL3Nadir.layouts, LocalFileSystem()
+        )
 
-@pytest.mark.parametrize(
-    "filters",
-    [
-        {},
-        {"delay": "NRT"},
-        {"mission": "s3a"},
-        {"resolution": 5},
-    ],
-)
-def test_list_l3_layout(
-    l3_nadir_dir_layout: Path, l3_nadir_dir_no_layout: Path, filters: dict[str, tp.Any]
-):
-    db = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir_layout)
-    db_no_layout = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir_no_layout)
+        actual = {
+            os.path.basename(f) for f in collector.to_dataframe(**filters).filename
+        }
+        expected = {os.path.basename(l3_nadir_files[ii]) for ii in expected}
+        assert len(expected) > 0
+        assert expected == actual
 
-    # Duplicates in the sort key (unmix set to False allows this). Need to
-    # test the tuples because dataframe order is not ensured
-    actual = db.list_files(**filters).drop(columns=["filename"])
-    expected = db_no_layout.list_files(**filters).drop(columns=["filename"])
+    @pytest.mark.parametrize(
+        "filters",
+        [
+            {},
+            {"delay": "NRT"},
+            {"mission": "s3a"},
+            {"resolution": 5},
+        ],
+    )
+    def test_list_l3_layout(
+        self,
+        l3_nadir_dir_layout: Path,
+        l3_nadir_dir_no_layout: Path,
+        filters: dict[str, tp.Any],
+    ):
+        db = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir_layout)
+        db_no_layout = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir_no_layout)
 
-    assert len(expected) > 0
-    assert set(map(tuple, actual.to_numpy())) == set(map(tuple, expected.to_numpy()))
+        # Duplicates in the sort key (unmix set to False allows this). Need to
+        # test the tuples because dataframe order is not ensured
+        actual = db.list_files(**filters).drop(columns=["filename"])
+        expected = db_no_layout.list_files(**filters).drop(columns=["filename"])
+
+        assert len(expected) > 0
+        assert set(map(tuple, actual.to_numpy())) == set(
+            map(tuple, expected.to_numpy())
+        )
 
 
 @pytest.mark.with_geo_packages

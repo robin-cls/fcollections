@@ -55,7 +55,7 @@ from ._l3_lr_ww import (
     FileNameConventionSwotL3WW,
     NetcdfFilesDatabaseSwotLRWW,
 )
-from ._l3_nadir import CMEMS_NADIR_SSHA_LAYOUT as _CMEMS_NADIR_SSHA_LAYOUT
+from ._l3_nadir import CMEMS_SSHA_L3_LAYOUT as _CMEMS_SSHA_L3_LAYOUT
 from ._l3_nadir import (
     BasicNetcdfFilesDatabaseL3Nadir,
     FileNameConventionL3Nadir,
@@ -106,7 +106,7 @@ AVISO_L3_LR_WINDWAVE_LAYOUT: Layout = _AVISO_L3_LR_WINDWAVE_LAYOUT
 #: Layout on Aviso FTP, Aviso TDS for the L4 Sea Level Anomaly experimental product including karin measurements
 AVISO_L4_SWOT_LAYOUT: Layout = _AVISO_L4_SWOT_LAYOUT
 #: Layout on CMEMS for the Level 3 SSHA nadir products
-CMEMS_NADIR_SSHA_LAYOUT: Layout = _CMEMS_NADIR_SSHA_LAYOUT
+CMEMS_SSHA_L3_LAYOUT: Layout = _CMEMS_SSHA_L3_LAYOUT
 #: Layout on CMEMS for the Level 4 SSHA gridded products
 CMEMS_L4_SSHA_LAYOUT: Layout = _CMEMS_L4_SSHA_LAYOUT
 
@@ -171,7 +171,7 @@ __all__ = [
     "AVISO_L3_LR_SSH_LAYOUT_V3",
     "AVISO_L3_LR_WINDWAVE_LAYOUT",
     "AVISO_L4_SWOT_LAYOUT",
-    "CMEMS_NADIR_SSHA_LAYOUT",
+    "CMEMS_SSHA_L3_LAYOUT",
     "CMEMS_L4_SSHA_LAYOUT",
     "SwotReaderL2LRSSH",
     "SwotReaderL3LRSSH",

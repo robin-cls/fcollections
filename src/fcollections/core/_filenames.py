@@ -356,9 +356,12 @@ class FileNameConvention:
 
     def generate(self, **kwargs):
         if self.generation_string is None:
-            raise NotImplementedError(
-                "The current file name convention is only configured for parsing. Please specify a 'generation_string' to enable file name generation"
+            msg = (
+                "The current file name convention is only configured for "
+                "parsing. Please specify a 'generation_string' to enable "
+                "file name generation"
             )
+            raise NotImplementedError(msg)
         try:
             return self._formatter.format(self.generation_string, **kwargs)
         except KeyError as exc:

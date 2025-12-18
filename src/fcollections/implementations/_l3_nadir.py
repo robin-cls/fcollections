@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -12,9 +11,7 @@ from fcollections.core import (
     FileNameFieldDateDelta,
     FileNameFieldDatetime,
     FileNameFieldEnum,
-    FileNameFieldFloat,
     FileNameFieldInteger,
-    FileNameFieldString,
     FilesDatabase,
     Layout,
     OpenMfDataset,
@@ -23,11 +20,14 @@ from fcollections.core import (
 )
 from fcollections.missions import MissionsPhases
 
-from ._definitions import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS, Delay, ProductLevel
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
+from ._definitions import (
+    DESCRIPTIONS,
+    XARRAY_TEMPORAL_NETCDFS,
+    Delay,
+    ProductLevel,
+    build_convention,
+    build_layout,
+)
 
 L3_NADIR_PATTERN = re.compile(
     r"(?P<delay>.*)_global_(?P<mission>.*)_(hr_){0,1}phy_(aux_){0,1}(?P<product_level>l3)_(?P<resolution>\d+)*(hz_)*(?P<time>\d{8})_(?P<production_date>\d{8}).nc"
@@ -88,23 +88,6 @@ class FileNameConventionL3Nadir(FileNameConvention):
         )
 
 
-class _FileNameFieldIntegerAdapter(FileNameFieldInteger):
-    """Specific field for sampling definition in file versus folder names.
-
-    In folder names, a sampling of 5Hz is given as PT0.2S, whereas it is
-    given as 5Hz in the file name. This field converts PT0.2S -> 5 to
-    have the same folder and file fields.
-    """
-
-    def decode(self, input_string: str) -> int:
-        f = FileNameFieldFloat("dummy")
-        return int(1 / f.decode(input_string))
-
-    def encode(self, data: int) -> str:
-        invert = 1 / data
-        return str(invert) if invert % 1 != 0 else str(int(invert))
-
-
 class _FileNameFieldEnumAdapter(FileNameFieldEnum):
     """Missions names in CMEMS folder versus file names differ.
 
@@ -128,43 +111,22 @@ class _FileNameFieldEnumAdapter(FileNameFieldEnum):
         return super().encode(data).replace("_", "-")
 
 
-CMEMS_NADIR_SSHA_LAYOUT = Layout(
-    [
-        FileNameConvention(
-            re.compile(
-                r"cmems_obs-sl_glo_phy-ssh_(?P<delay>nrt|my)_(?P<mission>.*)-l3-duacs_PT(?P<resolution>.*)S(-i){0,1}_(?P<version>.*)"
-            ),
-            [
-                FileNameFieldEnum(
-                    "delay",
-                    Delay,
-                    case_type_decoded=CaseType.upper,
-                    case_type_encoded=CaseType.lower,
-                ),
-                _FileNameFieldEnumAdapter("mission", MissionsPhases),
-                _FileNameFieldIntegerAdapter("resolution"),
-                FileNameFieldString("version"),
-            ],
-            "cmems_obs-sl_glo_phy-ssh_{delay!f}_{mission!f}-l3-duacs_PT{resolution!f}S_{version}",
-        ),
-        FileNameConvention(
-            re.compile(r"(?P<year>\d{4})"), [FileNameFieldInteger("year")], "{year}"
-        ),
-        FileNameConvention(
-            re.compile(r"(?P<month>\d{2})"),
-            [FileNameFieldInteger("month")],
-            "{month:0>2d}",
-        ),
-        FileNameConventionL3Nadir(),
-    ]
+_enum_field = _FileNameFieldEnumAdapter("mission", MissionsPhases)
+
+_DATASET_ID_CONVENTION = build_convention(
+    complementary=f"(?P<mission>{'|'.join(_enum_field.choices())})-l3-duacs",
+    complementary_fields=[_enum_field],
+    complementary_generation_string="{mission!f}-l3-duacs",
 )
+
+CMEMS_SSHA_L3_LAYOUT = build_layout(_DATASET_ID_CONVENTION, FileNameConventionL3Nadir())
 
 
 class BasicNetcdfFilesDatabaseL3Nadir(FilesDatabase, PeriodMixin):
     """Database mapping to select and read L3 nadir Netcdf files in a local
     file system."""
 
-    layouts = [CMEMS_NADIR_SSHA_LAYOUT, Layout([FileNameConventionL3Nadir()])]
+    layouts = [CMEMS_SSHA_L3_LAYOUT, Layout([FileNameConventionL3Nadir()])]
     deduplicator = Deduplicator(unique=("time",), auto_pick_last=("production_date",))
     unmixer = SubsetsUnmixer(partition_keys=["mission", "resolution"])
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)

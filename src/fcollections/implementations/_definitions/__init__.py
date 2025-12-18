@@ -1,6 +1,8 @@
 import re
 from enum import Enum, auto
 
+from ._cmems import build_convention, build_layout
+
 # This generic message can be used as a warning if the optional module import
 # fails. In which case the implementations should define a FilesDatabase with
 # less functionalities
