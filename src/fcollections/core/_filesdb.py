@@ -308,7 +308,7 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         directory and parse the files only
     follow_symlinks
         If False, symbolic links will be marked as file nodes instead of
-        directory node, and will not be explored
+        directory nodes, and will not be explored
 
     Attributes
     ----------

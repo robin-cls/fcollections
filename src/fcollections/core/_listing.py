@@ -297,7 +297,7 @@ class DirNode(INode):
         File system hosting the node. Useful to list the children
     follow_symlinks
         If False, symbolic links will be marked as file nodes instead of
-        directory node, and will not be explored
+        directory nodes, and will not be explored
     """
 
     def __init__(
@@ -861,7 +861,7 @@ class FileSystemMetadataCollector:
         File system hosting the paths
     follow_symlinks
         If False, symbolic links will be marked as file nodes instead of
-        directory node, and will not be explored
+        directory nodes, and will not be explored
     """
 
     def __init__(
