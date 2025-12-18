@@ -8,6 +8,7 @@ import os
 import typing as tp
 import warnings
 from enum import Enum, auto
+from pathlib import Path
 
 import fsspec
 import pandas as pda
@@ -294,11 +295,22 @@ class DirNode(INode):
         Nesting level of the current node with respect to the tree root
     fs
         File system hosting the node. Useful to list the children
+    follow_symlinks
+        If False, symbolic links will be marked as file nodes instead of
+        directory node, and will not be explored
     """
 
-    def __init__(self, name, info, fs: fsspec.AbstractFileSystem, level: int):
+    def __init__(
+        self,
+        name,
+        info,
+        fs: fsspec.AbstractFileSystem,
+        level: int,
+        follow_symlinks: bool = False,
+    ):
         super().__init__(name, info, level)
         self.fs = fs
+        self.follow_symlinks = follow_symlinks
         self._children: list[INode] | None = None
 
     def accept(self, visitor: LayoutVisitor) -> VisitResult:
@@ -329,7 +341,10 @@ class DirNode(INode):
             name = pathname.rsplit("/", 1)[-1]
             if info["type"] == "directory" and pathname != path:
                 # do not include "self" path
-                yield DirNode(name, info, self.fs, self.level + 1)
+                yield DirNode(name, info, self.fs, self.level + 1, self.follow_symlinks)
+            elif self.follow_symlinks and "islink" in info and info["islink"]:
+                info["name"] = Path(info["name"]).resolve().as_posix()
+                yield DirNode(name, info, self.fs, self.level + 1, self.follow_symlinks)
             elif pathname == path:
                 # file-like with same name as give path
                 # consequence of virtual directories in cloud object stores
