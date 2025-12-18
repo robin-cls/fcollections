@@ -20,6 +20,7 @@ from ._definitions import (
 )
 from ._era5 import FileNameConventionERA5, NetcdfFilesDatabaseERA5
 from ._gridded_sla import AVISO_L4_SWOT_LAYOUT as _AVISO_L4_SWOT_LAYOUT
+from ._gridded_sla import CMEMS_L4_SSHA_LAYOUT as _CMEMS_L4_SSHA_LAYOUT
 from ._gridded_sla import (
     BasicNetcdfFilesDatabaseGriddedSLA,
     FileNameConventionGriddedSLA,
@@ -106,6 +107,8 @@ AVISO_L3_LR_WINDWAVE_LAYOUT: Layout = _AVISO_L3_LR_WINDWAVE_LAYOUT
 AVISO_L4_SWOT_LAYOUT: Layout = _AVISO_L4_SWOT_LAYOUT
 #: Layout on CMEMS for the Level 3 SSHA nadir products
 CMEMS_NADIR_SSHA_LAYOUT: Layout = _CMEMS_NADIR_SSHA_LAYOUT
+#: Layout on CMEMS for the Level 4 SSHA gridded products
+CMEMS_L4_SSHA_LAYOUT: Layout = _CMEMS_L4_SSHA_LAYOUT
 
 __all__ = [
     "BasicNetcdfFilesDatabaseDAC",
@@ -169,6 +172,7 @@ __all__ = [
     "AVISO_L3_LR_WINDWAVE_LAYOUT",
     "AVISO_L4_SWOT_LAYOUT",
     "CMEMS_NADIR_SSHA_LAYOUT",
+    "CMEMS_L4_SSHA_LAYOUT",
     "SwotReaderL2LRSSH",
     "SwotReaderL3LRSSH",
     "SwotReaderL3WW",

@@ -22,15 +22,16 @@ if tp.TYPE_CHECKING:
     from pathlib import Path
 
 
-class TestConventionInternal:
+class TestConvention:
 
-    convention = FileNameConventionGriddedSLAInternal()
+    convention = FileNameConventionGriddedSLA()
+    convention_internal = FileNameConventionGriddedSLAInternal()
 
     def test_internal_convention_generate(self):
 
         reference = "msla_oer_merged_h_27029.nc"
         period = Period(np.datetime64("2024-01-02"), np.datetime64("2024-01-03"))
-        actual = self.convention.generate(date=period)
+        actual = self.convention_internal.generate(date=period)
         assert actual == reference
 
     def test_internal_convention_parse(self):
@@ -42,13 +43,10 @@ class TestConventionInternal:
                 include_stop=False,
             ),
         )
-        actual = self.convention.parse(self.convention.match(filename))
+        actual = self.convention_internal.parse(
+            self.convention_internal.match(filename)
+        )
         assert actual == reference
-
-
-class TestConvention:
-
-    convention = FileNameConventionGriddedSLA()
 
     def test_convention_generate(self):
 
@@ -91,9 +89,9 @@ class TestListing:
         ],
     )
     def test_list_gridded_sla(
-        self, l4_ssha_dir: Path, params: dict[str, tp.Any], result_size: int
+        self, l4_ssha_dir_no_layout: Path, params: dict[str, tp.Any], result_size: int
     ):
-        db = NetcdfFilesDatabaseGriddedSLA(l4_ssha_dir)
+        db = NetcdfFilesDatabaseGriddedSLA(l4_ssha_dir_no_layout)
 
         files = db.list_files(**params)
         assert files["filename"].size == result_size
@@ -101,23 +99,23 @@ class TestListing:
 
 class TestQuery:
 
-    def test_bad_kwargs(self, l4_ssha_dir: Path):
-        db = NetcdfFilesDatabaseGriddedSLA(l4_ssha_dir)
+    def test_bad_kwargs(self, l4_ssha_dir_no_layout: Path):
+        db = NetcdfFilesDatabaseGriddedSLA(l4_ssha_dir_no_layout)
         with pytest.raises(ValueError):
             db.list_files(bad_arg="bad_arg")
         with pytest.raises(ValueError):
             db.query(bad_arg="bad_arg")
 
     @pytest.mark.without_geo_packages
-    def test_query_bbox_disabled(self, l4_ssha_dir: Path):
-        db = NetcdfFilesDatabaseGriddedSLA(l4_ssha_dir)
+    def test_query_bbox_disabled(self, l4_ssha_dir_no_layout: Path):
+        db = NetcdfFilesDatabaseGriddedSLA(l4_ssha_dir_no_layout)
         with pytest.raises(ValueError):
             db.query(bbox=(-180, -90, 180, 90))
 
 
 class TestLayout:
 
-    def test_generate_layout(self):
+    def test_generate_layout_aviso(self):
         path = AVISO_L4_SWOT_LAYOUT.generate(
             "/duacs-experimental/dt-phy-grids/l4_karin_nadir",
             method="miost",
@@ -140,22 +138,61 @@ class TestLayout:
     @pytest.mark.parametrize(
         "filters, expected",
         [
-            ({}, [0, 1, 2, 3]),
-            ({"version": "0.3"}, [2, 3]),
+            ({}, [0, 1, 2, 3, 4]),
+            ({"version": "0.3"}, [2, 3, 4]),
             ({"method": "4dvarnet"}, [2]),
             ({"phase": "science"}, [0, 1]),
+            ({"time": np.datetime64("2023-07-29")}, [1, 2, 3, 4]),
+            ({"production_date": np.datetime64("2024-09-13")}, [2]),
+            ({"delay": Delay.NRT}, [4]),
         ],
     )
-    def test_list_layout(
+    def test_list_layout_aviso(
         self,
-        l4_ssha_dir_layout: Path,
+        l4_ssha_dir_layout_aviso: Path,
         l4_ssha_files: list[str],
         expected: list[int],
         filters: dict[str, tp.Any],
     ):
 
         collector = FileSystemMetadataCollector(
-            l4_ssha_dir_layout, NetcdfFilesDatabaseGriddedSLA.layouts, LocalFileSystem()
+            l4_ssha_dir_layout_aviso,
+            NetcdfFilesDatabaseGriddedSLA.layouts,
+            LocalFileSystem(),
+        )
+
+        actual = {
+            os.path.basename(f) for f in collector.to_dataframe(**filters).filename
+        }
+        expected = {os.path.basename(l4_ssha_files[ii]) for ii in expected}
+        assert len(expected) > 0
+        assert expected == actual
+
+    @pytest.mark.parametrize(
+        "filters, expected",
+        [
+            ({}, [8, 9, 10, 11]),
+            ({"delay": Delay.DT}, [0]),
+            ({"delay_nrt_my": Delay.MY}, [0]),
+            ({"version": "202411"}, [11]),
+            ({"time": np.datetime64("2023-07-28")}, [8, 11]),
+            ({"production_date": np.datetime64("2024-09-13")}, [10]),
+            ({"spatial_resolution": 0.5}, [10]),
+            ({"temporal_resolution": 0.5}, [9]),
+        ],
+    )
+    def test_list_layout_cmems(
+        self,
+        l4_ssha_dir_layout_cmems: Path,
+        l4_ssha_files: list[str],
+        expected: list[int],
+        filters: dict[str, tp.Any],
+    ):
+
+        collector = FileSystemMetadataCollector(
+            l4_ssha_dir_layout_cmems,
+            NetcdfFilesDatabaseGriddedSLA.layouts,
+            LocalFileSystem(),
         )
 
         actual = {

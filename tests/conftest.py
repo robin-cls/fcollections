@@ -50,9 +50,10 @@ from fixtures._l4_ssha import (
     l4_ssha_dataset_180_180,
     l4_ssha_dataset_reversed_lat,
     l4_ssha_dir,
-    l4_ssha_dir_layout,
+    l4_ssha_dir_layout_aviso,
+    l4_ssha_dir_layout_cmems,
+    l4_ssha_dir_no_layout,
     l4_ssha_files,
-    l4_ssha_files_2,
 )
 from fixtures._mur import mur_dir, mur_files
 from fixtures._nadir import (

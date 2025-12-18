@@ -11,6 +11,8 @@ from fcollections.core import (
     FileNameFieldDateJulianDelta,
     FileNameFieldDatetime,
     FileNameFieldEnum,
+    FileNameFieldFloat,
+    FileNameFieldInteger,
     FileNameFieldString,
     FilesDatabase,
     Layout,
@@ -22,7 +24,7 @@ from fcollections.missions import MissionsPhases
 from ._definitions import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS, Delay
 
 GRIDDED_SLA_PATTERN = re.compile(
-    r"(?P<delay>.*)_(.*)_allsat_phy_l4_(?P<time>(\d{8})|(\d{8}T\d{2}))_(?P<production_date>\d{8}).nc"
+    r"(?P<delay>nrt|dt)_(.*)_allsat_phy_l4_(?P<time>(\d{8})|(\d{8}T\d{2}))_(?P<production_date>\d{8}).nc"
 )
 
 INTERNAL_SLA_PATTERN = re.compile(r"msla_oer_merged_h_(?P<date>\d{5}).nc")
@@ -61,19 +63,53 @@ class FileNameConventionGriddedSLA(FileNameConvention):
 AVISO_L4_SWOT_LAYOUT = Layout(
     [
         FileNameConvention(
-            re.compile(r"v(?P<version>.*)"),
+            re.compile(r"^v(?P<version>.*)$"),
             [FileNameFieldString("version")],
             "v{version!f}",
         ),
         FileNameConvention(
-            re.compile(r"(?P<method>4dvarnet|4dvarqg|miost)"),
+            re.compile(r"^(?P<method>4dvarnet|4dvarqg|miost)$"),
             [FileNameFieldString("method")],
             "{method}",
         ),
         FileNameConvention(
-            re.compile(r"(?P<phase>.*)"),
+            re.compile(r"^(?P<phase>calval|science)$"),
             [FileNameFieldEnum("phase", MissionsPhases)],
             "{phase!f}",
+        ),
+        FileNameConventionGriddedSLA(),
+    ]
+)
+
+CMEMS_L4_SSHA_LAYOUT = Layout(
+    [
+        FileNameConvention(
+            re.compile(
+                r"^cmems_obs-sl_glo_phy-ssh_(?P<delay_nrt_my>nrt|my)_allsat-l4-duacs-(?P<spatial_resolution>.*)deg_P(?P<temporal_resolution>.*)D_(?P<version>\d{6})"
+            ),
+            [
+                FileNameFieldEnum(
+                    "delay_nrt_my",
+                    Delay,
+                    case_type_decoded=CaseType.upper,
+                    case_type_encoded=CaseType.lower,
+                    description=DESCRIPTIONS["delay"],
+                ),
+                FileNameFieldFloat("spatial_resolution"),
+                FileNameFieldFloat("temporal_resolution"),
+                FileNameFieldString("version"),
+            ],
+            "cmems_obs-sl_glo_phy-ssh_{delay_nrt_my!f}_allsat-l4-duacs-{spatial_resolution!f}deg_P{temporal_resolution!f}D_{version}",
+        ),
+        FileNameConvention(
+            re.compile(r"^(?P<year>\d{4})$"),
+            [FileNameFieldInteger("year")],
+            "{year!f}",
+        ),
+        FileNameConvention(
+            re.compile(r"^(?P<month>\d{2})$"),
+            [FileNameFieldInteger("month")],
+            "{month:>02d}",
         ),
         FileNameConventionGriddedSLA(),
     ]
@@ -84,7 +120,11 @@ class BasicNetcdfFilesDatabaseGriddedSLA(FilesDatabase, PeriodMixin):
     """Database mapping to select and read gridded Sla Netcdf files in a local
     file system."""
 
-    layouts = [Layout([FileNameConventionGriddedSLA()]), AVISO_L4_SWOT_LAYOUT]
+    layouts = [
+        Layout([FileNameConventionGriddedSLA()]),
+        AVISO_L4_SWOT_LAYOUT,
+        CMEMS_L4_SSHA_LAYOUT,
+    ]
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"
 
