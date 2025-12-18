@@ -165,12 +165,32 @@ def local_fs() -> LocalFileSystem:
     return LocalFileSystem()
 
 
+@pytest.fixture(scope="session")
+def links() -> list[tuple[str]]:
+    return [
+        ("links/RED", "../clean/RED"),
+        ("links/BLUE", "../clean/BLUE"),
+        ("links/GREEN", "../clean/GREEN"),
+        ("links/HR_009", "../clean/HR_009"),
+        ("links/HR_010", "../clean/HR_010"),
+        ("links/HR_011", "../clean/HR_011"),
+    ]
+
+
 @pytest.fixture
-def local_root(tmp_path_factory: pytest.TempPathFactory, filepaths: list[str]) -> Path:
+def local_root(
+    tmp_path_factory: pytest.TempPathFactory,
+    filepaths: list[str],
+    links: list[tuple[str]],
+) -> Path:
     my_fc = tmp_path_factory.mktemp("myfc")
     for filepath in filepaths:
         (my_fc / filepath).parent.mkdir(parents=True, exist_ok=True)
         (my_fc / filepath).touch()
+
+    for destination, source in links:
+        (my_fc / destination).parent.mkdir(parents=True, exist_ok=True)
+        (my_fc / destination).symlink_to(source)
     return my_fc
 
 
@@ -232,6 +252,19 @@ def test_walk(
     nodes_reimpl = list(walk(root_node, StandardVisitor()))
     nodes_fsspec = list(fs.walk(root_str))
     assert nodes_reimpl == nodes_fsspec
+
+
+def test_walk_no_symlinks(local_root: Path, local_fs: LocalFileSystem):
+    """By defaults, file system should not follow symlinks."""
+    root_str = (local_root / "clean").as_posix()
+    root_node = DirNode(root_str, {"name": root_str}, local_fs, 0)
+    result = list(walk(root_node, StandardVisitor()))
+    assert len(result) > 1
+
+    root_str = (local_root / "links").as_posix()
+    root_node = DirNode(root_str, {"name": root_str}, local_fs, 0)
+    result = list(walk(root_node, StandardVisitor()))
+    assert len(result) == 1
 
 
 class Color(Enum):
@@ -662,6 +695,24 @@ def test_walk_no_layout(
     records = list(walk(root_node, visitor))
     assert len(records) == count
     assert all([record[record_index] == expected for record in records])
+
+
+def test_walk_no_layout_symlinks(
+    layouts_v2: list[Layout], local_fs: LocalFileSystem, local_root: Path
+):
+    layout = layouts_v2[-1]
+    layout.set_filters()
+
+    visitor = NoLayoutVisitor(layout.conventions[-1], layout.filters[-1])
+    root_str = (local_root / "clean").as_posix()
+    link_str = (local_root / "links").as_posix()
+
+    root_node = DirNode(root_str, {"name": root_str}, local_fs, 0)
+    link_node = DirNode(link_str, {"name": link_str}, local_fs, 0, follow_symlinks=True)
+
+    records_clean = set(walk(root_node, visitor))
+    records_link = set(walk(link_node, visitor))
+    assert records_clean == records_link
 
 
 @pytest.fixture(

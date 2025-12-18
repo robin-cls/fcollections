@@ -306,6 +306,9 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         speed up the listing, but may raise an error if some directory does not
         match the pre-configured layouts. Set to False to scan the entire
         directory and parse the files only
+    follow_symlinks
+        If False, symbolic links will be marked as file nodes instead of
+        directory nodes, and will not be explored
 
     Attributes
     ----------
@@ -353,12 +356,15 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
     def __init__(
         self,
         path: str,
-        fs: AbstractFileSystem = LocalFileSystem(follow_symlinks=True),
+        fs: AbstractFileSystem = LocalFileSystem(),
         enable_layouts: bool = True,
+        follow_symlinks: bool = False,
     ):
         self.path = path
         self.fs = fs
-        self.discoverer = FileSystemMetadataCollector(path, self.layouts, fs)
+        self.discoverer = FileSystemMetadataCollector(
+            path, self.layouts, fs, follow_symlinks=follow_symlinks
+        )
         self.enable_layouts = enable_layouts
 
         def raise_if_unknown_keys(

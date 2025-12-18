@@ -82,3 +82,22 @@ NetcdfFilesDatabaseSwotLRL2.layouts.append(layout)
 # Branch pruning will be enabled again
 db = NetcdfFilesDatabaseSwotLRL2('/mypath/with/custom_nesting', enable_layouts=True)
 ```
+
+## Follow symlinks
+
+By default, symbolic links on a file system will not be resolved. This means
+queries might return empty results if your target collection contains symbolic
+links.
+
+Enabling the ``follow_symlinks`` parameter causes symbolic links to be resolved.
+Note that, although rare, they may form cyclic graphs, which are not handled
+correctly by the current implementation.
+
+```python
+db = NetcdfFilesDatabaseSwotLRL2('/mypath/with/symlinks', follow_symlinks=True)
+```
+
+:::{note}
+The functionality has been tested for POSIX-compliant
+{class}`LocalFileSystem <fsspec.implementations.local.LocalFileSystem>` only
+:::
