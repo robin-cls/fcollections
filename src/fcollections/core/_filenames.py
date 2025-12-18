@@ -202,6 +202,9 @@ class FileNameFieldEnum(FileNameField, EnumTester, EnumCodec):
         EnumTester.__init__(self, enum_cls)
         EnumCodec.__init__(self, enum_cls, case_type_decoded, case_type_encoded)
 
+    def choices(self) -> list[str]:
+        return [self.encode(x) for x in self.enum_cls]
+
 
 class FileNameFieldPeriod(FileNameField, PeriodTester, PeriodCodec):
     """Period value.
