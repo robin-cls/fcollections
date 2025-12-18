@@ -859,12 +859,22 @@ class FileSystemMetadataCollector:
         file nodes
     fs
         File system hosting the paths
+    follow_symlinks
+        If False, symbolic links will be marked as file nodes instead of
+        directory node, and will not be explored
     """
 
-    def __init__(self, path: str, layouts: list[Layout], fs: fsspec.AbstractFileSystem):
+    def __init__(
+        self,
+        path: str,
+        layouts: list[Layout],
+        fs: fsspec.AbstractFileSystem,
+        follow_symlinks: bool = False,
+    ):
         self.path = path
         self.layouts = layouts
         self.fs = fs
+        self.follow_symlinks = follow_symlinks
 
     def discover(
         self,
@@ -912,7 +922,13 @@ class FileSystemMetadataCollector:
             # to modify the Layout interface
             layout.set_filters(**filters)
 
-        root_node = DirNode(self.path, {"name": self.path}, self.fs, 0)
+        root_node = DirNode(
+            self.path,
+            {"name": self.path},
+            self.fs,
+            0,
+            follow_symlinks=self.follow_symlinks,
+        )
 
         if enable_layouts:
             logger.debug("Using layouts to speed up listing")
