@@ -14,6 +14,7 @@ from ._conversions import (
     numpy_to_fractional_julian_day,
     numpy_to_julian_day,
 )
+from ._iso8601 import ISODuration, parse_iso8601_duration
 from ._operations import (
     fuse_successive_periods,
     periods_envelop,
@@ -36,6 +37,8 @@ __all__ = [
     "CNES_DATE_REFERENCE",
     "MILLENNIUM_DATE_REFERENCE",
     "times_holes",
+    "parse_iso8601_duration",
+    "ISODuration",
 ]
 
 
