@@ -70,7 +70,7 @@ from fixtures._nadir import (
 from fixtures._ohc import ohc_dir, ohc_files
 from fixtures._s1aowi import s1aowi_dir, s1aowi_files
 from fixtures._sst import sst_dir, sst_files
-from fixtures._swh import swh_dir, swh_files
+from fixtures._swh import swh_dir, swh_dir_flat, swh_dir_layout, swh_files
 from fixtures._ww import (
     _extended_metadata,
     _light_metadata,

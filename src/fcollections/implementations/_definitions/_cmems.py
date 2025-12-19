@@ -195,6 +195,7 @@ class Sensors(Enum):
     J1N = auto()
     J2 = auto()
     J2G = auto()
+    J3 = auto()
     J3G = auto()
     AL = auto()
     ALG = auto()
@@ -214,6 +215,7 @@ class Sensors(Enum):
     # WAVE_GLO_PHY_SWH_L3_NRT_014_001
     CFO = auto()
     H2C = auto()
+    SWOT = auto()
     # SST_GLO_SST_L3S_NRT_OBSERVATIONS_010_010
     GIR = auto()
     PIR = auto()
@@ -326,6 +328,7 @@ _FIELDS = [
         Sensors,
         case_type_decoded=CaseType.upper,
         case_type_encoded=CaseType.lower,
+        underscore_encoded=False,
     ),
 ]
 

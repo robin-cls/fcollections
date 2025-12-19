@@ -195,12 +195,15 @@ class FileNameFieldEnum(FileNameField, EnumTester, EnumCodec):
         enum_cls: type[Enum],
         case_type_decoded: CaseType | None = None,
         case_type_encoded: CaseType | None = None,
+        underscore_encoded: bool = True,
         default: type[Enum] | None = None,
         description: str = "",
     ):
         super().__init__(name, default, description)
         EnumTester.__init__(self, enum_cls)
-        EnumCodec.__init__(self, enum_cls, case_type_decoded, case_type_encoded)
+        EnumCodec.__init__(
+            self, enum_cls, case_type_decoded, case_type_encoded, underscore_encoded
+        )
 
     def choices(self) -> list[str]:
         return [self.encode(x) for x in self.enum_cls]

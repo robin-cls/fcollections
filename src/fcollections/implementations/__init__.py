@@ -89,6 +89,7 @@ from ._sst import (
     FileNameConventionSST,
     NetcdfFilesDatabaseSST,
 )
+from ._swh import CMEMS_SWH_LAYOUT as _CMEMS_SWH_LAYOUT
 from ._swh import (
     BasicNetcdfFilesDatabaseSWH,
     FileNameConventionSWH,
@@ -112,6 +113,8 @@ CMEMS_SSHA_L3_LAYOUT: Layout = _CMEMS_SSHA_L3_LAYOUT
 CMEMS_L4_SSHA_LAYOUT: Layout = _CMEMS_L4_SSHA_LAYOUT
 #: Layout on CMEMS for the Level 3 and 4 ocean colour products
 CMEMS_OC_LAYOUT: Layout = _CMEMS_OC_LAYOUT
+#: Layout on CMEMS for the WAVE_GLO_PHY_SWH_L3_NRT_014_001 producct
+CMEMS_SWH_LAYOUT: Layout = _CMEMS_SWH_LAYOUT
 
 __all__ = [
     "BasicNetcdfFilesDatabaseDAC",
@@ -177,6 +180,7 @@ __all__ = [
     "CMEMS_SSHA_L3_LAYOUT",
     "CMEMS_L4_SSHA_LAYOUT",
     "CMEMS_OC_LAYOUT",
+    "CMEMS_SWH_LAYOUT",
     "SwotReaderL2LRSSH",
     "SwotReaderL3LRSSH",
     "SwotReaderL3WW",

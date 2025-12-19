@@ -129,6 +129,9 @@ class EnumCodec(ICodec[type[Enum]]):
     case_type_encoded
         Case transformation applied to the enumeration label. Set to None to
         keep the enumeration label case.
+    underscore_encoded
+        Whether to keep the underscore in the encoded value. If set to False,
+        ``_`` will be replace by ``-`` before dump
     """
 
     def __init__(
@@ -136,6 +139,7 @@ class EnumCodec(ICodec[type[Enum]]):
         enum_cls: type[Enum],
         case_type_decoded: CaseType | None = None,
         case_type_encoded: CaseType | None = None,
+        underscore_encoded: bool = True,
     ):
         self.enum_cls = enum_cls
         if isinstance(case_type_decoded, str):
@@ -145,6 +149,8 @@ class EnumCodec(ICodec[type[Enum]]):
         if isinstance(case_type_encoded, str):
             case_type_encoded = CaseType[case_type_encoded]
         self.case_type_encoded = case_type_encoded
+
+        self.underscore_encoded = underscore_encoded
 
     def decode(self, input_string: str) -> type[Enum]:
         # Handle difference cases
@@ -165,12 +171,16 @@ class EnumCodec(ICodec[type[Enum]]):
         return output_enum
 
     def encode(self, data: type[Enum]) -> str:
+        data = data.name
+        if not self.underscore_encoded:
+            data.replace("_", "-")
+
         if self.case_type_encoded == CaseType.upper:
-            return data.name.upper()
+            return data.upper()
         elif self.case_type_encoded == CaseType.lower:
-            return data.name.lower()
+            return data.lower()
         else:
-            return data.name
+            return data
 
 
 class DateTimeCodec(ICodec[np.datetime64]):
