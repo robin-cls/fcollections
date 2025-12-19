@@ -10,13 +10,24 @@ from fsspec.implementations.local import LocalFileSystem
 from fcollections.core import FileSystemMetadataCollector
 from fcollections.implementations import (
     AVISO_L4_SWOT_LAYOUT,
+    CMEMS_L4_SSHA_LAYOUT,
     Delay,
     FileNameConventionGriddedSLA,
     FileNameConventionGriddedSLAInternal,
     NetcdfFilesDatabaseGriddedSLA,
 )
+from fcollections.implementations._definitions._cmems import (
+    Area,
+    DataType,
+    Group,
+    Origin,
+    ProductClass,
+    Thematic,
+    Typology,
+    Variable,
+)
 from fcollections.missions import MissionsPhases
-from fcollections.time import Period
+from fcollections.time import ISODuration, Period
 
 if tp.TYPE_CHECKING:
     from pathlib import Path
@@ -115,6 +126,77 @@ class TestQuery:
 
 class TestLayout:
 
+    @pytest.mark.parametrize(
+        "dataset_id",
+        [
+            # SEALEVEL_GLO_PHY_L4_NRT_008_046
+            "cmems_obs-sl_glo_phy-ssh_nrt_demo-allsat-swos-l4-duacs-0.125deg_P1D-i",
+            "cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D",
+            "cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.25deg_P1D",
+            # SEALEVEL_GLO_PHY_L4_MY_008_047
+            "cmems_obs-sl_glo_phy-ssh_my_allsat-l4-duacs-0.125deg_P1D",
+            "cmems_obs-sl_glo_phy-ssh_my_allsat-demo-l4-duacs-0.125deg_P1D-i",
+            "cmems_obs-sl_glo_phy-ssh_my_allsat-l4-duacs-0.125deg_P1M-m",
+            # Result from the get command (with timestamp)
+            "cmems_obs-sl_glo_phy-ssh_my_allsat-l4-duacs-0.125deg_P1D_202205",
+            "cmems_obs-sl_glo_phy-ssh_my_allsat-demo-l4-duacs-0.125deg_P1D-i_202205",
+        ],
+    )
+    def test_dataset_id_regex(self, dataset_id: str):
+        """Check dataset id convention building for CMEMS."""
+        actual = CMEMS_L4_SSHA_LAYOUT.conventions[0].match(dataset_id)
+        assert actual is not None
+
+    @pytest.mark.parametrize(
+        "expected, data_type, blending, spatial_resolution, temporal_resolution, typology, version",
+        [
+            (
+                "cmems_obs-sl_glo_phy-ssh_my_allsat-demo-l4-duacs-0.125deg_P1D-i_202205",
+                DataType.MY,
+                "allsat-demo",
+                0.125,
+                ISODuration(days=1),
+                Typology.I,
+                "202205",
+            ),
+            (
+                "cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.25deg_PT12H",
+                DataType.NRT,
+                "allsat",
+                0.25,
+                ISODuration(hours=12),
+                None,
+                None,
+            ),
+        ],
+    )
+    def test_dataset_id_generate(
+        self,
+        expected: str,
+        version: str | None,
+        spatial_resolution: float,
+        blending: str,
+        temporal_resolution: ISODuration,
+        data_type: DataType,
+        typology: Typology | None,
+    ):
+        dataset_id = CMEMS_L4_SSHA_LAYOUT.conventions[0].generate(
+            spatial_resolution=spatial_resolution,
+            blending=blending,
+            origin=Origin.CMEMS,
+            group=Group.OBS,
+            pc=ProductClass.SL,
+            area=Area.GLO,
+            thematic=Thematic.PHY,
+            variable=Variable.SSH,
+            type=data_type,
+            temporal_resolution=temporal_resolution,
+            typology=typology,
+            version=version,
+        )
+
+        assert dataset_id == expected
+
     def test_generate_layout_aviso(self):
         path = AVISO_L4_SWOT_LAYOUT.generate(
             "/duacs-experimental/dt-phy-grids/l4_karin_nadir",
@@ -173,12 +255,12 @@ class TestLayout:
         [
             ({}, [8, 9, 10, 11]),
             ({"delay": Delay.DT}, [0]),
-            ({"delay_nrt_my": Delay.MY}, [0]),
+            ({"type": DataType.MY}, [0]),
             ({"version": "202411"}, [11]),
             ({"time": np.datetime64("2023-07-28")}, [8, 11]),
             ({"production_date": np.datetime64("2024-09-13")}, [10]),
             ({"spatial_resolution": 0.5}, [10]),
-            ({"temporal_resolution": 0.5}, [9]),
+            ({"temporal_resolution": "PT12H"}, [9]),
         ],
     )
     def test_list_layout_cmems(

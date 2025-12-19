@@ -10,11 +10,11 @@ from fcollections.core import (
     FileNameConvention,
     FileNameField,
     FileNameFieldEnum,
-    FileNameFieldFloat,
     FileNameFieldInteger,
     FileNameFieldString,
     Layout,
 )
+from fcollections.time import ISODuration, parse_iso8601_duration
 
 
 class Origin(Enum):
@@ -292,22 +292,35 @@ _ENUM_FIELDS = [
 ]
 
 
-# TODO: We need a proper time delta field
-class _FileNameFieldIntegerAdapter(FileNameFieldInteger):
-    """Specific field for sampling definition in file versus folder names.
+class FileNameFieldISODuration(FileNameField):
 
-    In folder names, a sampling of 5Hz is given as PT0.2S, whereas it is
-    given as 5Hz in the file name. This field converts PT0.2S -> 5 to
-    have the same folder and file fields.
-    """
+    def decode(self, input_string: str) -> ISODuration | None:
+        if input_string == "irr":
+            return None
+        return parse_iso8601_duration(input_string)
 
-    def decode(self, input_string: str) -> int:
-        f = FileNameFieldFloat("dummy")
-        return int(1 / f.decode(input_string[2:-1]))
+    def encode(self, value: ISODuration | None) -> str:
+        if value is None:
+            return "irr"
+        return str(value)
 
-    def encode(self, data: int) -> str:
-        invert = 1 / data
-        return f"PT{str(invert) if invert % 1 != 0 else str(int(invert))}S"
+    def test_description(self) -> str:
+        description = (
+            "ISO8601 duration field can be tested against an "
+            "ISODuration object or its string representation "
+            "(PT1S, ...)"
+        )
+        return description
+
+    @property
+    def type(self) -> type[ISODuration]:
+        """Type of the tested field."""
+        return ISODuration
+
+    def sanitize(self, reference: str | ISODuration) -> ISODuration:
+        if isinstance(reference, str):
+            return self.decode(reference)
+        return reference
 
 
 _MODEL_FRAGMENTS = [
@@ -317,7 +330,7 @@ _MODEL_FRAGMENTS = [
     "_(?P<thematic>{4})(?P<variable>{5}){{0,1}}",
     "(_(?P<type>{6})){{0,1}}",
     "_{8}",
-    "_(?P<temporal_resolution>irr|PT.*S)(?P<typology>{7}){{0,1}}",
+    "_(?P<temporal_resolution>irr|(P.*(Y|M|W|D|H|M|S)))(?P<typology>{7}){{0,1}}",
     "(?P<version>_\\d{{6}}){{0,1}}",
 ]
 
@@ -354,7 +367,7 @@ def build_convention(
         [
             *_ENUM_FIELDS[:7],
             *complementary_fields,
-            _FileNameFieldIntegerAdapter("temporal_resolution"),
+            FileNameFieldISODuration("temporal_resolution"),
             _ENUM_FIELDS[-1],
             FileNameFieldStringOptional("version"),
         ],

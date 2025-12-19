@@ -65,7 +65,7 @@ def l4_ssha_files() -> list[str]:
         "flat/nrt_global_allsat_phy_l4_20231016_20231103.nc",
         "flat/dt_global_allsat_phy_l4_20231017_20231106.nc",
         "cmems/cmems_obs-sl_glo_phy-ssh_my_allsat-l4-duacs-0.125deg_P1D_202211/2023/10/dt_global_allsat_phy_l4_20230728_20240912.nc",
-        "cmems/cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P0.5D_202211/2023/10/nrt_global_allsat_phy_l4_20230729_20240912.nc",
+        "cmems/cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_PT12H_202211/2023/10/nrt_global_allsat_phy_l4_20230729_20240912.nc",
         "cmems/cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.5deg_P1D_202211/2023/10/nrt_global_allsat_phy_l4_20230729_20240913.nc",
         "cmems/cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D_202411/2023/10/nrt_global_allsat_phy_l4_20230728_20251212.nc",
     ]

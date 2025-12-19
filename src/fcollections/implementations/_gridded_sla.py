@@ -12,7 +12,6 @@ from fcollections.core import (
     FileNameFieldDatetime,
     FileNameFieldEnum,
     FileNameFieldFloat,
-    FileNameFieldInteger,
     FileNameFieldString,
     FilesDatabase,
     Layout,
@@ -21,7 +20,13 @@ from fcollections.core import (
 )
 from fcollections.missions import MissionsPhases
 
-from ._definitions import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS, Delay
+from ._definitions import (
+    DESCRIPTIONS,
+    XARRAY_TEMPORAL_NETCDFS,
+    Delay,
+    build_convention,
+    build_layout,
+)
 
 GRIDDED_SLA_PATTERN = re.compile(
     r"(?P<delay>nrt|dt)_(.*)_allsat_phy_l4_(?P<time>(\d{8})|(\d{8}T\d{2}))_(?P<production_date>\d{8}).nc"
@@ -81,38 +86,18 @@ AVISO_L4_SWOT_LAYOUT = Layout(
     ]
 )
 
-CMEMS_L4_SSHA_LAYOUT = Layout(
-    [
-        FileNameConvention(
-            re.compile(
-                r"^cmems_obs-sl_glo_phy-ssh_(?P<delay_nrt_my>nrt|my)_allsat-l4-duacs-(?P<spatial_resolution>.*)deg_P(?P<temporal_resolution>.*)D_(?P<version>\d{6})"
-            ),
-            [
-                FileNameFieldEnum(
-                    "delay_nrt_my",
-                    Delay,
-                    case_type_decoded=CaseType.upper,
-                    case_type_encoded=CaseType.lower,
-                    description=DESCRIPTIONS["delay"],
-                ),
-                FileNameFieldFloat("spatial_resolution"),
-                FileNameFieldFloat("temporal_resolution"),
-                FileNameFieldString("version"),
-            ],
-            "cmems_obs-sl_glo_phy-ssh_{delay_nrt_my!f}_allsat-l4-duacs-{spatial_resolution!f}deg_P{temporal_resolution!f}D_{version}",
-        ),
-        FileNameConvention(
-            re.compile(r"^(?P<year>\d{4})$"),
-            [FileNameFieldInteger("year")],
-            "{year!f}",
-        ),
-        FileNameConvention(
-            re.compile(r"^(?P<month>\d{2})$"),
-            [FileNameFieldInteger("month")],
-            "{month:>02d}",
-        ),
-        FileNameConventionGriddedSLA(),
-    ]
+_DATASET_ID_CONVENTION = build_convention(
+    complementary="(?P<blending>allsat|demo-allsat-swos|allsat-demo)-l4-duacs-(?P<spatial_resolution>.*)deg",
+    complementary_fields=[
+        FileNameFieldString("blending"),
+        FileNameFieldFloat("spatial_resolution"),
+    ],
+    complementary_generation_string="{blending!f}-l4-duacs-{spatial_resolution!f}deg",
+)
+
+
+CMEMS_L4_SSHA_LAYOUT = build_layout(
+    _DATASET_ID_CONVENTION, FileNameConventionGriddedSLA()
 )
 
 

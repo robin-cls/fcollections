@@ -25,7 +25,7 @@ from fcollections.implementations._definitions._cmems import (
     Variable,
 )
 from fcollections.missions import MissionsPhases
-from fcollections.time import Period
+from fcollections.time import ISODuration, Period
 
 
 def test_bad_kwargs(l3_nadir_dir: Path):
@@ -233,7 +233,7 @@ class TestLayout:
                 "202411",
                 MissionsPhases.e2,
                 DataType.MY,
-                5,
+                ISODuration(seconds=0.2),
                 None,
             ),
             (
@@ -241,7 +241,7 @@ class TestLayout:
                 None,
                 MissionsPhases.c2n,
                 DataType.NRT,
-                1,
+                ISODuration(seconds=1),
                 Typology.I,
             ),
             (
@@ -249,7 +249,7 @@ class TestLayout:
                 None,
                 MissionsPhases.s3b,
                 DataType.NRT,
-                1,
+                ISODuration(seconds=1),
                 None,
             ),
             (
@@ -257,7 +257,7 @@ class TestLayout:
                 "202411",
                 MissionsPhases.j3g,
                 DataType.NRT,
-                5,
+                ISODuration(seconds=0.2),
                 Typology.I,
             ),
         ],
@@ -315,7 +315,7 @@ class TestLayout:
             year=1995,
             month=5,
             resolution=1,
-            temporal_resolution=1,
+            temporal_resolution=ISODuration(seconds=1),
             delay=delay,
             version="202411",
             mission=mission,

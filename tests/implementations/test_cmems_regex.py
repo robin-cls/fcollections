@@ -55,14 +55,6 @@ from fcollections.implementations._definitions._cmems import build_convention
         "cmems_obs-sl_glo_phy-ssh_nrt_s6a-hr-l3-duacs_PT0.2S",
         "cmems_obs-sl_glo_phy-ssh_nrt_swon-l3-duacs_PT1S",
         "cmems_obs-sl_glo_phy-ssh_nrt_swon-l3-duacs_PT0.2S",
-        # SEALEVEL_GLO_PHY_L4_NRT_008_046
-        "cmems_obs-sl_glo_phy-ssh_nrt_demo-allsat-swos-l4-duacs-0.125deg_P1D-i",
-        "cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D",
-        "cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.25deg_P1D",
-        # SEALEVEL_GLO_PHY_L4_MY_008_047
-        "cmems_obs-sl_glo_phy-ssh_my_allsat-l4-duacs-0.125deg_P1D",
-        "cmems_obs-sl_glo_phy-ssh_my_allsat-demo-l4-duacs-0.125deg_P1D-i",
-        "cmems_obs-sl_glo_phy-ssh_my_allsat-l4-duacs-0.125deg_P1M-m",
         # OCEANCOLOUR_GLO_BGC_L3_MY_009_103
         "cmems_obs-oc_glo_bgc-plankton_my_l3-multi-4km_P1D",
         "cmems_obs-oc_glo_bgc-optics_my_l3-multi-4km_P1D",
