@@ -399,10 +399,12 @@ def build_layout(
         [
             dataset_id_convention,
             FileNameConvention(
-                re.compile(r"(?P<year>\d{4})"), [FileNameFieldInteger("year")], "{year}"
+                re.compile(r"^(?P<year>\d{4})$"),
+                [FileNameFieldInteger("year")],
+                "{year}",
             ),
             FileNameConvention(
-                re.compile(r"(?P<month>\d{2})"),
+                re.compile(r"^(?P<month>\d{2})$"),
                 [FileNameFieldInteger("month")],
                 "{month:0>2d}",
             ),

@@ -172,7 +172,10 @@ class Layout(ILayout):
         """
         convention = self.conventions[level]
         try:
-            return convention.parse(convention.match(node))
+            match_object = convention.match(node)
+            if len(convention.fields) == 0 and match_object is None:
+                return None
+            return convention.parse(match_object)
         except (DecodingError, AttributeError):
             return None
 

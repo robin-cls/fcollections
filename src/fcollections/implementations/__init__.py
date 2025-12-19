@@ -84,6 +84,8 @@ from ._readers import (
     SwotReaderL3WW,
 )
 from ._s1aowi import FileNameConventionS1AOWI, NetcdfFilesDatabaseS1AOWI
+from ._sst import CMEMS_SST_LAYOUT as _CMEMS_SST_LAYOUT
+from ._sst import IFREMER_SST_LAYOUT as _IFREMER_SST_LAYOUT
 from ._sst import (
     BasicNetcdfFilesDatabaseSST,
     FileNameConventionSST,
@@ -113,8 +115,13 @@ CMEMS_SSHA_L3_LAYOUT: Layout = _CMEMS_SSHA_L3_LAYOUT
 CMEMS_L4_SSHA_LAYOUT: Layout = _CMEMS_L4_SSHA_LAYOUT
 #: Layout on CMEMS for the Level 3 and 4 ocean colour products
 CMEMS_OC_LAYOUT: Layout = _CMEMS_OC_LAYOUT
-#: Layout on CMEMS for the WAVE_GLO_PHY_SWH_L3_NRT_014_001 producct
+#: Layout on CMEMS for the WAVE_GLO_PHY_SWH_L3_NRT_014_001 product
 CMEMS_SWH_LAYOUT: Layout = _CMEMS_SWH_LAYOUT
+#: Layout on CMEMS for the SST_GLO_SST_L3S_NRT_OBSERVATIONS_010_010 product
+CMEMS_SST_LAYOUT: Layout = _CMEMS_SST_LAYOUT
+#: Layout on CMEMS for the SST_GLO_SST_L3S_NRT_OBSERVATIONS_010_010 product
+# (Ifremer special dataset_id not following the CMEMS convention)
+IFREMER_SST_LAYOUT: Layout = _IFREMER_SST_LAYOUT
 
 __all__ = [
     "BasicNetcdfFilesDatabaseDAC",
@@ -181,6 +188,8 @@ __all__ = [
     "CMEMS_L4_SSHA_LAYOUT",
     "CMEMS_OC_LAYOUT",
     "CMEMS_SWH_LAYOUT",
+    "CMEMS_SST_LAYOUT",
+    "IFREMER_SST_LAYOUT",
     "SwotReaderL2LRSSH",
     "SwotReaderL3LRSSH",
     "SwotReaderL3WW",
