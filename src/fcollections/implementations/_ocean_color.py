@@ -5,10 +5,8 @@ import re
 import numpy as np
 
 from fcollections.core import (
-    CaseType,
     FileNameConvention,
     FileNameFieldDateDelta,
-    FileNameFieldEnum,
     FileNameFieldString,
     FilesDatabase,
     Layout,
@@ -19,15 +17,27 @@ from fcollections.core import (
 from ._definitions import (
     DESCRIPTIONS,
     XARRAY_TEMPORAL_NETCDFS,
-    Delay,
-    OCVariable,
-    ProductLevel,
-    Sensor,
+    build_convention,
+    build_layout,
 )
+from ._definitions._cmems import _FIELDS
 
-OC_PATTERN = re.compile(
-    r"(?P<time>\d{8})_cmems_obs-oc_glo_bgc-(?P<oc_variable>.*)_(?P<delay>.*)_(?P<level>l3|l4)(-gapfree){0,1}-(?P<sensor>.*)-(?P<spatial_resolution>4km|1km|300m)_(?P<temporal_resolution>P1D|P1M).nc"
-)
+_COMPLEMENTARY_INFO = [
+    f"(?P<level>l3|l4|l4-gapfree)-(?P<sensor>{'|'.join(_FIELDS[-1].choices())})(-climatology){{0,1}}-(?P<spatial_resolution>\\d+(km|m))",
+    [
+        FileNameFieldString("level", description=DESCRIPTIONS["level"]),
+        _FIELDS[-1],
+        FileNameFieldString(
+            "spatial_resolution", description=DESCRIPTIONS["spatial_resolution"]
+        ),
+    ],
+    "{level}-{sensor!f}-{spatial_resolution!f}",
+]
+
+_DATASET_ID_CONVENTION = build_convention(*_COMPLEMENTARY_INFO, strict=False)
+
+# The filename convention simply extends the dataset id convention
+OC_PATTERN = re.compile(rf"(?P<time>\d{{8}})_{_DATASET_ID_CONVENTION.regex.pattern}.nc")
 
 
 class FileNameConventionOC(FileNameConvention):
@@ -43,50 +53,23 @@ class FileNameConventionOC(FileNameConvention):
                     np.timedelta64(1, "D"),
                     description=DESCRIPTIONS["time"],
                 ),
-                FileNameFieldEnum(
-                    "oc_variable",
-                    OCVariable,
-                    case_type_decoded=CaseType.upper,
-                    case_type_encoded=CaseType.lower,
-                    description=DESCRIPTIONS["oc_variable"],
-                ),
-                FileNameFieldEnum(
-                    "delay",
-                    Delay,
-                    case_type_decoded=CaseType.upper,
-                    case_type_encoded=CaseType.lower,
-                    description=DESCRIPTIONS["delay"],
-                ),
-                FileNameFieldEnum(
-                    "level",
-                    ProductLevel,
-                    case_type_decoded=CaseType.upper,
-                    case_type_encoded=CaseType.lower,
-                    description=DESCRIPTIONS["level"],
-                ),
-                FileNameFieldEnum(
-                    "sensor",
-                    Sensor,
-                    case_type_decoded=CaseType.upper,
-                    case_type_encoded=CaseType.lower,
-                    description=DESCRIPTIONS["sensor"],
-                ),
-                FileNameFieldString(
-                    "spatial_resolution", description=DESCRIPTIONS["spatial_resolution"]
-                ),
-                FileNameFieldString(
-                    "temporal_resolution",
-                    description=DESCRIPTIONS["temporal_resolution"],
-                ),
+                *_DATASET_ID_CONVENTION.fields,
             ],
         )
+
+
+CMEMS_OC_LAYOUT = build_layout(
+    # Need strict convention to avoid parsing a file node at folder level
+    build_convention(*_COMPLEMENTARY_INFO, strict=True),
+    FileNameConventionOC(),
+)
 
 
 class BasicNetcdfFilesDatabaseOC(FilesDatabase, PeriodMixin):
     """Database mapping to select and read ocean color Netcdf files in a local
     file system."""
 
-    layouts = [Layout([FileNameConventionOC()])]
+    layouts = [CMEMS_OC_LAYOUT, Layout([FileNameConventionOC()])]
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"
 

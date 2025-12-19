@@ -66,6 +66,7 @@ from ._mur import (
     FileNameConventionMUR,
     NetcdfFilesDatabaseMUR,
 )
+from ._ocean_color import CMEMS_OC_LAYOUT as _CMEMS_OC_LAYOUT
 from ._ocean_color import (
     BasicNetcdfFilesDatabaseOC,
     FileNameConventionOC,
@@ -109,6 +110,8 @@ AVISO_L4_SWOT_LAYOUT: Layout = _AVISO_L4_SWOT_LAYOUT
 CMEMS_SSHA_L3_LAYOUT: Layout = _CMEMS_SSHA_L3_LAYOUT
 #: Layout on CMEMS for the Level 4 SSHA gridded products
 CMEMS_L4_SSHA_LAYOUT: Layout = _CMEMS_L4_SSHA_LAYOUT
+#: Layout on CMEMS for the Level 3 and 4 ocean colour products
+CMEMS_OC_LAYOUT: Layout = _CMEMS_OC_LAYOUT
 
 __all__ = [
     "BasicNetcdfFilesDatabaseDAC",
@@ -173,6 +176,7 @@ __all__ = [
     "AVISO_L4_SWOT_LAYOUT",
     "CMEMS_SSHA_L3_LAYOUT",
     "CMEMS_L4_SSHA_LAYOUT",
+    "CMEMS_OC_LAYOUT",
     "SwotReaderL2LRSSH",
     "SwotReaderL3LRSSH",
     "SwotReaderL3WW",

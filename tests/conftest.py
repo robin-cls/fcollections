@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 from fixtures._auto import patch_test_geometries_path
-from fixtures._chl import chl_dir, chl_files
+from fixtures._chl import chl_dir, chl_dir_flat, chl_dir_layout, chl_files
 from fixtures._dac import dac_dir, dac_files
 from fixtures._era5 import era5_dir, era5_files
 from fixtures._l2_lr_ssh import (

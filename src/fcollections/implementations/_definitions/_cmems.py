@@ -243,7 +243,39 @@ class FileNameFieldStringOptional(FileNameFieldString):
         return "" if value is None else f"_{super().encode(value)}"
 
 
-_ENUM_FIELDS = [
+class FileNameFieldISODuration(FileNameField):
+
+    def decode(self, input_string: str) -> ISODuration | None:
+        if input_string == "irr":
+            return None
+        return parse_iso8601_duration(input_string)
+
+    def encode(self, value: ISODuration | None) -> str:
+        if value is None:
+            return "irr"
+        return str(value)
+
+    @property
+    def test_description(self) -> str:
+        description = (
+            "ISO8601 duration field can be tested against an "
+            "ISODuration object or its string representation "
+            "(PT1S, ...)"
+        )
+        return description
+
+    @property
+    def type(self) -> type[ISODuration]:
+        """Type of the tested field."""
+        return ISODuration
+
+    def sanitize(self, reference: str | ISODuration) -> ISODuration:
+        if isinstance(reference, str):
+            return self.decode(reference)
+        return reference
+
+
+_FIELDS = [
     FileNameFieldEnum(
         "origin",
         Origin,
@@ -289,39 +321,13 @@ _ENUM_FIELDS = [
         case_type_decoded=CaseType.upper,
         case_type_encoded=CaseType.lower,
     ),
+    FileNameFieldEnum(
+        "sensor",
+        Sensors,
+        case_type_decoded=CaseType.upper,
+        case_type_encoded=CaseType.lower,
+    ),
 ]
-
-
-class FileNameFieldISODuration(FileNameField):
-
-    def decode(self, input_string: str) -> ISODuration | None:
-        if input_string == "irr":
-            return None
-        return parse_iso8601_duration(input_string)
-
-    def encode(self, value: ISODuration | None) -> str:
-        if value is None:
-            return "irr"
-        return str(value)
-
-    def test_description(self) -> str:
-        description = (
-            "ISO8601 duration field can be tested against an "
-            "ISODuration object or its string representation "
-            "(PT1S, ...)"
-        )
-        return description
-
-    @property
-    def type(self) -> type[ISODuration]:
-        """Type of the tested field."""
-        return ISODuration
-
-    def sanitize(self, reference: str | ISODuration) -> ISODuration:
-        if isinstance(reference, str):
-            return self.decode(reference)
-        return reference
-
 
 _MODEL_FRAGMENTS = [
     "(?P<origin>{0})",
@@ -341,14 +347,22 @@ def build_convention(
     complementary: str = "(?P<complementary>.*)",
     complementary_fields: list[FileNameField] | None = None,
     complementary_generation_string: str = "na",
+    strict: bool = False,
 ) -> FileNameConvention:
 
     if complementary_fields is None:
         complementary_fields = [FileNameFieldString("complementary")]
 
     regex_string = MODEL.format(
-        *["|".join(field.choices()) for field in _ENUM_FIELDS], complementary
+        *["|".join(field.choices()) for field in _FIELDS[:-1]], complementary
     )
+    if strict:
+        # Needs to constraint the beginning and end of the regex (^ + $). This
+        # is useful if the dataset folder and filename have too much in common.
+        # In this case, the dataset convention should be stricter. The risk is
+        # to have the folder convention parsing a filename, returning less info
+        # than expected and triggering an error
+        regex_string = "^" + regex_string + "$"
     regex = re.compile(regex_string)
 
     generation_fragments = [
@@ -365,10 +379,10 @@ def build_convention(
     return FileNameConvention(
         regex,
         [
-            *_ENUM_FIELDS[:7],
+            *_FIELDS[:7],
             *complementary_fields,
             FileNameFieldISODuration("temporal_resolution"),
-            _ENUM_FIELDS[-1],
+            _FIELDS[-2],
             FileNameFieldStringOptional("version"),
         ],
         "".join(generation_fragments),
