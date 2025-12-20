@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 
 from fcollections.implementations import (
@@ -62,7 +61,7 @@ def sst_db(tmpdir, scope="module"):
         ),
         (
             "nadir_db",
-            ["List the files matching the given criteria.", "sort", "time", "mission"],
+            ["List the files matching the given criteria.", "sort", "time", "sensor"],
         ),
         ("sst_db", ["List the files matching the given criteria.", "sort", "time"]),
     ],
@@ -113,7 +112,7 @@ def test_list_files_docstring(db, keywords, request):
                 "Query a dataset by reading selected files in file system.",
                 "selected_variables",
                 "time",
-                "mission",
+                "sensor",
             ],
         ),
         (
@@ -138,7 +137,7 @@ def test_query_docstring(db, keywords, request):
     [
         ("swot_lr_l2_db", ["variables metadata", "level", "subset"]),
         ("swot_lr_l3_db", ["variables metadata"]),
-        ("nadir_db", ["variables metadata", "resolution", "mission"]),
+        ("nadir_db", ["variables metadata", "resolution", "sensor"]),
         ("sst_db", ["variables metadata"]),
     ],
 )

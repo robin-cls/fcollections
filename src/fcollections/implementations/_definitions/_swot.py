@@ -19,8 +19,8 @@ class Temporality(Enum):
 
     See Also
     --------
-    Delay
-        Copernicus Marine delay definition (in our case for Nadir data)
+    fcollections.implementations.DataType
+        Copernicus Marine data type definition (in our case for Nadir data)
     fcollections.implementations.Timeliness
         L2_LR_SSH product temporality definition
     """

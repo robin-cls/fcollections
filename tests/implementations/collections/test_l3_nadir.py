@@ -10,21 +10,19 @@ from fsspec.implementations.local import LocalFileSystem
 from fcollections.core import FileSystemMetadataCollector
 from fcollections.implementations import (
     CMEMS_SSHA_L3_LAYOUT,
-    Delay,
-    NetcdfFilesDatabaseL3Nadir,
-    ProductLevel,
-)
-from fcollections.implementations._definitions._cmems import (
     Area,
     DataType,
+    Delay,
     Group,
+    NetcdfFilesDatabaseL3Nadir,
     Origin,
     ProductClass,
+    ProductLevel,
+    Sensors,
     Thematic,
     Typology,
     Variable,
 )
-from fcollections.missions import MissionsPhases
 from fcollections.time import ISODuration, Period
 
 
@@ -37,19 +35,19 @@ def test_bad_kwargs(l3_nadir_dir: Path):
 
 
 @pytest.mark.parametrize(
-    "time, mission, result_size",
+    "time, sensor, result_size",
     [
         (None, None, 3),
         ((np.datetime64("2023-10-14"), np.datetime64("2023-10-16")), None, 1),
         ((np.datetime64("2023-10-03"), np.datetime64("2023-10-16")), None, 2),
-        (None, MissionsPhases.al, 1),
-        (None, MissionsPhases.swonc, 2),
+        (None, Sensors.AL, 1),
+        (None, Sensors.SWONC, 2),
     ],
 )
 def test_list_l3_nadir(
     l3_nadir_dir: Path,
     time: None | np.datetime64,
-    mission: None | MissionsPhases,
+    sensor: None | Sensors,
     result_size: int,
 ):
 
@@ -57,8 +55,8 @@ def test_list_l3_nadir(
     args = {}
     if time:
         args["time"] = time
-    if mission:
-        args["mission"] = mission
+    if sensor:
+        args["sensor"] = sensor
 
     files = db.list_files(**args)
     assert files["filename"].size == result_size
@@ -70,7 +68,7 @@ def parsing_result() -> pda.DataFrame:
     return pda.DataFrame(
         [
             (
-                MissionsPhases.j3n,
+                Sensors.J3N,
                 ProductLevel.L3,
                 1,
                 Period("2023-01-01", "2023-01-02", include_stop=False),
@@ -78,7 +76,7 @@ def parsing_result() -> pda.DataFrame:
                 "nrt_1.nc",
             ),
             (
-                MissionsPhases.j3n,
+                Sensors.J3N,
                 ProductLevel.L3,
                 1,
                 Period("2023-01-01", "2023-01-02", include_stop=False),
@@ -86,7 +84,7 @@ def parsing_result() -> pda.DataFrame:
                 "nrt_2.nc",
             ),
             (
-                MissionsPhases.j3n,
+                Sensors.J3N,
                 ProductLevel.L3,
                 1,
                 Period("2023-01-01", "2023-01-02", include_stop=False),
@@ -94,7 +92,7 @@ def parsing_result() -> pda.DataFrame:
                 "nrt_3.nc",
             ),
             (
-                MissionsPhases.j3n,
+                Sensors.J3N,
                 ProductLevel.L3,
                 None,
                 Period("2023-01-01", "2023-01-02", include_stop=False),
@@ -102,7 +100,7 @@ def parsing_result() -> pda.DataFrame:
                 "nrt_4.nc",
             ),
             (
-                MissionsPhases.j3n,
+                Sensors.J3N,
                 ProductLevel.L3,
                 1,
                 Period("2023-01-02", "2023-01-03", include_stop=False),
@@ -110,7 +108,7 @@ def parsing_result() -> pda.DataFrame:
                 "nrt_5.nc",
             ),
             (
-                MissionsPhases.j3n,
+                Sensors.J3N,
                 ProductLevel.L3,
                 1,
                 Period("2023-01-02", "2023-01-03", include_stop=False),
@@ -118,7 +116,7 @@ def parsing_result() -> pda.DataFrame:
                 "nrt_6.nc",
             ),
             (
-                MissionsPhases.al,
+                Sensors.AL,
                 ProductLevel.L3,
                 1,
                 Period("2023-01-01", "2023-01-02", include_stop=False),
@@ -126,7 +124,7 @@ def parsing_result() -> pda.DataFrame:
                 "nrt_7.nc",
             ),
             (
-                MissionsPhases.al,
+                Sensors.AL,
                 ProductLevel.L3,
                 1,
                 Period("2023-01-01", "2023-01-02", include_stop=False),
@@ -135,7 +133,7 @@ def parsing_result() -> pda.DataFrame:
             ),
         ],
         columns=[
-            "mission",
+            "sensor",
             "product_level",
             "resolution",
             "time",
@@ -156,8 +154,7 @@ def test_deduplicate_error_two_missions(
 def test_validate(l3_nadir_dir: Path, parsing_result: pda.DataFrame):
     db = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir)
     df_sub = parsing_result[
-        (parsing_result["mission"] == MissionsPhases.j3n)
-        & (parsing_result["resolution"] == 1)
+        (parsing_result["sensor"] == Sensors.J3N) & (parsing_result["resolution"] == 1)
     ].copy()
     df_result = db.unmixer(df_sub)
     df_result = db.deduplicator(df_sub)
@@ -226,12 +223,12 @@ class TestLayout:
         assert actual is not None
 
     @pytest.mark.parametrize(
-        "expected, version, mission, data_type, resolution, typology",
+        "expected, version, sensor, data_type, resolution, typology",
         [
             (
                 "cmems_obs-sl_glo_phy-ssh_my_e2-l3-duacs_PT0.2S_202411",
                 "202411",
-                MissionsPhases.e2,
+                Sensors.E2,
                 DataType.MY,
                 ISODuration(seconds=0.2),
                 None,
@@ -239,7 +236,7 @@ class TestLayout:
             (
                 "cmems_obs-sl_glo_phy-ssh_nrt_c2n-l3-duacs_PT1S-i",
                 None,
-                MissionsPhases.c2n,
+                Sensors.C2N,
                 DataType.NRT,
                 ISODuration(seconds=1),
                 Typology.I,
@@ -247,7 +244,7 @@ class TestLayout:
             (
                 "cmems_obs-sl_glo_phy-ssh_nrt_s3b-l3-duacs_PT1S",
                 None,
-                MissionsPhases.s3b,
+                Sensors.S3B,
                 DataType.NRT,
                 ISODuration(seconds=1),
                 None,
@@ -255,7 +252,7 @@ class TestLayout:
             (
                 "cmems_obs-sl_glo_phy-ssh_nrt_j3g-l3-duacs_PT0.2S-i_202411",
                 "202411",
-                MissionsPhases.j3g,
+                Sensors.J3G,
                 DataType.NRT,
                 ISODuration(seconds=0.2),
                 Typology.I,
@@ -267,13 +264,13 @@ class TestLayout:
         expected: str,
         version: str | None,
         resolution: float,
-        mission: MissionsPhases,
+        sensor: Sensors,
         data_type: DataType,
         typology: Typology | None,
     ):
         dataset_id = CMEMS_SSHA_L3_LAYOUT.conventions[0].generate(
             resolution=resolution,
-            mission=mission,
+            sensor=sensor,
             origin=Origin.CMEMS,
             group=Group.OBS,
             pc=ProductClass.SL,
@@ -289,23 +286,25 @@ class TestLayout:
         assert dataset_id == expected
 
     @pytest.mark.parametrize(
-        "mission, delay, expected",
+        "sensor, delay, type, expected",
         [
             (
-                MissionsPhases.j3g,
+                Sensors.J3G,
                 Delay.NRT,
+                DataType.NRT,
                 "/SEALEVEL_GLO_PHY_L3_NRT_008_044/cmems_obs-sl_glo_phy-ssh_nrt_j3g-l3-duacs_PT1S_202411/1995/05/nrt_global_j3g_phy_L3_1hz_19950501_20240101",
             ),
             # Test the _ -> - conversion in layout generation
             (
-                MissionsPhases.s6a_hr,
-                Delay.MY,
-                "/SEALEVEL_GLO_PHY_L3_NRT_008_044/cmems_obs-sl_glo_phy-ssh_my_s6a-hr-l3-duacs_PT1S_202411/1995/05/my_global_s6a_hr_phy_L3_1hz_19950501_20240101",
+                Sensors.S6A_HR,
+                Delay.DT,
+                DataType.MY,
+                "/SEALEVEL_GLO_PHY_L3_NRT_008_044/cmems_obs-sl_glo_phy-ssh_my_s6a-hr-l3-duacs_PT1S_202411/1995/05/dt_global_s6a_hr_phy_L3_1hz_19950501_20240101",
             ),
         ],
     )
     def test_generate_layout(
-        self, mission: MissionsPhases, delay: Delay, expected: str
+        self, sensor: Sensors, delay: Delay, expected: str, type: DataType
     ):
         period = Period(
             np.datetime64("1995-05-01"), np.datetime64("1995-05-02"), include_stop=False
@@ -318,7 +317,7 @@ class TestLayout:
             temporal_resolution=ISODuration(seconds=1),
             delay=delay,
             version="202411",
-            mission=mission,
+            sensor=sensor,
             origin=Origin.CMEMS,
             group=Group.OBS,
             pc=ProductClass.SL,
@@ -326,7 +325,7 @@ class TestLayout:
             thematic=Thematic.PHY,
             variable=Variable.SSH,
             typology=None,
-            type=delay,
+            type=type,
             product_level=ProductLevel.L3,
             production_date=np.datetime64("2024-01-01"),
             time=period,
@@ -366,7 +365,7 @@ class TestLayout:
         [
             {},
             {"delay": "NRT"},
-            {"mission": "s3a"},
+            {"sensor": "S3A"},
             {"resolution": 5},
         ],
     )
@@ -394,10 +393,10 @@ class TestLayout:
 def test_query_bbox(l3_nadir_dir: Path):
     db = NetcdfFilesDatabaseL3Nadir(l3_nadir_dir)
 
-    ds = db.query(mission="al")
+    ds = db.query(sensor="AL")
     assert ds.time.size == 4
 
-    ds = db.query(mission="al", bbox=(300, -90, 360, 90))
+    ds = db.query(sensor="AL", bbox=(300, -90, 360, 90))
     assert ds.time.size == 2
 
 

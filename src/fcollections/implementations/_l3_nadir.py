@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from copy import copy
 
 import numpy as np
 
@@ -18,9 +19,9 @@ from fcollections.core import (
     PeriodMixin,
     SubsetsUnmixer,
 )
-from fcollections.missions import MissionsPhases
 
 from ._definitions._cmems import (
+    CMEMS_DATASET_ID_FIELDS,
     build_convention,
     build_layout,
 )
@@ -31,8 +32,19 @@ from ._definitions._constants import (
     ProductLevel,
 )
 
+# The sensor is actually composed of the mission name and optionally the orbit
+# or the instrument mode (j3, j3n, s6a-lr). When the instrument mode is given,
+# it is separated from the mission name with '_' for the file names (s6a_hr)
+# and '-' for the folder name (s6a-hr).
+# By default, the sensor field name uses '-' for encoded string. Needs to adapt
+# the behavior to keep the '_' in the encoded string
+_SENSOR_FIELD: FileNameFieldEnum = CMEMS_DATASET_ID_FIELDS[-1]
+_SENSOR_FIELD_FILENAME = copy(_SENSOR_FIELD)
+_SENSOR_FIELD_FILENAME.underscore_encoded = True
+
+
 L3_NADIR_PATTERN = re.compile(
-    r"(?P<delay>.*)_global_(?P<mission>.*)_(hr_){0,1}phy_(aux_){0,1}(?P<product_level>l3)_(?P<resolution>\d+)*(hz_)*(?P<time>\d{8})_(?P<production_date>\d{8}).nc"
+    rf"(?P<delay>nrt|dt)_global_(?P<sensor>{'|'.join(_SENSOR_FIELD_FILENAME.choices())})_(hr_){{0,1}}phy_(aux_){{0,1}}(?P<product_level>l3)_(?P<resolution>\d+)*(hz_)*(?P<time>\d{{8}})_(?P<production_date>\d{{8}}).nc"
 )
 
 
@@ -66,11 +78,7 @@ class FileNameConventionL3Nadir(FileNameConvention):
                         " a different production date."
                     ),
                 ),
-                FileNameFieldEnum(
-                    "mission",
-                    MissionsPhases,
-                    description=("Altimetry mission in the file."),
-                ),
+                _SENSOR_FIELD_FILENAME,
                 FileNameFieldEnum(
                     "product_level",
                     ProductLevel,
@@ -86,39 +94,14 @@ class FileNameConventionL3Nadir(FileNameConvention):
                     ),
                 ),
             ],
-            generation_string="{delay!f}_global_{mission!f}_phy_{product_level!f}_{resolution!f}hz_{time!f}_{production_date!f}",
+            generation_string="{delay!f}_global_{sensor!f}_phy_{product_level!f}_{resolution!f}hz_{time!f}_{production_date!f}",
         )
 
 
-class _FileNameFieldEnumAdapter(FileNameFieldEnum):
-    """Missions names in CMEMS folder versus file names differ.
-
-    The mission is actually composed of the mission name and optionally the
-    orbit or the instrument mode (j3, j3n, s6a-lr). When the instrument mode is
-    given, it is separated from the mission name with '_' for the file names
-    (s6a_hr) and '-' for the folder name (s6a-hr).
-
-    By default, the mission name uses '_' in MissionsPhases. This enum adapts
-    the encoding/decoding of the folder name.
-
-    See Also
-    --------
-    fcollections.core.missions.MissionsPhases: mission phases definitions
-    """
-
-    def decode(self, input_string: str) -> MissionsPhases:
-        return super().decode(input_string.replace("-", "_"))
-
-    def encode(self, data: MissionsPhases) -> str:
-        return super().encode(data).replace("_", "-")
-
-
-_enum_field = _FileNameFieldEnumAdapter("mission", MissionsPhases)
-
 _DATASET_ID_CONVENTION = build_convention(
-    complementary=f"(?P<mission>{'|'.join(_enum_field.choices())})-l3-duacs",
-    complementary_fields=[_enum_field],
-    complementary_generation_string="{mission!f}-l3-duacs",
+    complementary=f"(?P<sensor>{'|'.join(_SENSOR_FIELD.choices())})-l3-duacs",
+    complementary_fields=[_SENSOR_FIELD],
+    complementary_generation_string="{sensor!f}-l3-duacs",
 )
 
 CMEMS_SSHA_L3_LAYOUT = build_layout(_DATASET_ID_CONVENTION, FileNameConventionL3Nadir())
@@ -130,7 +113,7 @@ class BasicNetcdfFilesDatabaseL3Nadir(FilesDatabase, PeriodMixin):
 
     layouts = [CMEMS_SSHA_L3_LAYOUT, Layout([FileNameConventionL3Nadir()])]
     deduplicator = Deduplicator(unique=("time",), auto_pick_last=("production_date",))
-    unmixer = SubsetsUnmixer(partition_keys=["mission", "resolution"])
+    unmixer = SubsetsUnmixer(partition_keys=["sensor", "resolution"])
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"
 

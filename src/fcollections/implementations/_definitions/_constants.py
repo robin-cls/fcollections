@@ -73,7 +73,9 @@ class ProductLevel(Enum):
 
 
 class Delay(Enum):
+    """Delay definition for L3 and L4 sea level products."""
+
     NRT = auto()
+    """Near real time."""
     DT = auto()
-    MY = auto()
-    MYINT = auto()
+    """Differed time."""
