@@ -15,7 +15,8 @@ from fcollections.core import (
     SubsetsUnmixer,
 )
 
-from ._definitions import DESCRIPTIONS, ProductLevel, ProductSubset, Temporality
+from ._definitions._constants import DESCRIPTIONS, ProductLevel
+from ._definitions._swot import ProductSubset, Temporality
 from ._readers import SwotReaderL3LRSSH
 
 SWOT_L3_PATTERN = re.compile(
@@ -142,7 +143,7 @@ try:
 except ImportError:
     import logging
 
-    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+    from ._definitions._constants import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     logger = logging.getLogger(__name__)
     logger.info(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)

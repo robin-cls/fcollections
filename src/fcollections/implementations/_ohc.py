@@ -11,7 +11,7 @@ from fcollections.core import (
     PeriodMixin,
 )
 
-from ._definitions import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS_NO_BACKEND
+from ._definitions._constants import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS_NO_BACKEND
 
 OHC_PATTERN = re.compile(
     r"OHC-NAQG3_v(.*)r(.*)_blend_s(.*)_e(.*)_c(?P<time>\d{8})(.*).nc"
@@ -52,7 +52,7 @@ try:
 except ImportError:
     import logging
 
-    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+    from ._definitions._constants import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     logger = logging.getLogger(__name__)
     logger.info(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)

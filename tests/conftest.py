@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 from fixtures._auto import patch_test_geometries_path
-from fixtures._chl import chl_dir, chl_files
+from fixtures._chl import chl_dir, chl_dir_flat, chl_dir_layout, chl_files
 from fixtures._dac import dac_dir, dac_files
 from fixtures._era5 import era5_dir, era5_files
 from fixtures._l2_lr_ssh import (
@@ -50,9 +50,10 @@ from fixtures._l4_ssha import (
     l4_ssha_dataset_180_180,
     l4_ssha_dataset_reversed_lat,
     l4_ssha_dir,
-    l4_ssha_dir_layout,
+    l4_ssha_dir_layout_aviso,
+    l4_ssha_dir_layout_cmems,
+    l4_ssha_dir_no_layout,
     l4_ssha_files,
-    l4_ssha_files_2,
 )
 from fixtures._mur import mur_dir, mur_files
 from fixtures._nadir import (
@@ -68,8 +69,14 @@ from fixtures._nadir import (
 )
 from fixtures._ohc import ohc_dir, ohc_files
 from fixtures._s1aowi import s1aowi_dir, s1aowi_files
-from fixtures._sst import sst_dir, sst_files
-from fixtures._swh import swh_dir, swh_files
+from fixtures._sst import (
+    sst_dir,
+    sst_dir_flat,
+    sst_dir_layout,
+    sst_dir_layout2,
+    sst_files,
+)
+from fixtures._swh import swh_dir, swh_dir_flat, swh_dir_layout, swh_files
 from fixtures._ww import (
     _extended_metadata,
     _light_metadata,

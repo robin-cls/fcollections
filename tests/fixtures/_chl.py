@@ -12,10 +12,14 @@ if tp.TYPE_CHECKING:
 @pytest.fixture(scope="session")
 def chl_files() -> list[str]:
     return [
-        "20250302_cmems_obs-oc_glo_bgc-plankton_nrt_l3-multi-4km_P1D.nc",
-        "20250302_cmems_obs-oc_glo_bgc-plankton_myint_l3-olci-4km_P1D.nc",
-        "20250302_cmems_obs-oc_glo_bgc-optics_myint_l4-olci-1km_P1D.nc",
-        "20250303_cmems_obs-oc_glo_bgc-plankton_myint_l4-gapfree-multi-4km_P1M.nc",
+        "flat/20250302_cmems_obs-oc_glo_bgc-plankton_nrt_l3-multi-4km_P1D.nc",
+        "flat/20250302_cmems_obs-oc_glo_bgc-plankton_myint_l3-olci-4km_P1D.nc",
+        "flat/20250302_cmems_obs-oc_glo_bgc-optics_myint_l4-olci-1km_P1D.nc",
+        "flat/20250303_cmems_obs-oc_glo_bgc-plankton_myint_l4-gapfree-multi-4km_P1M.nc",
+        "layout/cmems_obs-oc_glo_bgc-plankton_nrt_l3-multi-4km_P1D/2025/03/20250302_cmems_obs-oc_glo_bgc-plankton_nrt_l3-multi-4km_P1D.nc",
+        "layout/cmems_obs-oc_glo_bgc-plankton_myint_l3-olci-4km_P1D/2025/03/20250302_cmems_obs-oc_glo_bgc-plankton_myint_l3-olci-4km_P1D.nc",
+        "layout/cmems_obs-oc_glo_bgc-optics_myint_l4-olci-1km_P1D/2025/03/20250302_cmems_obs-oc_glo_bgc-optics_myint_l4-olci-1km_P1D.nc",
+        "layout/cmems_obs-oc_glo_bgc-plankton_myint_l4-gapfree-multi-4km_P1M/2025/03/20250303_cmems_obs-oc_glo_bgc-plankton_myint_l4-gapfree-multi-4km_P1M.nc",
     ]
 
 
@@ -28,10 +32,19 @@ def chl_dir(
     """The test folder will contain multiple netcdf."""
     data_dir = Path(tmpdir_factory.mktemp("data"))
 
-    test_dir = data_dir.joinpath("test_dir")
-    test_dir.mkdir(exist_ok=True)
-
     for f in chl_files:
-        l4_ssha_dataset_0_360.to_netcdf(test_dir.joinpath(f))
+        path = data_dir.joinpath(f)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        l4_ssha_dataset_0_360.to_netcdf(path)
 
-    return test_dir
+    return data_dir
+
+
+@pytest.fixture(scope="session")
+def chl_dir_flat(chl_dir: Path) -> Path:
+    return chl_dir / "flat"
+
+
+@pytest.fixture(scope="session")
+def chl_dir_layout(chl_dir: Path) -> Path:
+    return chl_dir / "layout"

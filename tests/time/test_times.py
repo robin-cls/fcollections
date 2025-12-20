@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import dataclasses as dc
 import typing as tp
 
 import numpy as np
 import pytest
 
-from fcollections.time import Period, times_holes
+from fcollections.time import ISODuration, Period, times_holes
 
 if tp.TYPE_CHECKING:
     import numpy.typing as np_t
@@ -88,3 +89,14 @@ def test_times_holes_jitter(
     ]
 
     assert actual_holes == expected_holes
+
+
+def test_iso_duration():
+    data = {
+        "weeks": 2,
+        "months": 1,
+        "days": 0.2,
+    }
+    duration = ISODuration(**data)
+    for key, value in dc.asdict(duration).items():
+        assert value == data.get(key, 0)

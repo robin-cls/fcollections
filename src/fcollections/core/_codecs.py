@@ -7,6 +7,7 @@ from enum import Enum, auto
 import numpy as np
 
 from fcollections.time import (
+    ISODuration,
     Period,
     fractional_julian_day_to_numpy,
     julian_day_to_numpy,
@@ -129,6 +130,9 @@ class EnumCodec(ICodec[type[Enum]]):
     case_type_encoded
         Case transformation applied to the enumeration label. Set to None to
         keep the enumeration label case.
+    underscore_encoded
+        Whether to keep the underscore in the encoded value. If set to False,
+        ``_`` will be replace by ``-`` before dump
     """
 
     def __init__(
@@ -136,6 +140,7 @@ class EnumCodec(ICodec[type[Enum]]):
         enum_cls: type[Enum],
         case_type_decoded: CaseType | None = None,
         case_type_encoded: CaseType | None = None,
+        underscore_encoded: bool = True,
     ):
         self.enum_cls = enum_cls
         if isinstance(case_type_decoded, str):
@@ -146,8 +151,13 @@ class EnumCodec(ICodec[type[Enum]]):
             case_type_encoded = CaseType[case_type_encoded]
         self.case_type_encoded = case_type_encoded
 
+        self.underscore_encoded = underscore_encoded
+
     def decode(self, input_string: str) -> type[Enum]:
         # Handle difference cases
+        if not self.underscore_encoded:
+            input_string = input_string.replace("-", "_")
+
         if self.case_type_decoded == CaseType.upper:
             input_string = input_string.upper()
         elif self.case_type_decoded == CaseType.lower:
@@ -165,12 +175,16 @@ class EnumCodec(ICodec[type[Enum]]):
         return output_enum
 
     def encode(self, data: type[Enum]) -> str:
+        data = data.name
+        if not self.underscore_encoded:
+            data = data.replace("_", "-")
+
         if self.case_type_encoded == CaseType.upper:
-            return data.name.upper()
+            return data.upper()
         elif self.case_type_encoded == CaseType.lower:
-            return data.name.lower()
+            return data.lower()
         else:
-            return data.name
+            return data
 
 
 class DateTimeCodec(ICodec[np.datetime64]):
@@ -383,6 +397,83 @@ class JulianDayCodec(ICodec[np.datetime64]):
                 data, reference=self.reference
             )
             return str(fractional_days)
+
+
+class ISODurationCodec(ICodec[ISODuration]):
+    """Coder-Decoder implementation for ISO8601 duration codes.
+
+    ISO8601 duration code are similar to time deltas, except that they can
+    define years and months which are cannot be converted to days directly
+    without a calendar.
+
+    Examples of codes: P1D (1 day), PT3H (3 hours), P1DT15M (1 day and 15
+    minutes)
+    """
+
+    REGEX = re.compile(
+        r"""
+        ^P
+        (?:(?P<years>\d+)Y)?
+        (?:(?P<months>\d+)M)?
+        (?:(?P<weeks>\d+)W)?
+        (?:(?P<days>\d+)D)?
+        (?:T
+            (?:(?P<hours>\d+)H)?
+            (?:(?P<minutes>\d+)M)?
+            (?:(?P<seconds>\d+(?:\.\d+)?)S)?
+        )?
+        $
+        """,
+        re.VERBOSE,
+    )
+    """Parsing regex for standard ISO8601 duration codes."""
+
+    def decode(self, input_string: str) -> ISODuration:
+        match = self.REGEX.match(input_string)
+        if not match:
+            msg = f"Invalid ISO 8601 duration : {input_string}"
+            raise DecodingError(msg)
+
+        parts = {
+            name: (
+                int(val)
+                if val and name != "seconds"
+                else float(val) if name == "seconds" and val else 0
+            )
+            for name, val in match.groupdict().items()
+        }
+
+        return ISODuration(**parts)
+
+    def encode(self, data: ISODuration) -> str:
+        if not any(vars(data).values()):
+            return "PT0S"
+
+        date_parts = []
+        time_parts = []
+
+        if data.years:
+            date_parts.append(f"{data.years}Y")
+        if data.months:
+            date_parts.append(f"{data.months}M")
+        if data.weeks:
+            date_parts.append(f"{data.weeks}W")
+        if data.days:
+            date_parts.append(f"{data.days}D")
+
+        if data.hours:
+            time_parts.append(f"{data.hours}H")
+        if data.minutes:
+            time_parts.append(f"{data.minutes}M")
+        if data.seconds:
+            # Supprime les .0 inutiles
+            sec = int(data.seconds) if data.seconds.is_integer() else data.seconds
+            time_parts.append(f"{sec}S")
+
+        if time_parts:
+            return "P" + "".join(date_parts) + "T" + "".join(time_parts)
+
+        return "P" + "".join(date_parts)
 
 
 class DecodingError(Exception):

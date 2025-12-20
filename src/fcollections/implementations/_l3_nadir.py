@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
+from copy import copy
 
 import numpy as np
 
@@ -12,25 +12,39 @@ from fcollections.core import (
     FileNameFieldDateDelta,
     FileNameFieldDatetime,
     FileNameFieldEnum,
-    FileNameFieldFloat,
     FileNameFieldInteger,
-    FileNameFieldString,
     FilesDatabase,
     Layout,
     OpenMfDataset,
     PeriodMixin,
     SubsetsUnmixer,
 )
-from fcollections.missions import MissionsPhases
 
-from ._definitions import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS, Delay, ProductLevel
+from ._definitions._cmems import (
+    CMEMS_DATASET_ID_FIELDS,
+    build_convention,
+    build_layout,
+)
+from ._definitions._constants import (
+    DESCRIPTIONS,
+    XARRAY_TEMPORAL_NETCDFS,
+    Delay,
+    ProductLevel,
+)
 
-if TYPE_CHECKING:
-    from pathlib import Path
+# The sensor is actually composed of the mission name and optionally the orbit
+# or the instrument mode (j3, j3n, s6a-lr). When the instrument mode is given,
+# it is separated from the mission name with '_' for the file names (s6a_hr)
+# and '-' for the folder name (s6a-hr).
+# By default, the sensor field name uses '-' for encoded string. Needs to adapt
+# the behavior to keep the '_' in the encoded string
+_SENSOR_FIELD: FileNameFieldEnum = CMEMS_DATASET_ID_FIELDS[-1]
+_SENSOR_FIELD_FILENAME = copy(_SENSOR_FIELD)
+_SENSOR_FIELD_FILENAME.underscore_encoded = True
 
 
 L3_NADIR_PATTERN = re.compile(
-    r"(?P<delay>.*)_global_(?P<mission>.*)_(hr_){0,1}phy_(aux_){0,1}(?P<product_level>l3)_(?P<resolution>\d+)*(hz_)*(?P<time>\d{8})_(?P<production_date>\d{8}).nc"
+    rf"(?P<delay>nrt|dt)_global_(?P<sensor>{'|'.join(_SENSOR_FIELD_FILENAME.choices())})_(hr_){{0,1}}phy_(aux_){{0,1}}(?P<product_level>l3)_(?P<resolution>\d+)*(hz_)*(?P<time>\d{{8}})_(?P<production_date>\d{{8}}).nc"
 )
 
 
@@ -57,18 +71,9 @@ class FileNameConventionL3Nadir(FileNameConvention):
                 FileNameFieldDatetime(
                     "production_date",
                     "%Y%m%d",
-                    description=(
-                        "Production date of a given file. The same granule is "
-                        "regenerated multiple times with updated corrections. Hence"
-                        " there can be multiple files for the same period, but with"
-                        " a different production date."
-                    ),
+                    description=DESCRIPTIONS["production_date"],
                 ),
-                FileNameFieldEnum(
-                    "mission",
-                    MissionsPhases,
-                    description=("Altimetry mission in the file."),
-                ),
+                _SENSOR_FIELD_FILENAME,
                 FileNameFieldEnum(
                     "product_level",
                     ProductLevel,
@@ -84,89 +89,26 @@ class FileNameConventionL3Nadir(FileNameConvention):
                     ),
                 ),
             ],
-            generation_string="{delay!f}_global_{mission!f}_phy_{product_level!f}_{resolution!f}hz_{time!f}_{production_date!f}",
+            generation_string="{delay!f}_global_{sensor!f}_phy_{product_level!f}_{resolution!f}hz_{time!f}_{production_date!f}",
         )
 
 
-class _FileNameFieldIntegerAdapter(FileNameFieldInteger):
-    """Specific field for sampling definition in file versus folder names.
-
-    In folder names, a sampling of 5Hz is given as PT0.2S, whereas it is
-    given as 5Hz in the file name. This field converts PT0.2S -> 5 to
-    have the same folder and file fields.
-    """
-
-    def decode(self, input_string: str) -> int:
-        f = FileNameFieldFloat("dummy")
-        return int(1 / f.decode(input_string))
-
-    def encode(self, data: int) -> str:
-        invert = 1 / data
-        return str(invert) if invert % 1 != 0 else str(int(invert))
-
-
-class _FileNameFieldEnumAdapter(FileNameFieldEnum):
-    """Missions names in CMEMS folder versus file names differ.
-
-    The mission is actually composed of the mission name and optionally the
-    orbit or the instrument mode (j3, j3n, s6a-lr). When the instrument mode is
-    given, it is separated from the mission name with '_' for the file names
-    (s6a_hr) and '-' for the folder name (s6a-hr).
-
-    By default, the mission name uses '_' in MissionsPhases. This enum adapts
-    the encoding/decoding of the folder name.
-
-    See Also
-    --------
-    fcollections.core.missions.MissionsPhases: mission phases definitions
-    """
-
-    def decode(self, input_string: str) -> MissionsPhases:
-        return super().decode(input_string.replace("-", "_"))
-
-    def encode(self, data: MissionsPhases) -> str:
-        return super().encode(data).replace("_", "-")
-
-
-CMEMS_NADIR_SSHA_LAYOUT = Layout(
-    [
-        FileNameConvention(
-            re.compile(
-                r"cmems_obs-sl_glo_phy-ssh_(?P<delay>nrt|my)_(?P<mission>.*)-l3-duacs_PT(?P<resolution>.*)S(-i){0,1}_(?P<version>.*)"
-            ),
-            [
-                FileNameFieldEnum(
-                    "delay",
-                    Delay,
-                    case_type_decoded=CaseType.upper,
-                    case_type_encoded=CaseType.lower,
-                ),
-                _FileNameFieldEnumAdapter("mission", MissionsPhases),
-                _FileNameFieldIntegerAdapter("resolution"),
-                FileNameFieldString("version"),
-            ],
-            "cmems_obs-sl_glo_phy-ssh_{delay!f}_{mission!f}-l3-duacs_PT{resolution!f}S_{version}",
-        ),
-        FileNameConvention(
-            re.compile(r"(?P<year>\d{4})"), [FileNameFieldInteger("year")], "{year}"
-        ),
-        FileNameConvention(
-            re.compile(r"(?P<month>\d{2})"),
-            [FileNameFieldInteger("month")],
-            "{month:0>2d}",
-        ),
-        FileNameConventionL3Nadir(),
-    ]
+_DATASET_ID_CONVENTION = build_convention(
+    complementary=f"(?P<sensor>{'|'.join(_SENSOR_FIELD.choices())})-l3-duacs",
+    complementary_fields=[_SENSOR_FIELD],
+    complementary_generation_string="{sensor!f}-l3-duacs",
 )
+
+CMEMS_SSHA_L3_LAYOUT = build_layout(_DATASET_ID_CONVENTION, FileNameConventionL3Nadir())
 
 
 class BasicNetcdfFilesDatabaseL3Nadir(FilesDatabase, PeriodMixin):
     """Database mapping to select and read L3 nadir Netcdf files in a local
     file system."""
 
-    layouts = [CMEMS_NADIR_SSHA_LAYOUT, Layout([FileNameConventionL3Nadir()])]
+    layouts = [CMEMS_SSHA_L3_LAYOUT, Layout([FileNameConventionL3Nadir()])]
     deduplicator = Deduplicator(unique=("time",), auto_pick_last=("production_date",))
-    unmixer = SubsetsUnmixer(partition_keys=["mission", "resolution"])
+    unmixer = SubsetsUnmixer(partition_keys=["sensor", "resolution"])
     reader = OpenMfDataset(XARRAY_TEMPORAL_NETCDFS)
     sort_keys = "time"
 
@@ -186,7 +128,7 @@ try:
 except ImportError:
     import logging
 
-    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+    from ._definitions._constants import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     logger = logging.getLogger(__name__)
     logger.info(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)

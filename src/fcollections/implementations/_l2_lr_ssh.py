@@ -14,13 +14,16 @@ from fcollections.core import (
     FileNameFieldEnum,
     FileNameFieldInteger,
     FileNameFieldPeriod,
+    FileNameFieldString,
     FilesDatabase,
+    ICodec,
     Layout,
     PeriodMixin,
     SubsetsUnmixer,
 )
 
-from ._definitions import DESCRIPTIONS, ProductLevel, ProductSubset
+from ._definitions._constants import DESCRIPTIONS, ProductLevel
+from ._definitions._swot import ProductSubset
 from ._readers import SwotReaderL2LRSSH
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -34,8 +37,12 @@ SWOT_L2_PATTERN = re.compile(
 
 
 class Timeliness(Enum):
+    """Timeliness of the SWOT L2_LR_SSH products."""
+
     I = auto()
+    """Forward data."""
     G = auto()
+    """Reprocessed data."""
 
 
 @functools.total_ordering
@@ -392,30 +399,26 @@ class L2Version:
         ).reshape(shape)
 
 
-def build_version_parser() -> oct_io.FileNameConvention:
-    """Return oct_io.FileNameConvention to parse CRID versions."""
-    # Nested import to keep this module light
-    import re
+def build_version_parser() -> FileNameConvention:
+    """Build file name convention to parse CRID versions."""
 
-    import fcollections.core as oct_io
-
-    class _ExclamationMarkDecoder(oct_io.ICodec):
+    class _ExclamationMarkDecoder(ICodec):
 
         def decode(self, input_string):
             if input_string == "?":
                 return None
             return super().decode(input_string)
 
-    class _FileNameFieldEnum(_ExclamationMarkDecoder, oct_io.FileNameFieldEnum):
+    class _FileNameFieldEnum(_ExclamationMarkDecoder, FileNameFieldEnum):
         pass
 
-    class _FileNameFieldInteger(_ExclamationMarkDecoder, oct_io.FileNameFieldInteger):
+    class _FileNameFieldInteger(_ExclamationMarkDecoder, FileNameFieldInteger):
         pass
 
-    class _FileNameFieldString(_ExclamationMarkDecoder, oct_io.FileNameFieldString):
+    class _FileNameFieldString(_ExclamationMarkDecoder, FileNameFieldString):
         pass
 
-    return oct_io.FileNameConvention(
+    return FileNameConvention(
         regex=re.compile(
             r"P(?P<forward>I|G|\?)(?P<baseline>[A-Z]|\?)(?P<minor_version>[0-9]|\?)(_){0,1}(?P<product_counter>[0-9]{2}){0,1}$"
         ),
@@ -423,7 +426,7 @@ def build_version_parser() -> oct_io.FileNameConvention:
             _FileNameFieldEnum("forward", Timeliness),
             _FileNameFieldString("baseline"),
             _FileNameFieldInteger("minor_version"),
-            oct_io.FileNameFieldInteger("product_counter", default=None),
+            FileNameFieldInteger("product_counter", default=None),
         ],
     )
 
@@ -591,7 +594,7 @@ try:
 except ImportError:
     import logging
 
-    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+    from ._definitions._constants import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     logger = logging.getLogger(__name__)
     logger.info(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)

@@ -11,7 +11,7 @@ from fcollections.core import (
     PeriodMixin,
 )
 
-from ._definitions import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS
+from ._definitions._constants import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS
 
 ERA5_PATTERN = re.compile(r"reanalysis-era5-single-levels_(?P<time>\d{8}).nc")
 

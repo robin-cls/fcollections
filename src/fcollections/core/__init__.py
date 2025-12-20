@@ -19,6 +19,7 @@ from ._filenames import (
     FileNameFieldEnum,
     FileNameFieldFloat,
     FileNameFieldInteger,
+    FileNameFieldISODuration,
     FileNameFieldPeriod,
     FileNameFieldString,
 )
@@ -72,6 +73,7 @@ __all__ = [
     "FileNameFieldInteger",
     "FileNameFieldString",
     "FileNameFieldPeriod",
+    "FileNameFieldISODuration",
     "FileNameConvention",
     "FileListingError",
     "IFilesReader",

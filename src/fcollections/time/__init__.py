@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses as dc
 import typing as tp
 
 import numpy as np
@@ -36,6 +37,7 @@ __all__ = [
     "CNES_DATE_REFERENCE",
     "MILLENNIUM_DATE_REFERENCE",
     "times_holes",
+    "ISODuration",
 ]
 
 
@@ -49,3 +51,36 @@ def times_holes(
         ),
         np.where(delta_t > 1.5 * sampling.astype("m8[ns]"))[0],
     )
+
+
+@dc.dataclass(eq=True, frozen=True)
+class ISODuration:
+    """ISO8601 duration.
+
+    Because years and months cannot be directly converted to seconds without
+    using a calendar, ``numpy`` and ``datetime`` modules do not handle them in
+    their respective timedelta classes. This class stores the duration code -
+    including years, months and weeks - naively, without trying to convert to
+    seconds
+
+    See Also
+    --------
+    fcollections.core.FileNameFieldISODuration
+        Field that can encode and decode an duration code following the ISO8601
+        convention
+    """
+
+    years: int = 0
+    """Years."""
+    months: int = 0
+    """Months."""
+    weeks: int = 0
+    """Weeks."""
+    days: int = 0
+    """Days."""
+    hours: int = 0
+    """Hours."""
+    minutes: int = 0
+    """Minutes."""
+    seconds: float = 0.0
+    """Seconds."""

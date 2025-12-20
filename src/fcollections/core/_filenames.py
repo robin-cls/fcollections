@@ -8,7 +8,7 @@ from enum import Enum
 
 import numpy as np
 
-from fcollections.time import Period
+from fcollections.time import ISODuration, Period
 
 from ._codecs import (
     CaseType,
@@ -17,6 +17,7 @@ from ._codecs import (
     FloatCodec,
     ICodec,
     IntegerCodec,
+    ISODurationCodec,
     JulianDayCodec,
     PeriodCodec,
     PeriodDeltaCodec,
@@ -195,12 +196,18 @@ class FileNameFieldEnum(FileNameField, EnumTester, EnumCodec):
         enum_cls: type[Enum],
         case_type_decoded: CaseType | None = None,
         case_type_encoded: CaseType | None = None,
+        underscore_encoded: bool = True,
         default: type[Enum] | None = None,
         description: str = "",
     ):
         super().__init__(name, default, description)
         EnumTester.__init__(self, enum_cls)
-        EnumCodec.__init__(self, enum_cls, case_type_decoded, case_type_encoded)
+        EnumCodec.__init__(
+            self, enum_cls, case_type_decoded, case_type_encoded, underscore_encoded
+        )
+
+    def choices(self) -> list[str]:
+        return [self.encode(x) for x in self.enum_cls]
 
 
 class FileNameFieldPeriod(FileNameField, PeriodTester, PeriodCodec):
@@ -226,6 +233,28 @@ class FileNameFieldPeriod(FileNameField, PeriodTester, PeriodCodec):
     ):
         super().__init__(name, default, description)
         super(FileNameField, self).__init__(date_fmt, separator)
+
+
+class FileNameFieldISODuration(FileNameField, ISODurationCodec):
+    """ISO8601 duration codes field (PT1D, P1W, ...)"""
+
+    @property
+    def test_description(self) -> str:
+        description = (
+            "ISO8601 duration field can be tested against an "
+            "ISODuration object or its string representation "
+            "(PT1S, ...)"
+        )
+        return description
+
+    @property
+    def type(self) -> type[ISODuration]:
+        return ISODuration
+
+    def sanitize(self, reference: str | ISODuration) -> ISODuration:
+        if isinstance(reference, str):
+            return self.decode(reference)
+        return reference
 
 
 class FieldFormatter(string.Formatter):
@@ -353,9 +382,12 @@ class FileNameConvention:
 
     def generate(self, **kwargs):
         if self.generation_string is None:
-            raise NotImplementedError(
-                "The current file name convention is only configured for parsing. Please specify a 'generation_string' to enable file name generation"
+            msg = (
+                "The current file name convention is only configured for "
+                "parsing. Please specify a 'generation_string' to enable "
+                "file name generation"
             )
+            raise NotImplementedError(msg)
         try:
             return self._formatter.format(self.generation_string, **kwargs)
         except KeyError as exc:

@@ -12,7 +12,7 @@ from fcollections.core import (
     PeriodMixin,
 )
 
-from ._definitions import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS
+from ._definitions._constants import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS
 
 L2_NADIR_PATTERN = re.compile(
     r"SWOT_(GPN|IPN)_2PfP(?P<cycle_number>\d{3})_(?P<pass_number>\d{3})_(?P<time>\d{8}_\d{6}_\d{8}_\d{6}).nc"
@@ -63,7 +63,7 @@ try:
 except ImportError:
     import logging
 
-    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+    from ._definitions._constants import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     logger = logging.getLogger(__name__)
     logger.info(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
