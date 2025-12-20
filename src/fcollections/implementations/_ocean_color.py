@@ -14,13 +14,12 @@ from fcollections.core import (
     PeriodMixin,
 )
 
-from ._definitions import (
-    DESCRIPTIONS,
-    XARRAY_TEMPORAL_NETCDFS,
+from ._definitions._cmems import (
+    _FIELDS,
     build_convention,
     build_layout,
 )
-from ._definitions._cmems import _FIELDS
+from ._definitions._constants import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS
 
 _COMPLEMENTARY_INFO = [
     f"(?P<level>l3|l4|l4-gapfree)-(?P<sensor>{'|'.join(_FIELDS[-1].choices())})(-climatology){{0,1}}-(?P<spatial_resolution>\\d+(km|m))",
@@ -86,7 +85,7 @@ try:
 except ImportError:
     import logging
 
-    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+    from ._definitions._constants import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     logger = logging.getLogger(__name__)
     logger.info(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)

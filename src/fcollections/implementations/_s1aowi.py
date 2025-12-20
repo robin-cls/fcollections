@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from enum import Enum, auto
 
 from fcollections.core import (
     CaseType,
@@ -14,17 +15,33 @@ from fcollections.core import (
     PeriodMixin,
 )
 
-from ._definitions import (
+from ._definitions._constants import (
     DESCRIPTIONS,
     XARRAY_TEMPORAL_NETCDFS,
-    AcquisitionMode,
-    S1AOWIProductType,
-    S1AOWISlicePostProcessing,
 )
 
 S1AOWI_PATTERN = re.compile(
     r"s1a-(?P<acquisition_mode>.*)-owi-(?P<slice_post_processing>.*)-(?P<time>\d{8}t\d{6}-\d{8}t\d{6})-(?P<resolution>\d{6})-(?P<orbit>\d{6})_(?P<product_type>.*).nc"
 )
+
+
+class AcquisitionMode(Enum):
+    IW = auto()
+    EW = auto()
+    WV = auto()
+    SM = auto()
+
+
+class S1AOWIProductType(Enum):
+    SW = auto()
+    GS = auto()
+
+
+class S1AOWISlicePostProcessing(Enum):
+
+    CC = auto()
+    CM = auto()
+    OCN = auto()
 
 
 class FileNameConventionS1AOWI(FileNameConvention):

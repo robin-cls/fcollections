@@ -20,13 +20,15 @@ from fcollections.core import (
 )
 from fcollections.missions import MissionsPhases
 
-from ._definitions import (
+from ._definitions._cmems import (
+    build_convention,
+    build_layout,
+)
+from ._definitions._constants import (
     DESCRIPTIONS,
     XARRAY_TEMPORAL_NETCDFS,
     Delay,
     ProductLevel,
-    build_convention,
-    build_layout,
 )
 
 L3_NADIR_PATTERN = re.compile(
@@ -148,7 +150,7 @@ try:
 except ImportError:
     import logging
 
-    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+    from ._definitions._constants import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     logger = logging.getLogger(__name__)
     logger.info(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)

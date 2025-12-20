@@ -20,13 +20,11 @@ from fcollections.core import (
 )
 from fcollections.missions import MissionsPhases
 
-from ._definitions import (
-    DESCRIPTIONS,
-    XARRAY_TEMPORAL_NETCDFS,
-    Delay,
+from ._definitions._cmems import (
     build_convention,
     build_layout,
 )
+from ._definitions._constants import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS, Delay
 
 GRIDDED_SLA_PATTERN = re.compile(
     r"(?P<delay>nrt|dt)_(.*)_allsat_phy_l4_(?P<time>(\d{8})|(\d{8}T\d{2}))_(?P<production_date>\d{8}).nc"
@@ -142,7 +140,7 @@ try:
 except ImportError:
     import logging
 
-    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+    from ._definitions._constants import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     logger = logging.getLogger(__name__)
     logger.info(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)

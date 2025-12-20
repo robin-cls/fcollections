@@ -137,19 +137,6 @@ class Variable(Enum):
     """Reflectance."""
 
 
-class ComplementaryInfo(Enum):
-    """Product level enum."""
-
-    L3 = auto()
-    """Level 3."""
-    L3S = auto()
-    """Level 3 specific to SST_GLO_SST_L3S_NRT_OBSERVATIONS_010_010."""
-    L4 = auto()
-    """Level 4."""
-    L4_DUACS = auto()
-    """Level 4 specific to DUACS mappings."""
-
-
 class DataType(Enum):
     """Dataset type."""
 

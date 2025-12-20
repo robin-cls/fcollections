@@ -7,17 +7,22 @@ from ._dac import (
     FileNameConventionDAC,
     NetcdfFilesDatabaseDAC,
 )
-from ._definitions import (
-    AcquisitionMode,
-    Delay,
-    OCVariable,
-    ProductLevel,
-    ProductSubset,
-    S1AOWIProductType,
-    S1AOWISlicePostProcessing,
-    Sensor,
-    Temporality,
+from ._definitions._cmems import (
+    Area,
+    DataType,
+    Group,
+    Origin,
+    ProductClass,
+    Sensors,
+    Thematic,
+    Typology,
+    Variable,
 )
+from ._definitions._constants import (
+    Delay,
+    ProductLevel,
+)
+from ._definitions._swot import ProductSubset, Temporality
 from ._era5 import FileNameConventionERA5, NetcdfFilesDatabaseERA5
 from ._gridded_sla import AVISO_L4_SWOT_LAYOUT as _AVISO_L4_SWOT_LAYOUT
 from ._gridded_sla import CMEMS_L4_SSHA_LAYOUT as _CMEMS_L4_SSHA_LAYOUT
@@ -83,7 +88,13 @@ from ._readers import (
     SwotReaderL3LRSSH,
     SwotReaderL3WW,
 )
-from ._s1aowi import FileNameConventionS1AOWI, NetcdfFilesDatabaseS1AOWI
+from ._s1aowi import (
+    AcquisitionMode,
+    FileNameConventionS1AOWI,
+    NetcdfFilesDatabaseS1AOWI,
+    S1AOWIProductType,
+    S1AOWISlicePostProcessing,
+)
 from ._sst import CMEMS_SST_LAYOUT as _CMEMS_SST_LAYOUT
 from ._sst import IFREMER_SST_LAYOUT as _IFREMER_SST_LAYOUT
 from ._sst import (
@@ -150,9 +161,8 @@ __all__ = [
     "NetcdfFilesDatabaseL2Nadir",
     "NetcdfFilesDatabaseL3Nadir",
     "NetcdfFilesDatabaseSwotLRWW",
+    # File name conventions
     "FileNameConventionERA5",
-    "ProductSubset",
-    "ProductGroup",
     "FileNameConventionOC",
     "FileNameConventionGriddedSLA",
     "FileNameConventionGriddedSLAInternal",
@@ -167,18 +177,7 @@ __all__ = [
     "FileNameConventionSWH",
     "FileNameConventionL2Nadir",
     "FileNameConventionL3Nadir",
-    "Timeliness",
-    "L2Version",
-    "L2VersionField",
-    "ProductType",
-    "build_version_parser",
-    "Sensor",
-    "OCVariable",
-    "ProductLevel",
-    "AcquisitionMode",
-    "S1AOWIProductType",
-    "Delay",
-    "S1AOWISlicePostProcessing",
+    # Layouts
     "AVISO_L2_LR_SSH_LAYOUT",
     "AVISO_L3_LR_SSH_LAYOUT_V2",
     "AVISO_L3_LR_SSH_LAYOUT_V3",
@@ -190,9 +189,41 @@ __all__ = [
     "CMEMS_SWH_LAYOUT",
     "CMEMS_SST_LAYOUT",
     "IFREMER_SST_LAYOUT",
+    # Readers
     "SwotReaderL2LRSSH",
     "SwotReaderL3LRSSH",
     "SwotReaderL3WW",
+    # Common definitions
+    "Delay",
+    "ProductLevel",
+    "Temporality",
+    # Definitions from CMEMS
+    "Origin",
+    "Group",
+    "ProductClass",
+    "DataType",
+    "Thematic",
+    "Area",
+    "ProductClass",
+    "Variable",
+    "Typology",
+    "Sensors",
+    # Definitions for SWOT mission
+    "Temporality",
+    "ProductSubset",
+    # Definitions specific to one product
     "StackLevel",
     "Temporality",
+    "ProductSubset",
+    "ProductGroup",
+    "Timeliness",
+    "L2Version",
+    "L2VersionField",
+    "ProductType",
+    "build_version_parser",
+    "ProductLevel",
+    "AcquisitionMode",
+    "S1AOWIProductType",
+    "Delay",
+    "S1AOWISlicePostProcessing",
 ]

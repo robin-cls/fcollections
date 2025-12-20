@@ -14,7 +14,8 @@ from fcollections.core import (
     SubsetsUnmixer,
 )
 
-from ._definitions import DESCRIPTIONS, ProductSubset
+from ._definitions._constants import DESCRIPTIONS
+from ._definitions._swot import ProductSubset
 from ._l3_lr_ssh import AVISO_L3_LR_SSH_LAYOUT_V2
 from ._readers import SwotReaderL3WW
 
@@ -93,7 +94,7 @@ try:
 except ImportError:
     import logging
 
-    from ._definitions import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
+    from ._definitions._constants import MISSING_OPTIONAL_DEPENDENCIES_MESSAGE
 
     logger = logging.getLogger(__name__)
     logger.info(MISSING_OPTIONAL_DEPENDENCIES_MESSAGE)
