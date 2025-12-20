@@ -30,6 +30,7 @@ class Color(Enum):
     GREEN = auto()
     BLUE = auto()
     gray = auto()
+    PINK_SCARLET = auto()
 
 
 def test_field_bad_init():
@@ -56,6 +57,12 @@ def test_field_bad_init():
             np.datetime64("2023-12-02T02:31:15.000000"),
         ),
         (FileNameFieldEnum("", Color), "BLUE", Color.BLUE),
+        (FileNameFieldEnum("", Color), "PINK_SCARLET", Color.PINK_SCARLET),
+        (
+            FileNameFieldEnum("", Color, underscore_encoded=False),
+            "PINK-SCARLET",
+            Color.PINK_SCARLET,
+        ),
         (FileNameFieldEnum("", Color, "upper", "lower"), "blue", Color.BLUE),
         (FileNameFieldEnum("", Color, "lower", "upper"), "GRAY", Color.gray),
         (FileNameFieldInteger(""), "-2", -2),
@@ -150,6 +157,7 @@ def test_fields_encode_decode_nominal(
             ),
             "17831.25",
         ),
+        (FileNameFieldISODuration(""), "P0.2W"),
     ],
     ids=[
         "Non matching string with date format",
@@ -165,6 +173,7 @@ def test_fields_encode_decode_nominal(
         "Not a julian day with hours",
         "Not a fractional julian day",
         "Not a julian day",
+        "Not a vlid ISO8601 code",
     ],
 )
 def test_fields_decode_error(field: FileNameField, input_string: str):
@@ -324,6 +333,7 @@ def test_field_test(field, reference, tested, filtered):
             Period,
         ),
         (FileNameFieldDateDelta("", "", np.timedelta64(1, "D")), Period),
+        (FileNameFieldISODuration(""), ISODuration),
     ],
 )
 def test_field_type(field, expected_type):
@@ -351,6 +361,7 @@ def test_field_type_name(field: FileNameField, expected_type_name: str):
         (FileNameFieldDatetime("dfield", ""), ["[%Y-%m-%dT%H:%M:%S]"]),
         (FileNameFieldPeriod("pfield", ""), ["[%Y-%m-%dT%H:%M:%S]"]),
         (FileNameFieldEnum("efield", Color), ["RED", "BLUE", "GREEN", "gray"]),
+        (FileNameFieldISODuration("Ifield"), ["ISO8601"]),
     ],
 )
 def test_field_description(field: FileNameField, elements: list[str]):
@@ -360,10 +371,15 @@ def test_field_description(field: FileNameField, elements: list[str]):
     assert not field.description.startswith(" ")
 
 
+def test_field_choices():
+    fields = FileNameFieldEnum("efield", Color, underscore_encoded=False)
+    assert fields.choices() == ["RED", "GREEN", "BLUE", "gray", "PINK-SCARLET"]
+
+
 @pytest.fixture(scope="session")
 def convention():
     regex = re.compile(
-        r"file_(?P<field_i>\d+)_(?P<field_f>[+-]?([0-9]*[.])?[0-9]+)_(?P<field_s>[a-zA-Z0-9.-]+)_(?P<field_date>\d{8})_(?P<field_enum>\w+)_(?P<field_period>\d{8}_\d{8})_(?P<field_date_delta>\d{8}).txt"
+        r"file_(?P<field_i>\d+)_(?P<field_f>[+-]?([0-9]*[.])?[0-9]+)_(?P<field_s>[a-zA-Z0-9.-]+)_(?P<field_date>\d{8})_(?P<field_enum>\w+)_(?P<field_period>\d{8}_\d{8})_(?P<field_date_delta>\d{8})_(?P<field_iso_duration>\w+).txt"
     )
     fields = [
         FileNameFieldInteger("field_i"),
@@ -373,8 +389,9 @@ def convention():
         FileNameFieldEnum("field_enum", Color),
         FileNameFieldPeriod("field_period", "%Y%m%d"),
         FileNameFieldDateDelta("field_date_delta", "%Y%m%d", np.timedelta64(1, "h")),
+        FileNameFieldISODuration("field_iso_duration"),
     ]
-    generation_string = "file_{field_i:>03d}_{field_f}_{field_s}_{field_date!f}_{field_enum!f}_{field_period!f}_{field_date_delta!f}.txt"
+    generation_string = "file_{field_i:>03d}_{field_f}_{field_s}_{field_date!f}_{field_enum!f}_{field_period!f}_{field_date_delta!f}_{field_iso_duration!f}.txt"
     return FileNameConvention(regex, fields, generation_string)
 
 
@@ -392,12 +409,13 @@ def expected_record():
             np.datetime64("2001-01-01T01"),
             include_stop=False,
         ),
+        ISODuration(seconds=1),
     )
 
 
 @pytest.fixture
 def expected_filename():
-    return "file_002_0.25_foo-bar_20230201_RED_20121101_20130705_20010101.txt"
+    return "file_002_0.25_foo-bar_20230201_RED_20121101_20130705_20010101_PT1S.txt"
 
 
 def test_filename_convention_get_field(convention):
@@ -431,13 +449,13 @@ def test_filename_convention_parse_default(convention, expected_record):
     new_fields = convention.fields
     new_fields[0].default = -127
     regex = re.compile(
-        r"file_(?P<field_i>\d+)*(_)*(?P<field_f>[+-]?([0-9]*[.])?[0-9]+)_(?P<field_s>[a-zA-Z0-9.-]+)_(?P<field_date>\d{8})_(?P<field_enum>\w+)_(?P<field_period>\d{8}_\d{8})_(?P<field_date_delta>\d{8}).txt"
+        r"file_(?P<field_i>\d+)*(_)*(?P<field_f>[+-]?([0-9]*[.])?[0-9]+)_(?P<field_s>[a-zA-Z0-9.-]+)_(?P<field_date>\d{8})_(?P<field_enum>\w+)_(?P<field_period>\d{8}_\d{8})_(?P<field_date_delta>\d{8})_(?P<field_iso_duration>\w+).txt"
     )
     new_record = list(expected_record)
     new_record[0] = -127
 
     new_parser = FileNameConvention(regex, new_fields)
-    filename = "file_.25_foo-bar_20230201_RED_20121101_20130705_20010101.txt"
+    filename = "file_.25_foo-bar_20230201_RED_20121101_20130705_20010101_PT1S.txt"
     record = new_parser.parse(new_parser.match(filename))
     assert all([r == e for r, e in zip(record, new_record)])
 

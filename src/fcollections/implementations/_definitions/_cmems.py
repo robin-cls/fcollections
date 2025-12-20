@@ -335,9 +335,9 @@ _MODEL = "".join(_MODEL_FRAGMENTS)
 
 
 def build_convention(
-    complementary: str = "(?P<complementary>.*)",
-    complementary_fields: list[FileNameField] | None = None,
-    complementary_generation_string: str = "na",
+    complementary: str,
+    complementary_fields: list[FileNameField],
+    complementary_generation_string: str,
     strict: bool = False,
 ) -> FileNameConvention:
     """Build CMEMS dataset id convention.
@@ -369,9 +369,6 @@ def build_convention(
     :
         A file name convention matching the product
     """
-
-    if complementary_fields is None:
-        complementary_fields = [FileNameFieldString("complementary")]
 
     regex_string = _MODEL.format(
         *["|".join(field.choices()) for field in CMEMS_DATASET_ID_FIELDS[:-1]],

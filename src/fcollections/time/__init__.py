@@ -37,7 +37,6 @@ __all__ = [
     "CNES_DATE_REFERENCE",
     "MILLENNIUM_DATE_REFERENCE",
     "times_holes",
-    "parse_iso8601_duration",
     "ISODuration",
 ]
 
@@ -54,7 +53,7 @@ def times_holes(
     )
 
 
-@dc.dataclass
+@dc.dataclass(eq=True, frozen=True)
 class ISODuration:
     """ISO8601 duration.
 

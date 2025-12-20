@@ -155,6 +155,9 @@ class EnumCodec(ICodec[type[Enum]]):
 
     def decode(self, input_string: str) -> type[Enum]:
         # Handle difference cases
+        if not self.underscore_encoded:
+            input_string = input_string.replace("-", "_")
+
         if self.case_type_decoded == CaseType.upper:
             input_string = input_string.upper()
         elif self.case_type_decoded == CaseType.lower:
@@ -174,7 +177,7 @@ class EnumCodec(ICodec[type[Enum]]):
     def encode(self, data: type[Enum]) -> str:
         data = data.name
         if not self.underscore_encoded:
-            data.replace("_", "-")
+            data = data.replace("_", "-")
 
         if self.case_type_encoded == CaseType.upper:
             return data.upper()
@@ -429,7 +432,7 @@ class ISODurationCodec(ICodec[ISODuration]):
         match = self.REGEX.match(input_string)
         if not match:
             msg = f"Invalid ISO 8601 duration : {input_string}"
-            raise ValueError(msg)
+            raise DecodingError(msg)
 
         parts = {
             name: (

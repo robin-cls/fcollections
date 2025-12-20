@@ -22,6 +22,7 @@ from fcollections.core import (
     FileNameFieldEnum,
     FileNameFieldFloat,
     FileNameFieldInteger,
+    FileNameFieldISODuration,
     FileNameFieldPeriod,
     FileNameFieldString,
     FileSystemMetadataCollector,
@@ -40,7 +41,7 @@ from fcollections.core._listing import (
     VisitResult,
     walk,
 )
-from fcollections.time import Period
+from fcollections.time import ISODuration, Period
 
 
 def test_file_node_no_children():
@@ -53,34 +54,34 @@ def filepaths() -> list[str]:
     # The files that we will use to test the listing and filtering using the
     # file names will allow us
     return [
-        "root/RED/LR_000/file_000_.25_foo-bar_20230201_RED_20121101_20130705_20010101.txt",
-        "root/BLUE/LR_001/file_001_.25_foo-bar_20230202_BLUE_20121101_20130705_20010101.txt",
-        "root/GREEN/LR_002/file_002_.25_foo-bar_20230203_GREEN_20121101_20130705_20010101.txt",
-        "root/RED/LR_003/file_003_1.75_foo-bar_20230204_RED_20121101_20130705_20010101.txt",
-        "root/BLUE/LR_004/file_004_1.75_foo-bar_20230205_BLUE_20121101_20130705_20010101.txt",
-        "root/GREEN/LR_005/file_005_1.75_foo-bar_20230206_GREEN_20121101_20130705_20010101.txt",
-        "root/RED/HR_006/file_006_5.6_baz_20230207_RED_20221101_20230705_19500101.txt",
-        "root/BLUE/HR_007/file_007_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt",
-        "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
-        "root/HR_009/file_009_5.6_baz_20230207_RED_20221101_20230705_19500101.txt",
-        "root/HR_010/file_010_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt",
-        "root/HR_011/file_011_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+        "root/RED/LR_000/file_000_.25_foo-bar_20230201_RED_20121101_20130705_20010101_PT1S.txt",
+        "root/BLUE/LR_001/file_001_.25_foo-bar_20230202_BLUE_20121101_20130705_20010101_PT1S.txt",
+        "root/GREEN/LR_002/file_002_.25_foo-bar_20230203_GREEN_20121101_20130705_20010101_PT1S.txt",
+        "root/RED/LR_003/file_003_1.75_foo-bar_20230204_RED_20121101_20130705_20010101_PT1S.txt",
+        "root/BLUE/LR_004/file_004_1.75_foo-bar_20230205_BLUE_20121101_20130705_20010101_PT1S.txt",
+        "root/GREEN/LR_005/file_005_1.75_foo-bar_20230206_GREEN_20121101_20130705_20010101_PT1S.txt",
+        "root/RED/HR_006/file_006_5.6_baz_20230207_RED_20221101_20230705_19500101_PT1S.txt",
+        "root/BLUE/HR_007/file_007_5.8_baz_20230208_BLUE_20221101_20230705_19500101_PT1S.txt",
+        "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101_PT1S.txt",
+        "root/HR_009/file_009_5.6_baz_20230207_RED_20221101_20230705_19500101_PT1S.txt",
+        "root/HR_010/file_010_5.8_baz_20230208_BLUE_20221101_20230705_19500101_PT2S.txt",
+        "root/HR_011/file_011_7.4_baz_20230209_GREEN_20221101_20230705_19500101_PT2S.txt",
         "root/HR_011/KO.txt",
         "root/RED/dead_branch",
         "root/HR_011/dead_branch",
         "root/dead_branch",
-        "clean/RED/LR_000/file_000_.25_foo-bar_20230201_RED_20121101_20130705_20010101.txt",
-        "clean/BLUE/LR_001/file_001_.25_foo-bar_20230202_BLUE_20121101_20130705_20010101.txt",
-        "clean/GREEN/LR_002/file_002_.25_foo-bar_20230203_GREEN_20121101_20130705_20010101.txt",
-        "clean/RED/LR_003/file_003_1.75_foo-bar_20230204_RED_20121101_20130705_20010101.txt",
-        "clean/BLUE/LR_004/file_004_1.75_foo-bar_20230205_BLUE_20121101_20130705_20010101.txt",
-        "clean/GREEN/LR_005/file_005_1.75_foo-bar_20230206_GREEN_20121101_20130705_20010101.txt",
-        "clean/RED/HR_006/file_006_5.6_baz_20230207_RED_20221101_20230705_19500101.txt",
-        "clean/BLUE/HR_007/file_007_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt",
-        "clean/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
-        "clean/HR_009/file_009_5.6_baz_20230207_RED_20221101_20230705_19500101.txt",
-        "clean/HR_010/file_010_5.8_baz_20230208_BLUE_20221101_20230705_19500101.txt",
-        "clean/HR_011/file_011_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+        "clean/RED/LR_000/file_000_.25_foo-bar_20230201_RED_20121101_20130705_20010101_PT1S.txt",
+        "clean/BLUE/LR_001/file_001_.25_foo-bar_20230202_BLUE_20121101_20130705_20010101_PT1S.txt",
+        "clean/GREEN/LR_002/file_002_.25_foo-bar_20230203_GREEN_20121101_20130705_20010101_PT1S.txt",
+        "clean/RED/LR_003/file_003_1.75_foo-bar_20230204_RED_20121101_20130705_20010101_PT1S.txt",
+        "clean/BLUE/LR_004/file_004_1.75_foo-bar_20230205_BLUE_20121101_20130705_20010101_PT1S.txt",
+        "clean/GREEN/LR_005/file_005_1.75_foo-bar_20230206_GREEN_20121101_20130705_20010101_PT1S.txt",
+        "clean/RED/HR_006/file_006_5.6_baz_20230207_RED_20221101_20230705_19500101_PT1S.txt",
+        "clean/BLUE/HR_007/file_007_5.8_baz_20230208_BLUE_20221101_20230705_19500101_PT1S.txt",
+        "clean/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101_PT1S.txt",
+        "clean/HR_009/file_009_5.6_baz_20230207_RED_20221101_20230705_19500101_PT1S.txt",
+        "clean/HR_010/file_010_5.8_baz_20230208_BLUE_20221101_20230705_19500101_PT2S.txt",
+        "clean/HR_011/file_011_7.4_baz_20230209_GREEN_20221101_20230705_19500101_PT2S.txt",
     ]
 
 
@@ -288,6 +289,7 @@ def expected_record() -> tuple[tp.Any, ...]:
             np.datetime64("1950-01-01T01"),
             include_stop=False,
         ),
+        ISODuration(seconds=1),
     )
 
 
@@ -318,6 +320,7 @@ def test_record_filter(expected_record, convention):
             Period(np.datetime64("0001-01-01"), np.datetime64("2023-01-01")),
         ),
         ("field_date_delta", "2023-01-01", np.datetime64("2023-01-01")),
+        ("field_iso_duration", "PT2S", ISODuration(seconds=2)),
     ],
 )
 def test_record_filter_sanitize(convention, field, value, value_sanitized):
@@ -391,10 +394,17 @@ def test_layout_parse_test(
     assert layout.test_record(1, record) is test_result
 
 
+def test_layout_parse_empty():
+    # If no match, ensure None is returned, even if the convention has no field
+    layout = Layout([FileNameConvention(re.compile("foo|bar"), [])])
+    result = layout.parse_node(0, "baz")
+    assert result is None
+
+
 @pytest.fixture(scope="session")
 def convention():
     regex = re.compile(
-        r"file_(?P<field_i>\d+)_(?P<field_f>[+-]?([0-9]*[.])?[0-9]+)_(?P<field_s>[a-zA-Z0-9.-]+)_(?P<field_date>\d{8})_(?P<field_enum>\w+)_(?P<field_period>\d{8}_\d{8})_(?P<field_date_delta>\d{8}).txt"
+        r"file_(?P<field_i>\d+)_(?P<field_f>[+-]?([0-9]*[.])?[0-9]+)_(?P<field_s>[a-zA-Z0-9.-]+)_(?P<field_date>\d{8})_(?P<field_enum>\w+)_(?P<field_period>\d{8}_\d{8})_(?P<field_date_delta>\d{8})_(?P<field_iso_duration>\w+).txt"
     )
     fields = [
         FileNameFieldInteger("field_i"),
@@ -404,8 +414,9 @@ def convention():
         FileNameFieldEnum("field_enum", Color),
         FileNameFieldPeriod("field_period", "%Y%m%d"),
         FileNameFieldDateDelta("field_date_delta", "%Y%m%d", np.timedelta64(1, "h")),
+        FileNameFieldISODuration("field_iso_duration"),
     ]
-    generation_string = "file_{field_i:>03d}_{field_f}_{field_s}_{field_date!f}_{field_enum!f}_{field_period!f}_{field_date_delta!f}.txt"
+    generation_string = "file_{field_i:>03d}_{field_f}_{field_s}_{field_date!f}_{field_enum!f}_{field_period!f}_{field_date_delta!f}_{field_iso_duration!f}.txt"
     return FileNameConvention(regex, fields, generation_string)
 
 
@@ -480,12 +491,12 @@ def test_layout_visit_dir_outlier(
     "path, level, layouts_selection",
     [
         (
-            "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+            "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101_PT1S.txt",
             3,
             [0],
         ),
         (
-            "root/HR_009/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+            "root/HR_009/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101_PT1S.txt",
             2,
             [1],
         ),
@@ -548,7 +559,7 @@ def test_layout_visit_file_stat_fields(
     memory_root: Path,
     expected_record: tuple[tp.Any, ...],
 ):
-    path = "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt"
+    path = "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101_PT1S.txt"
     path = memory_root / path
     node = FileNode(
         path.name,
@@ -641,8 +652,8 @@ def test_no_layout_visit_dir(
 @pytest.mark.parametrize(
     "path",
     [
-        "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
-        "root/HR_009/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101.txt",
+        "root/GREEN/HR_008/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101_PT1S.txt",
+        "root/HR_009/file_008_7.4_baz_20230209_GREEN_20221101_20230705_19500101_PT1S.txt",
     ],
 )
 def test_no_layout_visit_file(

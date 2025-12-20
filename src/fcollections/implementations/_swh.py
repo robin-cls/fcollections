@@ -6,6 +6,7 @@ from copy import copy
 from fcollections.core import (
     FileNameConvention,
     FileNameFieldDatetime,
+    FileNameFieldEnum,
     FileNameFieldPeriod,
     FilesDatabase,
     Layout,
@@ -20,16 +21,18 @@ from fcollections.implementations._definitions._cmems import (
 
 from ._definitions._constants import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS
 
-_SENSOR_FIELD = CMEMS_DATASET_ID_FIELDS[-1]
-
-SWH_PATTERN = re.compile(
-    rf"global_vavh_l3_rt_(?P<sensorf>{'|'.join(_SENSOR_FIELD.choices())})_(?P<time>\d{{8}}T\d{{6}}_\d{{8}}T\d{{6}})_(?P<production_date>\d{{8}}T\d{{6}}).nc"
-)
-
 # Sensor names in dataset and file are not the same for s6a/s6a_hr and swon/swot
-# Need to distinguish both field to account for this particularity
+# Need to distinguish both field to account for this particularity. In addition,
+# S6A_HR -> s6a_hr without '-' <-> '_' transformation, so the behavior must be
+# adjusted
+_SENSOR_FIELD: FileNameFieldEnum = CMEMS_DATASET_ID_FIELDS[-1]
 _SENSOR_FIELD_FILENAME = copy(_SENSOR_FIELD)
 _SENSOR_FIELD_FILENAME.name = "sensorf"
+_SENSOR_FIELD_FILENAME.underscore_encoded = True
+
+SWH_PATTERN = re.compile(
+    rf"global_vavh_l3_rt_(?P<sensorf>{'|'.join(_SENSOR_FIELD_FILENAME.choices())})_(?P<time>\d{{8}}T\d{{6}}_\d{{8}}T\d{{6}})_(?P<production_date>\d{{8}}T\d{{6}}).nc"
+)
 
 
 class FileNameConventionSWH(FileNameConvention):
