@@ -63,13 +63,14 @@ DESCRIPTIONS = {
 
 
 class ProductLevel(Enum):
-    """Product level enum."""
+    """Product level."""
 
-    L1A = auto()
-    L1B = auto()
     L2 = auto()
+    """Level-2 products."""
     L3 = auto()
+    """Level-3 products."""
     L4 = auto()
+    """Level-4 products."""
 
 
 class Delay(Enum):

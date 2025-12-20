@@ -71,12 +71,7 @@ class FileNameConventionL3Nadir(FileNameConvention):
                 FileNameFieldDatetime(
                     "production_date",
                     "%Y%m%d",
-                    description=(
-                        "Production date of a given file. The same granule is "
-                        "regenerated multiple times with updated corrections. Hence"
-                        " there can be multiple files for the same period, but with"
-                        " a different production date."
-                    ),
+                    description=DESCRIPTIONS["production_date"],
                 ),
                 _SENSOR_FIELD_FILENAME,
                 FileNameFieldEnum(
