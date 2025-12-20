@@ -44,9 +44,26 @@ class ProductSubset(Enum):
     """Swot product subset enum."""
 
     Basic = auto()
+    """Basic subset for L2_LR_SSH and L3_LR_SSH products."""
     Expert = auto()
+    """Expert subset for L2_LR_SSH and L3_LR_SSH products.
+
+    Expert subset contains all of the Basic subset fields.
+    """
     WindWave = auto()
+    """Basic subset for L2_LR_SSH product."""
     Unsmoothed = auto()
+    """Expert subset for L2_LR_SSH and L3_LR_SSH products."""
     Technical = auto()
+    """Technical subset for L3_LR_SSH product.
+
+    Contains additional fields such as alternative corrections to be
+    used by experts.
+    """
     Light = auto()
+    """Light subset for L3_LR_WIND_WAVE product."""
     Extended = auto()
+    """Extended subset for L3_LR_WIND_WAVE product.
+
+    Extended subset contains all of the Light subset data.
+    """

@@ -57,8 +57,17 @@ def times_holes(
 class ISODuration:
     """ISO8601 duration.
 
-    We must redefine as class different from numpy.timedelta64 or
-    datetime64 because years and months can be coded in ISO duration.
+    Because years and months cannot be directly converted to seconds without
+    using a calendar, ``numpy`` and ``datetime`` modules do not handle them in
+    their respective timedelta classes. This class stores the duration code -
+    including years, months and weeks - naively, without trying to convert to
+    seconds
+
+    See Also
+    --------
+    fcollections.core.FileNameFieldISODuration
+        Field that can encode and decode an duration code following the ISO8601
+        convention
     """
 
     years: int = 0
