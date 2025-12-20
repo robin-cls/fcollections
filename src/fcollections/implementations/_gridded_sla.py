@@ -18,13 +18,13 @@ from fcollections.core import (
     OpenMfDataset,
     PeriodMixin,
 )
-from fcollections.missions import MissionsPhases
 
 from ._definitions._cmems import (
     build_convention,
     build_layout,
 )
 from ._definitions._constants import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS, Delay
+from ._definitions._swot import SwotPhases
 
 GRIDDED_SLA_PATTERN = re.compile(
     r"(?P<delay>nrt|dt)_(.*)_allsat_phy_l4_(?P<time>(\d{8})|(\d{8}T\d{2}))_(?P<production_date>\d{8}).nc"
@@ -77,7 +77,14 @@ AVISO_L4_SWOT_LAYOUT = Layout(
         ),
         FileNameConvention(
             re.compile(r"^(?P<phase>calval|science)$"),
-            [FileNameFieldEnum("phase", MissionsPhases)],
+            [
+                FileNameFieldEnum(
+                    "phase",
+                    SwotPhases,
+                    case_type_decoded=CaseType.upper,
+                    case_type_encoded=CaseType.lower,
+                )
+            ],
             "{phase!f}",
         ),
         FileNameConventionGriddedSLA(),

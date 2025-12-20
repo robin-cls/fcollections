@@ -15,6 +15,7 @@ from fcollections.implementations import (
     FileNameConventionGriddedSLA,
     FileNameConventionGriddedSLAInternal,
     NetcdfFilesDatabaseGriddedSLA,
+    SwotPhases,
 )
 from fcollections.implementations._definitions._cmems import (
     Area,
@@ -26,7 +27,6 @@ from fcollections.implementations._definitions._cmems import (
     Typology,
     Variable,
 )
-from fcollections.missions import MissionsPhases
 from fcollections.time import ISODuration, Period
 
 if tp.TYPE_CHECKING:
@@ -202,7 +202,7 @@ class TestLayout:
             "/duacs-experimental/dt-phy-grids/l4_karin_nadir",
             method="miost",
             version="1.0",
-            phase=MissionsPhases.science,
+            phase=SwotPhases.SCIENCE,
             delay=Delay.NRT,
             time=Period(
                 np.datetime64("2025-03-31"),
@@ -223,7 +223,7 @@ class TestLayout:
             ({}, [0, 1, 2, 3, 4]),
             ({"version": "0.3"}, [2, 3, 4]),
             ({"method": "4dvarnet"}, [2]),
-            ({"phase": "science"}, [0, 1]),
+            ({"phase": "SCIENCE"}, [0, 1]),
             ({"time": np.datetime64("2023-07-29")}, [1, 2, 3, 4]),
             ({"production_date": np.datetime64("2024-09-13")}, [2]),
             ({"delay": Delay.NRT}, [4]),

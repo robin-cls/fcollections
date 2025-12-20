@@ -22,7 +22,7 @@ from ._definitions._constants import (
     Delay,
     ProductLevel,
 )
-from ._definitions._swot import ProductSubset, Temporality
+from ._definitions._swot import ProductSubset, SwotPhases, Temporality
 from ._era5 import FileNameConventionERA5, NetcdfFilesDatabaseERA5
 from ._gridded_sla import AVISO_L4_SWOT_LAYOUT as _AVISO_L4_SWOT_LAYOUT
 from ._gridded_sla import CMEMS_L4_SSHA_LAYOUT as _CMEMS_L4_SSHA_LAYOUT
@@ -196,7 +196,6 @@ __all__ = [
     # Common definitions
     "Delay",
     "ProductLevel",
-    "Temporality",
     # Definitions from CMEMS
     "Origin",
     "Group",
@@ -211,9 +210,9 @@ __all__ = [
     # Definitions for SWOT mission
     "Temporality",
     "ProductSubset",
+    "SwotPhases",
     # Definitions specific to one product
     "StackLevel",
-    "Temporality",
     "ProductSubset",
     "ProductGroup",
     "Timeliness",

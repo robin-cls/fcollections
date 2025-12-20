@@ -25,10 +25,19 @@ class Temporality(Enum):
         L2_LR_SSH product temporality definition
     """
 
-    #: Reprocessed data calibrated on the MY nadir dataset
     REPROC = auto()
-    #: Forward data calibrated on the NRT nadir dataset
+    """Reprocessed data calibrated on the MY nadir dataset."""
     FORWARD = auto()
+    """Forward data calibrated on the NRT nadir dataset."""
+
+
+class SwotPhases(Enum):
+    """Swot mission phases definitions."""
+
+    CALVAL = auto()
+    """1-day repeat orbit, sparse geographical coverage."""
+    SCIENCE = auto()
+    """21-day repeat orbit, quasi full geographical coverage."""
 
 
 class ProductSubset(Enum):
