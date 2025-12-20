@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses as dc
 import typing as tp
 
 import numpy as np
@@ -14,7 +15,6 @@ from ._conversions import (
     numpy_to_fractional_julian_day,
     numpy_to_julian_day,
 )
-from ._iso8601 import ISODuration, parse_iso8601_duration
 from ._operations import (
     fuse_successive_periods,
     periods_envelop,
@@ -52,3 +52,27 @@ def times_holes(
         ),
         np.where(delta_t > 1.5 * sampling.astype("m8[ns]"))[0],
     )
+
+
+@dc.dataclass
+class ISODuration:
+    """ISO8601 duration.
+
+    We must redefine as class different from numpy.timedelta64 or
+    datetime64 because years and months can be coded in ISO duration.
+    """
+
+    years: int = 0
+    """Years."""
+    months: int = 0
+    """Months."""
+    weeks: int = 0
+    """Weeks."""
+    days: int = 0
+    """Days."""
+    hours: int = 0
+    """Hours."""
+    minutes: int = 0
+    """Minutes."""
+    seconds: float = 0.0
+    """Seconds."""

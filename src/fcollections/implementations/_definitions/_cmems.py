@@ -1,5 +1,9 @@
-"""Sourced from
+"""Definition of the dataset id convention. Described in the following link
 https://help.marine.copernicus.eu/en/articles/6820094-how-is-the-nomenclature-of-copernicus-marine-data-defined
+
+Each product will define its own regex and fields for a free complementary info
+section. The module provides two utilities to build the final convention of a
+product with the complementary information.
 """
 
 import re
@@ -11,10 +15,10 @@ from fcollections.core import (
     FileNameField,
     FileNameFieldEnum,
     FileNameFieldInteger,
+    FileNameFieldISODuration,
     FileNameFieldString,
     Layout,
 )
-from fcollections.time import ISODuration, parse_iso8601_duration
 
 
 class Origin(Enum):
@@ -164,6 +168,17 @@ class Typology(Enum):
 
 
 class Sensors(Enum):
+    """Aggregation of sensors for multiple CMEMS products.
+
+    - SEALEVEL_GLO_PHY_L3_MY_008_062
+    - SEALEVEL_GLO_PHY_L3_NRT_008_044
+    - SEALEVEL_GLO_PHY_L4_NRT_008_046
+    - SEALEVEL_GLO_PHY_L4_MY_008_047
+    - WAVE_GLO_PHY_SWH_L3_NRT_014_001
+    - SST_GLO_SST_L3S_NRT_OBSERVATIONS_010_010
+    - OCEANCOLOUR_GLO_BGC_L3_MY_009_103
+    """
+
     # SEALEVEL_GLO_PHY_L3_MY_008_062
     # SEALEVEL_GLO_PHY_L3_NRT_008_044
     C2 = auto()
@@ -213,58 +228,44 @@ class Sensors(Enum):
 
 
 class FileNameFieldEnumOptional(FileNameFieldEnum):
+    """Specific field created for the CMEMS dataset id convention.
+
+    In the convention regex, some groups can be optional (-ssh). These
+    groups are heasier to handle if the field can handle the hyphen
+    (?P<variables>-ssh)
+
+    In order to have the value, decoding/encoding must remove/add the
+    hyphen.
+    """
 
     def decode(self, input_string: str) -> type[Enum]:
         if input_string.startswith("-"):
             return super().decode(input_string[1:])
 
-    def encode(self, enum: type[Enum] | None) -> str:
-        return "" if enum is None else f"-{super().encode(enum)}"
+    def encode(self, data: type[Enum] | None) -> str:
+        return "" if data is None else f"-{super().encode(data)}"
 
 
 class FileNameFieldStringOptional(FileNameFieldString):
+    """Specific field created for the CMEMS dataset id convention.
+
+    In the convention regex, some groups can be optional (_202422).
+    These groups are heasier to handle if the field can handle the
+    underscore (?P<version>_\\d{6})
+
+    To work with a useful value, decoding/encoding must remove/add the
+    underscore.
+    """
 
     def decode(self, input_string: str) -> str:
         if input_string.startswith("_"):
             return super().decode(input_string[1:])
 
-    def encode(self, value: str | None) -> str:
-        return "" if value is None else f"_{super().encode(value)}"
+    def encode(self, data: str | None) -> str:
+        return "" if data is None else f"_{super().encode(data)}"
 
 
-class FileNameFieldISODuration(FileNameField):
-
-    def decode(self, input_string: str) -> ISODuration | None:
-        if input_string == "irr":
-            return None
-        return parse_iso8601_duration(input_string)
-
-    def encode(self, value: ISODuration | None) -> str:
-        if value is None:
-            return "irr"
-        return str(value)
-
-    @property
-    def test_description(self) -> str:
-        description = (
-            "ISO8601 duration field can be tested against an "
-            "ISODuration object or its string representation "
-            "(PT1S, ...)"
-        )
-        return description
-
-    @property
-    def type(self) -> type[ISODuration]:
-        """Type of the tested field."""
-        return ISODuration
-
-    def sanitize(self, reference: str | ISODuration) -> ISODuration:
-        if isinstance(reference, str):
-            return self.decode(reference)
-        return reference
-
-
-_FIELDS = [
+CMEMS_DATASET_ID_FIELDS = [
     FileNameFieldEnum(
         "origin",
         Origin,
@@ -330,7 +331,7 @@ _MODEL_FRAGMENTS = [
     "(?P<version>_\\d{{6}}){{0,1}}",
 ]
 
-MODEL = "".join(_MODEL_FRAGMENTS)
+_MODEL = "".join(_MODEL_FRAGMENTS)
 
 
 def build_convention(
@@ -339,20 +340,48 @@ def build_convention(
     complementary_generation_string: str = "na",
     strict: bool = False,
 ) -> FileNameConvention:
+    """Build CMEMS dataset id convention.
+
+    Dataset ID convention reserves a free section that each product can use to
+    put specific information. These specificities must be given in the form of
+    a regex fragment, fields and generation_string matching the regex.
+
+    In case the file name convention is based on the dataset_id convention,
+    there can be a confusion of layouts during parsing: a file node could be
+    parsed by the folder/datasetid convention, leading to an incomplete record.
+
+    To avoid this case, the ``strict`` argument can be set to enforce that the
+    datasetid name convention regex will match the whole input
+
+    Parameters
+    ----------
+    complementary
+        The regex for complementary information section
+    complementary_fields
+        The fields for complementary information section
+    complementary_generation_string
+        The generation string for complementary information section
+    strict
+        True to enforce ``^...$`` for the returned file name convention regex
+
+    Returns
+    -------
+    :
+        A file name convention matching the product
+    """
 
     if complementary_fields is None:
         complementary_fields = [FileNameFieldString("complementary")]
 
-    regex_string = MODEL.format(
-        *["|".join(field.choices()) for field in _FIELDS[:-1]], complementary
+    regex_string = _MODEL.format(
+        *["|".join(field.choices()) for field in CMEMS_DATASET_ID_FIELDS[:-1]],
+        complementary,
     )
     if strict:
-        # Needs to constraint the beginning and end of the regex (^ + $). This
-        # is useful if the dataset folder and filename have too much in common.
-        # In this case, the dataset convention should be stricter. The risk is
-        # to have the folder convention parsing a filename, returning less info
-        # than expected and triggering an error
+        # Enforce full match, useful if filename convention is based on dataset
+        # id convention
         regex_string = "^" + regex_string + "$"
+
     regex = re.compile(regex_string)
 
     generation_fragments = [
@@ -369,10 +398,10 @@ def build_convention(
     return FileNameConvention(
         regex,
         [
-            *_FIELDS[:7],
+            *CMEMS_DATASET_ID_FIELDS[:7],
             *complementary_fields,
             FileNameFieldISODuration("temporal_resolution"),
-            _FIELDS[-2],
+            CMEMS_DATASET_ID_FIELDS[-2],
             FileNameFieldStringOptional("version"),
         ],
         "".join(generation_fragments),
@@ -382,6 +411,24 @@ def build_convention(
 def build_layout(
     dataset_id_convention: FileNameConvention, filename_convention: FileNameConvention
 ) -> Layout:
+    """Add year and month levels to build a full CMEMS layout.
+
+    CMEMS layout are usually organized as <dataset_id>/<year>/<month>/<file>.
+    Given the dataset_id and filename conventions, this utility adds the two
+    intermediary levels
+
+    Parameters
+    ----------
+    dataset_id_convention
+        Dataset ID convention
+    filename_convention
+        File name convention
+
+    Returns
+    -------
+    :
+        The full product layout
+    """
     return Layout(
         [
             dataset_id_convention,

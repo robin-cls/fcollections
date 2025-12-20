@@ -13,14 +13,14 @@ from fcollections.core import (
     PeriodMixin,
 )
 from fcollections.implementations._definitions._cmems import (
-    _FIELDS,
+    CMEMS_DATASET_ID_FIELDS,
     build_convention,
     build_layout,
 )
 
 from ._definitions._constants import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS
 
-_SENSOR_FIELD = _FIELDS[-1]
+_SENSOR_FIELD = CMEMS_DATASET_ID_FIELDS[-1]
 
 SWH_PATTERN = re.compile(
     rf"global_vavh_l3_rt_(?P<sensorf>{'|'.join(_SENSOR_FIELD.choices())})_(?P<time>\d{{8}}T\d{{6}}_\d{{8}}T\d{{6}})_(?P<production_date>\d{{8}}T\d{{6}}).nc"

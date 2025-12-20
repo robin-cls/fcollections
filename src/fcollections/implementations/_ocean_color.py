@@ -15,17 +15,17 @@ from fcollections.core import (
 )
 
 from ._definitions._cmems import (
-    _FIELDS,
+    CMEMS_DATASET_ID_FIELDS,
     build_convention,
     build_layout,
 )
 from ._definitions._constants import DESCRIPTIONS, XARRAY_TEMPORAL_NETCDFS
 
 _COMPLEMENTARY_INFO = [
-    f"(?P<level>l3|l4|l4-gapfree)-(?P<sensor>{'|'.join(_FIELDS[-1].choices())})(-climatology){{0,1}}-(?P<spatial_resolution>\\d+(km|m))",
+    f"(?P<level>l3|l4|l4-gapfree)-(?P<sensor>{'|'.join(CMEMS_DATASET_ID_FIELDS[-1].choices())})(-climatology){{0,1}}-(?P<spatial_resolution>\\d+(km|m))",
     [
         FileNameFieldString("level", description=DESCRIPTIONS["level"]),
-        _FIELDS[-1],
+        CMEMS_DATASET_ID_FIELDS[-1],
         FileNameFieldString(
             "spatial_resolution", description=DESCRIPTIONS["spatial_resolution"]
         ),

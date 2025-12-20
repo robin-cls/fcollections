@@ -8,7 +8,7 @@ from enum import Enum
 
 import numpy as np
 
-from fcollections.time import Period
+from fcollections.time import ISODuration, Period
 
 from ._codecs import (
     CaseType,
@@ -17,6 +17,7 @@ from ._codecs import (
     FloatCodec,
     ICodec,
     IntegerCodec,
+    ISODurationCodec,
     JulianDayCodec,
     PeriodCodec,
     PeriodDeltaCodec,
@@ -232,6 +233,28 @@ class FileNameFieldPeriod(FileNameField, PeriodTester, PeriodCodec):
     ):
         super().__init__(name, default, description)
         super(FileNameField, self).__init__(date_fmt, separator)
+
+
+class FileNameFieldISODuration(FileNameField, ISODurationCodec):
+    """ISO8601 duration codes field (PT1D, P1W, ...)"""
+
+    @property
+    def test_description(self) -> str:
+        description = (
+            "ISO8601 duration field can be tested against an "
+            "ISODuration object or its string representation "
+            "(PT1S, ...)"
+        )
+        return description
+
+    @property
+    def type(self) -> type[ISODuration]:
+        return ISODuration
+
+    def sanitize(self, reference: str | ISODuration) -> ISODuration:
+        if isinstance(reference, str):
+            return self.decode(reference)
+        return reference
 
 
 class FieldFormatter(string.Formatter):

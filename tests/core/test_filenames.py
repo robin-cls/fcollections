@@ -18,10 +18,11 @@ from fcollections.core import (
     FileNameFieldEnum,
     FileNameFieldFloat,
     FileNameFieldInteger,
+    FileNameFieldISODuration,
     FileNameFieldPeriod,
     FileNameFieldString,
 )
-from fcollections.time import Period
+from fcollections.time import ISODuration, Period
 
 
 class Color(Enum):
@@ -94,6 +95,16 @@ def test_field_bad_init():
             "23831.25",
             np.datetime64("2015-04-01T06"),
         ),
+        (FileNameFieldISODuration(""), "PT15M", ISODuration(minutes=15)),
+        (FileNameFieldISODuration(""), "P1D", ISODuration(days=1)),
+        (FileNameFieldISODuration(""), "P1DT3H", ISODuration(days=1, hours=3)),
+        (FileNameFieldISODuration(""), "P1W", ISODuration(weeks=1)),
+        (
+            FileNameFieldISODuration(""),
+            "P1Y4M2DT1H1S",
+            ISODuration(years=1, months=4, days=2, hours=1, seconds=1),
+        ),
+        (FileNameFieldISODuration(""), "PT0S", ISODuration()),
     ],
 )
 def test_fields_encode_decode_nominal(
