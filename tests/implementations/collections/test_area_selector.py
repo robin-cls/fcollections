@@ -267,6 +267,18 @@ class Test_SwathAreaSelector:
 
         assert reference == ds
 
+    @pytest.mark.parametrize("bbox", [(50, -50, 60, 0)])
+    def test_apply_unsmoothed_sorted_time(
+        self,
+        l2_lr_ssh_unsmoothed_dataset: xr.Dataset,
+        bbox: tuple[float, float, float, float],
+    ):
+        selector = SwathAreaSelector()
+        ds = selector.apply(l2_lr_ssh_unsmoothed_dataset, bbox)
+
+        time_values = ds["time"].values
+        assert np.all(time_values[1:] >= time_values[:-1])
+
     @pytest.mark.parametrize("latitude", [-75, -30, 0, 30, 75])
     def test_apply_circular(self, l2_lr_ssh_basic_dataset: xr.Dataset, latitude: float):
         """Test apply with a bbox intersecting the dataset."""

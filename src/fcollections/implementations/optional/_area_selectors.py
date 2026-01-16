@@ -113,10 +113,10 @@ class SwathAreaSelector(AreaSelector1D):
             logger.debug("No intersection between the bbox and the dataset")
             return {"num_lines": slice(0)}
 
-        # If one pixel of the swath is in the box, take the entire line. Use set
-        # to take the unique values of num_lines (they will be repeated for each
+        # If one pixel of the swath is in the box, take the entire line.
+        # Take the unique values of num_lines (they will be repeated for each
         # num_pixels in the box)
-        return {"num_lines": list(set(_id))}
+        return {"num_lines": list(np.unique(_id))}
 
 
 class AreaSelector2D(IAreaSelector):
