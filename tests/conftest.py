@@ -134,3 +134,10 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
             kept.append(item)
     items[:] = kept
     config.hook.pytest_deselected(items=deselected)
+
+
+@pytest.fixture(autouse=True, scope="session")
+def xarray_future_defaults():
+    import xarray as xr
+
+    xr.set_options(use_new_combine_kwarg_defaults=True)
