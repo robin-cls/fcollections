@@ -738,10 +738,7 @@ def collector_status(
     request: pytest.FixtureRequest,
 ) -> tuple[FileSystemMetadataCollector, bool]:
     root_path_str = (memory_root / request.param[0]).as_posix()
-    root_node = DirNode(
-        root_path_str,
-        {"name": root_path_str},
-        0, memory_fs)
+    root_node = DirNode(root_path_str, {"name": root_path_str}, 0, memory_fs)
     return (
         FileSystemMetadataCollector(layouts_v2, root_node),
         request.param[1],

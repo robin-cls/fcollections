@@ -865,10 +865,7 @@ class FileSystemMetadataCollector:
         directory on a file system
     """
 
-    def __init__(
-        self,
-        layouts: list[Layout],
-        root_node: INode):
+    def __init__(self, layouts: list[Layout], root_node: INode):
         self.path = path
         self.root_node = root_node
 

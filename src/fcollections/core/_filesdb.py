@@ -364,11 +364,8 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
         self.fs = fs
 
         root_node = DirNode(
-                    self.path,
-                    {"name": self.path},
-                    self.fs,
-                    0,
-                    follow_symlinks=follow_symlinks)
+            self.path, {"name": self.path}, self.fs, 0, follow_symlinks=follow_symlinks
+        )
 
         self.discoverer = FileSystemMetadataCollector(self.layouts, root_node)
         self.enable_layouts = enable_layouts
