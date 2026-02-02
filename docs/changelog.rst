@@ -1,6 +1,40 @@
 Release notes
 =============
 
+1.0.0 (unreleased)
+------------------
+
+A bit of refactoring has been done in this version to improve the maintainability
+and versatility of the code. The following interfaces are impacted:
+
+- ``fcollections.core.FileDiscoverer`` and ``fcollections.core.FileSystemIterable`` have been merged into
+  ``fcollections.core.FileSystemMetadataCollector``
+- ``fcollections.core.FilesDatabase`` is configured using multiple layouts. Layouts must now declare both folder and filename conventions.
+  This effectively makes ``fcollections.core.CompositeLayout`` obsolete (it has been removed)
+- A new parameter ``enable_layouts`` has been introduced in ``fcollections.core.FilesDatabase`` to simplify layout feature disabling in
+  cast of a mismatch
+- A new parameter ``follow_symlinks`` has been introduced in ``fcollections.core.FilesDatabase`` to enable symlinks. (The feature is
+  disable by default)
+
+Details
+.......
+
+- fix: keep dataset sorted for bbox selection on unsmoothed dataset `#20 <https://github.com/robin-cls/fcollections/pull/20>`_
+- refactor!: Use one or multiple Layouts instead of FileNameConvention in FilesDatabase `#14 <https://github.com/robin-cls/fcollections/pull/14>`_
+- feat!: refactor and add layouts for CMEMS implementations `#19 <https://github.com/robin-cls/fcollections/pull/19>`_
+- feat!: allow listing with/without layouts `#17 <https://github.com/robin-cls/fcollections/pull/17>`_
+- feat!: use INode for FileSystemMetadataCollector `#21 <https://github.com/robin-cls/fcollections/pull/21>`_
+- feat: follow symbolic links for posix-compliant local file systems `#18 <https://github.com/robin-cls/fcollections/pull/18>`_
+- chore!: remove obsolete code from core API `#16 <https://github.com/robin-cls/fcollections/pull/16>`_
+- chore: switch license file name to US spelling `#22 <https://github.com/robin-cls/fcollections/pull/22>`_
+- doc: create README and documentation landing page `#15 <https://github.com/robin-cls/fcollections/pull/15>`_
+
+Contributors
+............
+
+- Robin Chevrier
+- Anne-Sophie Tonneau
+
 0.1.3 (2025-12-15)
 ------------------
 
