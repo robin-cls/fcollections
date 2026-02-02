@@ -860,24 +860,17 @@ class FileSystemMetadataCollector:
     layouts
         Succession of conventions describing how to interpret the folder and
         file nodes
-    fs
-        File system hosting the paths
-    follow_symlinks
-        If False, symbolic links will be marked as file nodes instead of
-        directory nodes, and will not be explored
+    root_node
+        Root node representing an explorable tree. Usually represent the parent
+        directory on a file system
     """
 
     def __init__(
         self,
-        path: str,
         layouts: list[Layout],
-        fs: fsspec.AbstractFileSystem,
-        follow_symlinks: bool = False,
-    ):
+        root_node: INode):
         self.path = path
-        self.layouts = layouts
-        self.fs = fs
-        self.follow_symlinks = follow_symlinks
+        self.root_node = root_node
 
     def discover(
         self,
@@ -924,14 +917,6 @@ class FileSystemMetadataCollector:
             # TODO: We should also be able to give the predicates here -> need
             # to modify the Layout interface
             layout.set_filters(**filters)
-
-        root_node = DirNode(
-            self.path,
-            {"name": self.path},
-            self.fs,
-            0,
-            follow_symlinks=self.follow_symlinks,
-        )
 
         if enable_layouts:
             logger.debug("Using layouts to speed up listing")

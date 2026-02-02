@@ -362,9 +362,15 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
     ):
         self.path = path
         self.fs = fs
-        self.discoverer = FileSystemMetadataCollector(
-            path, self.layouts, fs, follow_symlinks=follow_symlinks
-        )
+
+        root_node = DirNode(
+                    self.path,
+                    {"name": self.path},
+                    self.fs,
+                    0,
+                    follow_symlinks=follow_symlinks)
+
+        self.discoverer = FileSystemMetadataCollector(self.layouts, root_node)
         self.enable_layouts = enable_layouts
 
         def raise_if_unknown_keys(
