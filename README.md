@@ -45,4 +45,4 @@ the breaking changes using SemVer convention
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENCE)
+Apache 2.0 — see [LICENSE](LICENSE)
