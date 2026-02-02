@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 from fsspec.implementations.local import LocalFileSystem
 
-from fcollections.core import FileSystemMetadataCollector
+from fcollections.core import DirNode, FileSystemMetadataCollector
 from fcollections.implementations import (
     AVISO_L4_SWOT_LAYOUT,
     CMEMS_L4_SSHA_LAYOUT,
@@ -237,10 +237,13 @@ class TestLayout:
         filters: dict[str, tp.Any],
     ):
 
+        root_path_str = l4_ssha_dir_layout_aviso.as_posix()
+        root_node = DirNode(
+            root_path_str, {"name": root_path_str}, LocalFileSystem(), 0
+        )
+
         collector = FileSystemMetadataCollector(
-            l4_ssha_dir_layout_aviso,
-            NetcdfFilesDatabaseGriddedSLA.layouts,
-            LocalFileSystem(),
+            NetcdfFilesDatabaseGriddedSLA.layouts, root_node
         )
 
         actual = {
@@ -271,10 +274,13 @@ class TestLayout:
         filters: dict[str, tp.Any],
     ):
 
+        root_path_str = l4_ssha_dir_layout_cmems.as_posix()
+        root_node = DirNode(
+            root_path_str, {"name": root_path_str}, LocalFileSystem(), 0
+        )
+
         collector = FileSystemMetadataCollector(
-            l4_ssha_dir_layout_cmems,
-            NetcdfFilesDatabaseGriddedSLA.layouts,
-            LocalFileSystem(),
+            NetcdfFilesDatabaseGriddedSLA.layouts, root_node
         )
 
         actual = {

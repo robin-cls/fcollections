@@ -17,7 +17,7 @@ from fsspec import AbstractFileSystem
 from fsspec.implementations.local import LocalFileSystem
 
 from ._filenames import FileNameConvention
-from ._listing import FileSystemMetadataCollector, Layout
+from ._listing import DirNode, FileSystemMetadataCollector, Layout
 from ._metadata import GroupMetadata
 from ._readers import IFilesReader
 
@@ -362,9 +362,12 @@ class FilesDatabase(metaclass=FilesDatabaseMeta):
     ):
         self.path = path
         self.fs = fs
-        self.discoverer = FileSystemMetadataCollector(
-            path, self.layouts, fs, follow_symlinks=follow_symlinks
+
+        root_node = DirNode(
+            self.path, {"name": self.path}, self.fs, 0, follow_symlinks=follow_symlinks
         )
+
+        self.discoverer = FileSystemMetadataCollector(self.layouts, root_node)
         self.enable_layouts = enable_layouts
 
         def raise_if_unknown_keys(

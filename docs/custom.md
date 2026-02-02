@@ -196,14 +196,15 @@ regex groups.
 
 ```{code-cell}
 import fsspec.implementations.memory as fs_mem
-from fcollections.core import FileSystemMetadataCollector
+from fcollections.core import FileSystemMetadataCollector, DirNode
 
 fs = fs_mem.MemoryFileSystem()
 fs.touch('/SWOT_L2_LR_SSH_Expert_001_010_20240101T000000_20240101T030000_PGC0_01.nc')
 fs.touch('/SWOT_L2_LR_SSH_Expert_001_012_20240101T030000_20240101T030000_PGC0_01.nc')
 fs.touch('/SWOT_L2_LR_SSH_Expert_002_010_20240102T000000_20240102T030000_PGC0_01.nc')
 
-collector = FileSystemMetadataCollector('/', [layout_flat], fs)
+root_node = DirNode("/", {"name": "/"}, fs, 0)
+collector = FileSystemMetadataCollector([layout_flat], root_node)
 collector.to_dataframe()
 ```
 
