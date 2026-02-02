@@ -8,7 +8,7 @@ import xarray as xr
 from fsspec.implementations.local import LocalFileSystem
 from utils import brute_force_geographical_selection
 
-from fcollections.core import FileSystemMetadataCollector
+from fcollections.core import DirNode, FileSystemMetadataCollector
 from fcollections.implementations import (
     AVISO_L3_LR_WINDWAVE_LAYOUT,
     NetcdfFilesDatabaseSwotLRWW,
@@ -337,8 +337,13 @@ class TestLayout:
         filters: dict[str, tp.Any],
     ):
 
+        root_path_str = l3_lr_ww_dir_layout.as_posix()
+        root_node = DirNode(
+            root_path_str, {"name": root_path_str}, LocalFileSystem(), 0
+        )
+
         collector = FileSystemMetadataCollector(
-            l3_lr_ww_dir_layout, NetcdfFilesDatabaseSwotLRWW.layouts, LocalFileSystem()
+            NetcdfFilesDatabaseSwotLRWW.layouts, root_node
         )
 
         actual = {

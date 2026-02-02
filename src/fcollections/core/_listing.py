@@ -866,7 +866,7 @@ class FileSystemMetadataCollector:
     """
 
     def __init__(self, layouts: list[Layout], root_node: INode):
-        self.path = path
+        self.layouts = layouts
         self.root_node = root_node
 
     def discover(
@@ -918,14 +918,14 @@ class FileSystemMetadataCollector:
         if enable_layouts:
             logger.debug("Using layouts to speed up listing")
             visitor = LayoutVisitor(self.layouts, stat_fields)
-            records = walk(root_node, visitor)
+            records = walk(self.root_node, visitor)
         else:
             logger.debug("Full scan (not using layouts)")
             layout = self.layouts[-1]
             visitor = NoLayoutVisitor(
                 layout.conventions[-1], layout.filters[-1], stat_fields
             )
-            records = walk(root_node, visitor)
+            records = walk(self.root_node, visitor)
 
         for predicate in predicates:
             records = filter(predicate, records)

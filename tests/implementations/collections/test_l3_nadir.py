@@ -7,7 +7,7 @@ import pandas as pda
 import pytest
 from fsspec.implementations.local import LocalFileSystem
 
-from fcollections.core import FileSystemMetadataCollector
+from fcollections.core import DirNode, FileSystemMetadataCollector
 from fcollections.implementations import (
     CMEMS_SSHA_L3_LAYOUT,
     Area,
@@ -349,8 +349,14 @@ class TestLayout:
         l3_nadir_files: list[str],
     ):
         """Test layout filters not integrated in the database."""
+
+        root_path_str = l3_nadir_dir_layout.as_posix()
+        root_node = DirNode(
+            root_path_str, {"name": root_path_str}, LocalFileSystem(), 0
+        )
+
         collector = FileSystemMetadataCollector(
-            l3_nadir_dir_layout, NetcdfFilesDatabaseL3Nadir.layouts, LocalFileSystem()
+            NetcdfFilesDatabaseL3Nadir.layouts, root_node
         )
 
         actual = {
