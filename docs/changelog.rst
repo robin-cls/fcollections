@@ -14,7 +14,7 @@ and versatility of the code. The following interfaces are impacted:
 - A new parameter ``enable_layouts`` has been introduced in ``fcollections.core.FilesDatabase`` to simplify layout feature disabling in
   cast of a mismatch
 - A new parameter ``follow_symlinks`` has been introduced in ``fcollections.core.FilesDatabase`` to enable symlinks. (The feature is
-  disable by default)
+  disabled by default)
 
 Details
 .......
