@@ -1,7 +1,7 @@
 Release notes
 =============
 
-1.0.0 (unreleased)
+1.0.0 (2025-02-04)
 ------------------
 
 A bit of refactoring has been done in this version to improve the maintainability
