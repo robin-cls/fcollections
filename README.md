@@ -1,8 +1,8 @@
 # Files Collections
 
-[![Linting](https://cnes.github.io/fcollections/actions/workflows/pre-commit.yaml/badge.svg)](https://cnes.github.io/fcollections/actions/workflows/pre-commit.yaml)
-[![Tests](https://cnes.github.io/fcollections/actions/workflows/tests.yaml/badge.svg)](https://cnes.github.io/fcollections/actions/workflows/tests.yaml)
-[![Documentation](https://cnes.github.io/fcollections/actions/workflows/doc.yaml/badge.svg)](https://cnes.github.io/fcollections/actions/workflows/doc.yaml)
+[![Linting](https://github.com/CNES/fcollections/actions/workflows/pre-commit.yaml/badge.svg)](https://github.com/CNES/fcollections/actions/workflows/pre-commit.yaml)
+[![Tests](https://github.com/CNES/fcollections/actions/workflows/tests.yaml/badge.svg)](https://github.com/CNES/fcollections/actions/workflows/tests.yaml)
+[![Documentation](https://github.com/CNES/fcollections/actions/workflows/doc.yaml/badge.svg)](https://github.com/CNES/fcollections/actions/workflows/doc.yaml)
 ![License](https://img.shields.io/github/license/cnes/fcollections)
 
 
@@ -36,6 +36,7 @@ Output:
 
 ```text
 Frozen({'num_lines': 9860, 'num_pixels': 69})
+
 ```
 
 ```python
